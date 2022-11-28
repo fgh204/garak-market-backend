@@ -52,7 +52,7 @@ public class Aspects {
 		
 		String agent = "";
 		
-		log.info("userAgent ================== " + userAgent);
+		//log.info("userAgent ================== " + userAgent);
 		//log.error("userAgent ================== " + request.getRemoteAddr());
 		//log.error("userAgent ================== " + request.getRemoteHost());
 		//log.error("userAgent ================== " + request.getServerName());
