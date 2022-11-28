@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.lawzone.market.cart.service.CartService;
 import com.lawzone.market.config.SessionBean;
 import com.lawzone.market.externalLink.util.BootpayUtils;
 import com.lawzone.market.order.service.CustOrderInfoDTO;
@@ -27,7 +26,6 @@ import com.lawzone.market.order.service.ProductOrderService;
 import com.lawzone.market.payment.service.PaymentCancleDTO;
 import com.lawzone.market.payment.service.PaymentDTO;
 import com.lawzone.market.payment.service.PaymentService;
-import com.lawzone.market.product.service.ProductCDTO;
 import com.lawzone.market.product.service.ProductInfo;
 import com.lawzone.market.product.service.ProductService;
 import com.lawzone.market.telmsgLog.service.TelmsgLogService;
@@ -79,7 +77,7 @@ public class PaymentController {
 		this.telmsgLogService.addTelmsgLog("01", "01", "2", receiptData);
 		
 		if(receiptData.get("error_code") != null) {
-			log.info("receiptData================" + receiptData);
+			//log.info("receiptData================" + receiptData);
 			return JsonUtils.returnValue("9999", receiptData.get("message").toString(), rtnMap).toString();
 	    }
 		
@@ -189,7 +187,7 @@ public class PaymentController {
 					//this.productService.modifyProductStock(_orderNo);
 				}catch (Exception e) {
 					receiptCancleData = this.bootpayUtils.getBootpayReceiptCancel(_receiptId, "관리자", "승인오류", null);
-					log.info("receiptCancleData========= " + receiptCancleData);
+					//log.info("receiptCancleData========= " + receiptCancleData);
 					return JsonUtils.returnValue("9999", "결제시 오류가 발생하였습니다.", rtnMap).toString();
 				}
 		    }else {
@@ -206,6 +204,7 @@ public class PaymentController {
 	public String paymentCancle(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
 		this.telmsgLogService.addTelmsgLog("01", "00", "1", map);
 		Map rtnMap = new HashMap<>();
+		String rtnMsg = "";
 		PaymentCancleDTO paymentCancleDTO = new PaymentCancleDTO();
 		paymentCancleDTO = (PaymentCancleDTO) ParameterUtils.setDto(map, paymentCancleDTO, "insert", sessionBean);
 		
@@ -222,42 +221,60 @@ public class PaymentController {
 		BigDecimal _amt = new BigDecimal("0");
 		Double _cancleAmt = 0.0;
 		
-		//승인번호 채번 금액
-		List<PaymentCancleDTO> _paymentCancleList = this.paymentService.getPaymentCancleInfo(paymentCancleDTO);
+		//주문상태확인
+		List<ProductOrderItemInfo> productOrderItemInfo = this.productOrderService.getProductOrderItemInfoByOrderNoAndProductId(_orderNo, _productId);
+		String _orderItemStateCode = productOrderItemInfo.get(0).getOrderItemStateCode();
+		String _orderItemDlngStateCode = productOrderItemInfo.get(0).getOrderItemDlngStateCode();
 		
-		if(_paymentCancleList.size() > 0) {
-			_productTotalAmt = _paymentCancleList.get(0).getProductTotalAmt();
-			_orderTotalAmt = _paymentCancleList.get(0).getOrderTotalAmt();
-			_receiptId = _paymentCancleList.get(0).getReceiptId();
-			_paymentAmount = _paymentCancleList.get(0).getPaymentAmount();
-			_cancelledPaymentAmount = _paymentCancleList.get(0).getCancelledPaymentAmount();
-			_paymentAmt = _paymentAmount.subtract(_cancelledPaymentAmount);
-			paymentCancleDTO.setReceiptId(_receiptId);
-			
-			//취소처리
-			_amt = _productTotalAmt;
-			if(_productId == null || "".equals(_productId)) {
-				_amt = _orderTotalAmt;
-			}
-			
-			if(_paymentAmt.compareTo(_amt) >= 0) {
-				_cancleAmt = _amt.doubleValue();
-				if(_paymentAmt.compareTo(_amt) == 0) {
-					_allCancleYn = "Y";
-				}
-				this.telmsgLogService.addTelmsgLog("01", "90", "1", map);
-				_rtnMsg = this.paymentService.paymentCancle(paymentCancleDTO, _allCancleYn, _cancleAmt);
-			}else {
-				return JsonUtils.returnValue("9999", "취소금액불일치", rtnMap).toString();
-			}
-			
-			if("".equals(_rtnMsg)) {
-				return JsonUtils.returnValue("0000", "취소되었습니다.", rtnMap).toString();
-			}else {
-				return JsonUtils.returnValue("9999", _rtnMsg, rtnMap).toString();
-			}
+		if("002".equals(_orderItemStateCode)) {
+			return JsonUtils.returnValue("0000", "이미 취소된 주문입니다.", rtnMap).toString();
 		}else {
-			return JsonUtils.returnValue("9999", "결제취소건이 없습니다.", rtnMap).toString();
+			if("100".equals(_orderItemDlngStateCode)){
+				//승인번호 채번 금액
+				List<PaymentCancleDTO> _paymentCancleList = this.paymentService.getPaymentCancleInfo(paymentCancleDTO);
+				
+				if(_paymentCancleList.size() > 0) {
+					_productTotalAmt = _paymentCancleList.get(0).getProductTotalAmt();
+					_orderTotalAmt = _paymentCancleList.get(0).getOrderTotalAmt();
+					_receiptId = _paymentCancleList.get(0).getReceiptId();
+					_paymentAmount = _paymentCancleList.get(0).getPaymentAmount();
+					_cancelledPaymentAmount = _paymentCancleList.get(0).getCancelledPaymentAmount();
+					_paymentAmt = _paymentAmount.subtract(_cancelledPaymentAmount);
+					paymentCancleDTO.setReceiptId(_receiptId);
+					
+					//취소처리
+					_amt = _productTotalAmt;
+					if(_productId == null || "".equals(_productId)) {
+						_amt = _orderTotalAmt;
+					}
+					
+					if(_paymentAmt.compareTo(_amt) >= 0) {
+						_cancleAmt = _amt.doubleValue();
+						if(_paymentAmt.compareTo(_amt) == 0) {
+							_allCancleYn = "Y";
+						}
+						this.telmsgLogService.addTelmsgLog("01", "90", "1", map);
+						_rtnMsg = this.paymentService.paymentCancle(paymentCancleDTO, _allCancleYn, _cancleAmt, _orderItemDlngStateCode);
+					}else {
+						return JsonUtils.returnValue("9999", "취소금액불일치", rtnMap).toString();
+					}
+					
+					if("".equals(_rtnMsg)) {
+						return JsonUtils.returnValue("0000", "취소되었습니다.", rtnMap).toString();
+					}else {
+						return JsonUtils.returnValue("9999", _rtnMsg, rtnMap).toString();
+					}
+				}else {
+					return JsonUtils.returnValue("9999", "결제취소건이 없습니다.", rtnMap).toString();
+				}
+			}else if("200".equals(_orderItemDlngStateCode) || "300".equals(_orderItemDlngStateCode)) {
+				//취소요청만 가능
+				this.productOrderService.modifyOrderItemStatInfo(_orderNo, _productId, "800");
+				return JsonUtils.returnValue("0000", "취소요청 하였습니다.", rtnMap).toString();
+			}else {
+				//그 외 취소불가
+				return JsonUtils.returnValue("0000", "취소가능한 주문이 없습니다.", rtnMap).toString();
+			}
 		}
 	}
 }

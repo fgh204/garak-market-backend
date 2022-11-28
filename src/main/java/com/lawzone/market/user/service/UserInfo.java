@@ -3,7 +3,9 @@ package com.lawzone.market.user.service;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.validation.constraints.NotNull;
 
+import org.hibernate.annotations.Comment;
 
 import com.lawzone.market.config.BaseTimeEntity;
 
@@ -22,7 +24,7 @@ public class UserInfo extends BaseTimeEntity{
 	@Column(unique = true, columnDefinition = "varchar (100)")
 	private String email;
 	
-	private String password;
+	//private String password;
 	
 	@Column(unique = true, columnDefinition = "varchar (100)")
 	private String socialId;
@@ -35,4 +37,14 @@ public class UserInfo extends BaseTimeEntity{
 	
 	@Column(columnDefinition = "char (1)")
 	private String useYn;
+	
+	@Comment("유저레벨")
+	private Integer userLvl;
+	
+	@Column(unique = true, columnDefinition = "varchar (100)")
+	private String nickname;
+	
+	@Comment("프로필 이미지 경로")
+	@Column(columnDefinition = "varchar (300)")
+	private String profileImagesPath;
 }

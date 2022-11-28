@@ -74,4 +74,22 @@ public class ProductReviewInfoJdbcDAO {
 		
 		return _query.toString();
 	}
+	
+	public String getAverageScoreInfo() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n select")
+			  .append("\n	round(sum(pri.product_score)/ count(1),1) as product_average_score ")
+			  .append("\n   , round(sum(pri.fresh_score)/ count(1),1) as fresh_average_score ")
+			  .append("\n 	, round(sum(pri.taste_score)/ count(1),1) as taste_average_score ")
+			  .append("\n 	, round(sum(pri.packaging_score)/ count(1),1) as packaging_average_score ")
+			  .append("\n 	, round(sum(pri.shipping_score)/ count(1),1) as shipping_average_score ")
+			  .append("\n 	, count(1) as seller_review_count ")
+			  .append("\n from lz_market.product_review_info pri ")
+			  .append("\n 	, lz_market.product_info pi2 ")
+			  .append("\n where pri.product_id = pi2.product_id ")
+			  .append("\n and pi2.seller_id = ? ");		
+		
+		return _query.toString();
+	}
 }

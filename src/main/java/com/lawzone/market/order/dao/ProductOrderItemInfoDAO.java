@@ -9,5 +9,6 @@ import com.lawzone.market.order.service.ProductOrderItemInfo;
 
 public interface ProductOrderItemInfoDAO extends JpaRepository<ProductOrderItemInfo, Key>{
 	List<ProductOrderItemInfo> findByIdOrderNo(String orderNo);
+	List<ProductOrderItemInfo> findByIdOrderNoAndIdProductId(String orderNo, String productId);
 	List<ProductOrderItemInfo> findByIdOrderNoAndOrderItemStateCodeAndCartNumberIsNotNull(String orderNo, String orderItemStateCode);
 }

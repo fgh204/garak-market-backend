@@ -29,6 +29,7 @@ public class ProductInfoDTO {
 	private String updateDate;
 	private String shopName;
 	private String sellerName;
+	private String thumbnailImagePath;
 	
 	public ProductInfoDTO() {
 		

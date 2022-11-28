@@ -8,7 +8,9 @@ import javax.persistence.EntityListeners;
 import javax.persistence.MappedSuperclass;
 
 import org.hibernate.annotations.Comment;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -23,7 +25,6 @@ import lombok.Getter;
 public abstract class BaseTimeEntity {
 	@CreatedDate
 	@Comment("등록일자")
-	//@Column(updatable = false)
 	@Column(name="create_date", length=20 ,updatable = false)
 	@Convert(converter=BaseDateToStringConverter.class)
     private String createDate;
@@ -33,4 +34,14 @@ public abstract class BaseTimeEntity {
     @Column(name="update_date", length=20)
     @Convert(converter=BaseDateToStringConverter.class)
     private String updateDate;
+    
+    @CreatedBy
+	@Comment("등록자")
+	@Column(name="create_user", length=8 ,updatable = false)
+    private String createUser;
+	
+    @LastModifiedBy
+    @Comment("수정자")
+    @Column(name="update_user", length=8)
+    private String updateUser;
 }

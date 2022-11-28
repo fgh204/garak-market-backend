@@ -74,8 +74,8 @@ public class FileController {
 	@PostMapping(value = "/upload", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
 	public String upload2(@RequestPart(value="file",required = false) MultipartFile[] uploadFile,
 			@RequestPart(value="productInfo",required = false) Map map) throws IllegalStateException, IOException{
-		log.info("uploadFile=" + uploadFile);
-		log.info("productId=" + map.get("productId"));
+		//log.info("uploadFile=" + uploadFile);
+		//log.info("productId=" + map.get("productId"));
 		
 		this.fileUpload(map.get("productId").toString(),uploadFile);
 		
@@ -87,12 +87,16 @@ public class FileController {
 		
 		for(MultipartFile file : uploadFile) {
 			if(!file.isEmpty()) {
-				ProductImageDTO productImageDTO = new ProductImageDTO(productId,
-						UUID.randomUUID().toString() + "_" + file.getName(),
-						file.getOriginalFilename(),
-						file.getOriginalFilename(),
-						"","",file.getSize());
-											
+				ProductImageDTO productImageDTO = new ProductImageDTO();
+				
+				productImageDTO.setProductId(productId);
+				productImageDTO.setFileName(UUID.randomUUID().toString() + "_" + file.getName());
+				productImageDTO.setOriginFileName(file.getOriginalFilename());
+				productImageDTO.setThumbnailImagePath(file.getOriginalFilename());
+				productImageDTO.setDelegateThumbnailYn("");
+				productImageDTO.setImageCfcd("");
+				productImageDTO.setFileSize(file.getSize());
+
 				list.add(productImageDTO);
 				
 				File newFileName = new File(productImageDTO.getFileName());
@@ -121,19 +125,22 @@ public class FileController {
 					_delegateThumbNailYn = "Y";
 				}
 				String _fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-				ProductImageDTO productImageDTO = new ProductImageDTO(map.get("productId").toString(),
-						_fileName,
-						file.getOriginalFilename(),
-						"",
-						_delegateThumbNailYn,
-						"",
-						file.getSize());
-											
+
+				ProductImageDTO productImageDTO = new ProductImageDTO();
+				
+				productImageDTO.setProductId(map.get("productId").toString());
+				productImageDTO.setFileName(_fileName);
+				productImageDTO.setOriginFileName(file.getOriginalFilename());
+				productImageDTO.setThumbnailImagePath("");
+				productImageDTO.setDelegateThumbnailYn(_delegateThumbNailYn);
+				productImageDTO.setImageCfcd("");
+				productImageDTO.setFileSize(file.getSize());
+				
 				list.add(productImageDTO);
 				
 				String imeageUrl = s3Upload.upload(file, _fileName);
 				
-				log.info("imeageUrl===" + imeageUrl);
+				//log.info("imeageUrl===" + imeageUrl);
 				
 				if(imeageUrl != null) {
 					productImageDTO.setThumbnailImagePath(imeageUrl);
@@ -158,19 +165,22 @@ public class FileController {
 					_delegateThumbNailYn = "Y";
 				}
 				String _fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-				ProductImageDTO productImageDTO = new ProductImageDTO(productId,
-						_fileName,
-						file.getOriginalFilename(),
-						"",
-						_delegateThumbNailYn,
-						"",
-						file.getSize());
-											
+				
+				ProductImageDTO productImageDTO = new ProductImageDTO();
+				
+				productImageDTO.setProductId(productId);
+				productImageDTO.setFileName(_fileName);
+				productImageDTO.setOriginFileName(file.getOriginalFilename());
+				productImageDTO.setThumbnailImagePath("");
+				productImageDTO.setDelegateThumbnailYn(_delegateThumbNailYn);
+				productImageDTO.setImageCfcd("");
+				productImageDTO.setFileSize(file.getSize());
+				
 				list.add(productImageDTO);
 				
 				String imeageUrl = s3Upload.upload(file, _fileName);
 				
-				log.info("imeageUrl===" + imeageUrl);
+				//log.info("imeageUrl===" + imeageUrl);
 				
 				if(imeageUrl != null) {
 					productImageDTO.setThumbnailImagePath(imeageUrl);

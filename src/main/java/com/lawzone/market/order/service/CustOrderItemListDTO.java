@@ -14,11 +14,14 @@ import lombok.ToString;
 @Data
 public class CustOrderItemListDTO {
 	private String productName;
-	private String stateName;
+	private String orderItemStateCode;
+	private String orderItemStateName;
 	private BigDecimal productCount;
 	private BigDecimal productPrice;
 	private String thumbnailImagePath;
 	private String productId;
+	private String orderItemDlngStateCode;
+	private String orderItemDlngStateName;
 	
 	public CustOrderItemListDTO() {
 		

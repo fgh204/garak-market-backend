@@ -1,0 +1,77 @@
+package com.lawzone.market.common.dao;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class CommonJdbcDAO {
+	public String menuInfo() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n SELECT ")
+		.append("\n 	M1.MENU_SEQ ")
+		.append("\n 	, M1.MENU_NM ")
+		.append("\n 	, M1.RSRC_PATH_VALUE ")
+		.append("\n 	, M1.FULL_TITLE ")
+		.append("\n 	, M1.DEPTH_PATH ")
+		.append("\n 	, M1.ORDER_SEQ ")
+		.append("\n 	, M1.MENU_LVL ")
+		.append("\n 	, M1.FOLDER_YN ")
+		.append("\n 	, M1.MENU_REF ")
+		.append("\n 	, M1.MENU_CNT ")
+		.append("\n FROM ( ")
+		.append("\n   SELECT ")
+		.append("\n     a.MENU_SEQ ")
+		.append("\n     , a.MENU_NM ")
+		.append("\n     , a.RSRC_PATH_VALUE ")
+		.append("\n     , CONCAT_WS('>', c.MENU_NM, b.MENU_NM, a.MENU_NM) AS FULL_TITLE ")
+		.append("\n     , CONCAT_WS('', c.MENU_SEQ, b.MENU_SEQ, a.MENU_SEQ) AS DEPTH_PATH ")
+		.append("\n     , CONCAT_WS('', c.ORDER_SEQ , b.ORDER_SEQ, a.ORDER_SEQ) AS ORDER_SEQ ")
+		.append("\n     , a.MENU_LVL ")
+		.append("\n     , a.FOLDER_YN ")
+		.append("\n     , a.MENU_REF ")
+		.append("\n     , ((SELECT ")
+		.append("\n 	      COUNT(1) ")
+		.append("\n 	    FROM lz_market.menu_info MI ")
+		.append("\n 	    WHERE MI.UP_MENU_SEQ = a.MENU_SEQ ")
+		//.append("\n 	    AND MI.FOLDER_YN = 'N' ")
+		.append("\n 	    AND MI.USE_YN = 'Y' ")
+		.append("\n 	    AND MI.DISP_YN = 'Y' ")
+		.append("\n 	    AND MI.rsrc_lvl <= (select  ")
+		.append("\n 	    							ui.user_lvl  ")
+		.append("\n 	    						from lz_market.user_info ui  ")
+		.append("\n 								where ui.user_id = ?) ")
+		.append("\n      	)+(SELECT ")
+		.append("\n  		COUNT(1) ")
+		.append("\n  		FROM lz_market.menu_info MI ")
+		.append("\n 		WHERE MI.UP_MENU_SEQ = b.MENU_SEQ  ")
+		.append("\n  		AND MI.FOLDER_YN = 'N' ")
+		.append("\n  		AND MI.USE_YN = 'Y' ")
+		.append("\n  		AND MI.DISP_YN = 'Y' ")
+		.append("\n 	    AND MI.rsrc_lvl  <= (select  ")
+		.append("\n 	    							ui.user_lvl  ")
+		.append("\n 	    						from lz_market.user_info ui  ")
+		.append("\n 								where ui.user_id = ?) ")
+		.append("\n  		 )+(SELECT ")
+		.append("\n  		     COUNT(1) ")
+		.append("\n  		 FROM lz_market.menu_info MI ")
+		.append("\n  		 WHERE MI.UP_MENU_SEQ = c.MENU_SEQ ")
+		.append("\n  		 AND MI.FOLDER_YN = 'N' ")
+		.append("\n  		 AND MI.USE_YN = 'Y' ")
+		.append("\n  		 AND MI.DISP_YN = 'Y' ")
+		.append("\n 	    AND MI.rsrc_lvl  <= (select  ")
+		.append("\n 	    							ui.user_lvl  ")
+		.append("\n 	    						from lz_market.user_info ui  ")
+		.append("\n 								where ui.user_id = ?)) ")
+		.append("\n  		) AS MENU_CNT ")
+		.append("\n   FROM lz_market.menu_info a ")
+		.append("\n   LEFT OUTER JOIN lz_market.menu_info b ON a.UP_MENU_SEQ = b.MENU_SEQ ")
+		.append("\n   LEFT OUTER JOIN lz_market.menu_info c ON b.UP_MENU_SEQ = c.MENU_SEQ ")
+		.append("\n   WHERE a.USE_YN = 'Y' ")
+		.append("\n   AND a.DISP_YN = 'Y' ")
+		.append("\n )M1 ")
+		.append("\n WHERE M1.MENU_CNT > 0 ")
+		.append("\n ORDER BY M1.ORDER_SEQ ");
+		
+		return _query.toString();
+	}
+}

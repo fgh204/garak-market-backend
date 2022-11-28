@@ -54,6 +54,10 @@ public class ProductOrderInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "varchar(3)")
 	private String orderStateCode;
 	
+//	@Comment("주문처리상태코드")
+//	@Column(columnDefinition = "varchar(3)")
+//	private String orderDlngStateCode;
+	
 	@Comment("사용자ID")
 	@Column(columnDefinition = "varchar(8)")
 	private String userId;

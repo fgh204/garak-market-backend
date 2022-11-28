@@ -1,4 +1,4 @@
-package com.lawzone.market.admin.dto;
+package com.lawzone.market.admin.dto.common;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

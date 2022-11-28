@@ -3,7 +3,9 @@ package com.lawzone.market.image.service;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -45,7 +47,7 @@ public class ProductImageService {
 		return this.productImageDAO.findByproductId(productId);
 	}
 	
-	public void productFileUploadList(String productId, List uploadList) throws IllegalStateException, IOException {
+	public void productFileUploadList(String productId, List uploadList, String imgCfcd) throws IllegalStateException, IOException {
 		String delegateYn = "N";
 		
 		for(int i = 0; i < uploadList.size(); i++) {
@@ -53,11 +55,11 @@ public class ProductImageService {
 			if(i == 0) {
 				delegateYn = "Y";
 			}
-			productFileUpload(productId, (MultipartFile[]) uploadList.get(i),delegateYn);
+			productFileUpload(productId, (MultipartFile[]) uploadList.get(i), delegateYn, imgCfcd);
 		}
 	}
 	
-	public void productFileUpload(String productId, MultipartFile[] uploadFile, String delegateYn) throws IllegalStateException, IOException {
+	public void productFileUpload(String productId, MultipartFile[] uploadFile, String delegateYn, String imgCfcd) throws IllegalStateException, IOException {
 		List<ProductImageDTO> list = new ArrayList<>();
 		int imgCnt = 0;
 		for(MultipartFile file : uploadFile) {
@@ -84,19 +86,21 @@ public class ProductImageService {
 				}
 				
 				String _fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-				ProductImageDTO productImageDTO = new ProductImageDTO(productId,
-						_fileName,
-						file.getOriginalFilename(),
-						"",
-						delegateYn,
-						"",
-						file.getSize());
-											
+				ProductImageDTO productImageDTO = new ProductImageDTO();
+				
+				productImageDTO.setProductId(productId);
+				productImageDTO.setFileName(_fileName);
+				productImageDTO.setOriginFileName(file.getOriginalFilename());
+				productImageDTO.setThumbnailImagePath("");
+				productImageDTO.setDelegateThumbnailYn(delegateYn);
+				productImageDTO.setImageCfcd(imgCfcd);
+				productImageDTO.setFileSize(file.getSize());
+				
 				list.add(productImageDTO);
 				
 				String imeageUrl = s3Upload.upload(file, _fileName);
 				
-				log.info("imeageUrl===" + imeageUrl);
+				//log.info("imeageUrl===" + imeageUrl);
 				
 				if(imeageUrl != null) {
 					productImageDTO.setThumbnailImagePath(imeageUrl);
@@ -106,6 +110,23 @@ public class ProductImageService {
 				}
 				imgCnt++;
 			}
+		}
+	}
+	@Transactional
+	public void removeProductImageInfoList(List<ProductImageDTO> productImageList) {
+		
+		int cnt = productImageList.size();
+		ProductImageDTO productImageDTO = new ProductImageDTO();
+		ProductImageInfo productImageInfo = new ProductImageInfo();
+		
+		Map productImageMap = new HashMap<>();
+		for(int i = 0; i < cnt; i++) {
+			productImageMap = (Map) productImageList.get(i);
+			productImageInfo = new ProductImageInfo();
+			
+			productImageInfo.setImageFileNumber(Long.parseLong(productImageMap.get("imageFileNumber").toString()));
+			
+			this.productImageDAO.delete(productImageInfo);
 		}
 	}
 }

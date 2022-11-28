@@ -24,6 +24,8 @@ public class CustOrderInfoDTO {
 	private String phoneNumber;
 	private String subPhoneNumber;
 	private String deliveryMessage;
+	//private String orderDlngStateCode;
+	//private String orderDlngStateName;
 	
 	public CustOrderInfoDTO() {
 		

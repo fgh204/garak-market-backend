@@ -21,6 +21,9 @@ public class ProductCDTO {
 	private String pageCount;
 	private String userId;
 	private String maxPageCount;
+	private String sellerSearchYn;
+	private String sellerId;
+	private String sellerIdYn;
 	
 	public ProductCDTO() {
 		

@@ -23,7 +23,7 @@ public class OAuth2AuthenticationFailureHandler implements AuthenticationFailure
 	@Override
 	public void onAuthenticationFailure(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse
 			, AuthenticationException e) throws IOException, ServletException {
-		log.info("실패!");
+		//log.info("실패!");
 		redirectStrategy.sendRedirect(httpServletRequest, httpServletResponse, "/login");
 	}
 }

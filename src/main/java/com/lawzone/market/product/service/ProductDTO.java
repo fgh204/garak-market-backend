@@ -22,6 +22,5 @@ public class ProductDTO {
 	private String page;
 	private String endDate;
 	private String useYn;
-	private Date createDate;
-	private Date updateDate;
+	private String sellerId;
 }

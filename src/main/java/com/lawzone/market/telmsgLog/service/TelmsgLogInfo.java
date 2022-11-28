@@ -44,7 +44,6 @@ public class TelmsgLogInfo {
 	private String method;
 	
 	@Comment("사용자ID")
-	@NotNull
 	@Column(columnDefinition = "varchar(8)")
 	private String userId;
 	
@@ -53,7 +52,7 @@ public class TelmsgLogInfo {
 	private String sessionId;
 	
 	@Comment("전문DATA")
-	@Column(columnDefinition = "TEXT")
+	@Column(columnDefinition = "LONGTEXT")
 	private String telmsgDtaInfo;
 	
 	@Comment("사용자IP")

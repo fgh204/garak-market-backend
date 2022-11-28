@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProductJdbcDAO {
 	public String pageListQuery(String pageCnt, String maxPageCnt
-			, String cateCodeYn , String productIdYn , String productNameYn) {
+			, String cateCodeYn , String productIdYn , String productNameYn, String sellerYn) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select")
@@ -25,7 +25,8 @@ public class ProductJdbcDAO {
 			  .append("\n , lz_market.seller_info si")
 			  .append("\n where pi2.product_id = pii.product_id")
 			  .append("\n and pi2.seller_id = si.seller_id ")
-			  .append("\n and pii.delegate_thumbnail_yn = 'Y'")
+			  .append("\n and pii.delegate_thumbnail_yn = 'Y' ")
+			  .append("\n and pii.image_cfcd = '01' ")
 			  .append("\n and pi2.use_yn = 'Y'");
 		
 		if("Y".equals(cateCodeYn)) {
@@ -39,13 +40,17 @@ public class ProductJdbcDAO {
 		if("Y".equals(productNameYn)) {
 			_query.append("\n and pi2.product_name like concat('%',?,'%')");
 		}
+		
+		if("Y".equals(sellerYn)) {
+			_query.append("\n and pi2.seller_id = ?");
+		}
 		_query.append("\n order by pi2.product_id DESC")
 			  .append("\n limit " + pageCnt + ", " + maxPageCnt);
 		return _query.toString();
 	}
 	
 	public String pageQuery(String maxPageCnt
-			, String cateCodeYn , String productIdYn , String productNameYn) {
+			, String cateCodeYn , String productIdYn , String productNameYn, String sellerYn) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select")
@@ -57,6 +62,7 @@ public class ProductJdbcDAO {
 			  .append("\n where pi2.product_id = pii.product_id")
 			  .append("\n and pi2.seller_id = si.seller_id ")
 			  .append("\n and pii.delegate_thumbnail_yn = 'Y'")
+			  .append("\n and pii.image_cfcd = '01'")
 			  .append("\n and pi2.use_yn = 'Y'");
 		if("Y".equals(cateCodeYn)) {
 			_query.append("\n and pi2.product_categories_code = ?");
@@ -67,6 +73,9 @@ public class ProductJdbcDAO {
 		
 		if("Y".equals(productNameYn)) {
 			_query.append("\n and pi2.product_name like concat('%',?,'%')");
+		}
+		if("Y".equals(sellerYn)) {
+			_query.append("\n and pi2.seller_id = ?");
 		}
 		return _query.toString();
 	}
@@ -107,6 +116,11 @@ public class ProductJdbcDAO {
 				.append("\n 	, DATE_FORMAT(pi2.update_date, '%Y-%m-%d %H:%i:%s') as update_date ")
 				.append("\n 	, si.shop_name as shop_name ")
 				.append("\n 	, ui.user_name as user_name ")
+				.append("\n 	, (select pii.thumbnail_image_path  from lz_market.product_image_info pii ")
+				.append("\n 	where pii.product_id = pi2.product_id ")
+				.append("\n 	and pii.delegate_thumbnail_yn = 'Y' ")
+				.append("\n 	and pii.image_cfcd = '01' ")
+				.append("\n 	limit 1) as thumbnail_image_path ")
 				.append("\n FROM lz_market.product_info pi2 ")
 				.append("\n 	, lz_market.seller_info si ")
 				.append("\n 	, lz_market.user_info ui ")

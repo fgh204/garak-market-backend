@@ -20,6 +20,7 @@ public class CartInfoListDTO {
 	private BigDecimal productCount;
 	private String thumbnailImagePath;
 	private String shopName;
+	private String sellerName;
 	
 	public CartInfoListDTO() {
 		

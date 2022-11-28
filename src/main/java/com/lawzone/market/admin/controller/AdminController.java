@@ -26,10 +26,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.lawzone.market.admin.dto.AdminOrderItemListDTO;
-import com.lawzone.market.admin.dto.AdminPageInfoDTO;
-import com.lawzone.market.admin.dto.AdminProductOrderInfoDTO;
-import com.lawzone.market.admin.dto.AdminProductOrderListDTO;
+import com.lawzone.market.admin.dto.common.AdminPageInfoDTO;
+import com.lawzone.market.admin.dto.order.AdminOrderItemListDTO;
 import com.lawzone.market.config.SessionBean;
 import com.lawzone.market.order.service.ProductOrderInfo;
 import com.lawzone.market.order.service.ProductOrderService;
@@ -66,7 +64,7 @@ public class AdminController {
     		, @RequestParam(value = "sttatCd", defaultValue = "") String sttatCd
     		) {
 		this.telmsgLogService.addTelmsgLog("00", "00", "1", null);
-    	log.info("page:{}, kw:{}", page, kw,beginDate, endDate, sttatCd);
+    	//log.info("page:{}, kw:{}", page, kw,beginDate, endDate, sttatCd);
     	
     	//Page<AdminProductOrderListDTO> paging = this.productOrderService.getList(page, kw);
     	
@@ -97,11 +95,11 @@ public class AdminController {
     	
     	//List<AdminOrderItemListDTO> adminOrder = this.productOrderService.getOrderList(orderMap);
     	
-    	List<AdminPageInfoDTO> paging = this.productOrderService.getAdminOrderListPageInfo(orderMap);
-    	List<AdminOrderItemListDTO> adminOrder = this.productOrderService.getAdminOrderList(orderMap); 
+    	//List<AdminPageInfoDTO> paging = this.productOrderService.getAdminOrderListPageInfo(orderMap);
+    	//List<AdminOrderItemListDTO> adminOrder = this.productOrderService.getAdminOrderList(orderMap); 
     	
-    	model.addAttribute("paging", paging.get(0));
-    	model.addAttribute("adminOrder", adminOrder);
+    	//model.addAttribute("paging", paging.get(0));
+    	//model.addAttribute("adminOrder", adminOrder);
         model.addAttribute("kw", kw);
         model.addAttribute("beginDate", beginDate);
         model.addAttribute("endDate", endDate);

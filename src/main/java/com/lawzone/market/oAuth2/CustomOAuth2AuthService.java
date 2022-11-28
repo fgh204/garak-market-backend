@@ -54,7 +54,7 @@ public class CustomOAuth2AuthService implements OAuth2UserService<OAuth2UserRequ
 	@SneakyThrows
 	@Override
 	public OAuth2User loadUser(OAuth2UserRequest request) throws OAuth2AuthenticationException {
-		log.info("CustomOAuth2AuthService");
+		//log.info("CustomOAuth2AuthService");
 		OAuth2UserService delegate = new DefaultOAuth2UserService();
 		OAuth2User oAuth2User = delegate.loadUser(request);
 		String reistrationId = request.getClientRegistration().getRegistrationId();

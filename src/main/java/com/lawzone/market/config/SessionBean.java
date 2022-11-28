@@ -30,4 +30,5 @@ public class SessionBean implements Serializable{
 	private String sessionId;
 	private String userIp;
 	private String agent;
+	private String userLvl;
 }

@@ -106,7 +106,7 @@ public class UserController {
 	@ResponseBody
     @PostMapping("/logout")
     public void logout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		log.info("request=============================" + request.getCookies());
+		//log.info("request=============================" + request.getCookies());
 		Cookie[] myCookies = request.getCookies();
 
 	    for(int i = 0; i < myCookies.length; i++) {

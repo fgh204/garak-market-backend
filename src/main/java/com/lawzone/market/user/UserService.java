@@ -43,12 +43,12 @@ public class UserService {
     }
 	
 	public Optional<UserInfo> getLogInInfo(String email, String password) {
-        Optional<UserInfo> userInfo = this.userInfoDAO.findByEmailAndPasswordIsNotNull(email);
+        Optional<UserInfo> userInfo = this.userInfoDAO.findByEmail(email);
 
         if (userInfo.isPresent()) {
-            if(!passwordEncoder.matches(password, userInfo.get().getPassword())) {
-            	return java.util.Optional.empty();
-            }
+           // if(!passwordEncoder.matches(password, userInfo.get().getPassword())) {
+            //	return java.util.Optional.empty();
+            //}
         } 
         
         return userInfo;

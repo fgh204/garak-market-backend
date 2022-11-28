@@ -7,7 +7,9 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.client.ClientProtocolException;
 import org.springframework.data.domain.Page;
@@ -20,12 +22,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.lawzone.market.config.SessionBean;
 import com.lawzone.market.externalLink.util.BootpayUtils;
 import com.lawzone.market.externalLink.util.DoobalHeroUtils;
+import com.lawzone.market.image.service.ProductImageDTO;
 import com.lawzone.market.image.service.ProductImageService;
 import com.lawzone.market.product.service.PageInfoDTO;
 import com.lawzone.market.product.service.ProductCDTO;
@@ -39,6 +43,7 @@ import com.lawzone.market.question.Question;
 import com.lawzone.market.review.service.ProductReviewInfoDTO;
 import com.lawzone.market.review.service.ProductReviewInfoService;
 import com.lawzone.market.telmsgLog.service.TelmsgLogService;
+import com.lawzone.market.user.service.SellerInfoService;
 import com.lawzone.market.util.JsonUtils;
 import com.lawzone.market.util.ParameterUtils;
 
@@ -55,6 +60,7 @@ public class ProductController {
 	private final ProductReviewInfoService productReviewInfoService;
 	private final ProductImageService productImageService;
 	private final TelmsgLogService telmsgLogService;
+	private final SellerInfoService sellerInfoService;
 	
 	@Resource
 	private SessionBean sessionBean;
@@ -75,59 +81,99 @@ public class ProductController {
 	@ResponseBody
 	@PostMapping("/createIntegrated")
 	public String addProductIntegratedInfo(HttpServletRequest request
-			, @RequestPart(value="file1",required = false) MultipartFile[] uploadFile1
-			, @RequestPart(value="file2",required = false) MultipartFile[] uploadFile2
-			, @RequestPart(value="file3",required = false) MultipartFile[] uploadFile3
-			, @RequestPart(value="file4",required = false) MultipartFile[] uploadFile4
-			, @RequestPart(value="file5",required = false) MultipartFile[] uploadFile5
-			, @RequestPart(value="file5",required = false) MultipartFile[] uploadFile6
-			, @RequestPart(value="file5",required = false) MultipartFile[] uploadFile7
-			, @RequestPart(value="file5",required = false) MultipartFile[] uploadFile8
-			, @RequestPart(value="file5",required = false) MultipartFile[] uploadFile9
-			, @RequestPart(value="file5",required = false) MultipartFile[] uploadFile10
+			, @RequestPart(value="productImage1",required = false) MultipartFile[] productImage1
+			, @RequestPart(value="productImage2",required = false) MultipartFile[] productImage2
+			, @RequestPart(value="productImage3",required = false) MultipartFile[] productImage3
+			, @RequestPart(value="productImage4",required = false) MultipartFile[] productImage4
+			, @RequestPart(value="productImage5",required = false) MultipartFile[] productImage5
+			, @RequestPart(value="productImage6",required = false) MultipartFile[] productImage6
+			, @RequestPart(value="productImage7",required = false) MultipartFile[] productImage7
+			, @RequestPart(value="productImage8",required = false) MultipartFile[] productImage8
+			, @RequestPart(value="productImage9",required = false) MultipartFile[] productImage9
+			, @RequestPart(value="productImage10",required = false) MultipartFile[] productImage10
+			, @RequestPart(value="noticeImage1",required = false) MultipartFile[] noticeImage1
+			, @RequestPart(value="noticeImage2",required = false) MultipartFile[] noticeImage2
+			, @RequestPart(value="noticeImage3",required = false) MultipartFile[] noticeImage3
+			, @RequestPart(value="noticeImage4",required = false) MultipartFile[] noticeImage4
+			, @RequestPart(value="noticeImage5",required = false) MultipartFile[] noticeImage5
 			, @RequestPart(value="productInfo",required = false) Map productInfoMap
 			, @RequestPart(value="productTagList",required = false) Map productTagListMap
-			) throws IllegalStateException, IOException{
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", productInfoMap);
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", productTagListMap);
+			, @RequestPart(value="deletedImageList",required = false) Map deletedImageListMap
+			) throws IllegalStateException, IOException{		
+		Map logMap = new HashMap<>();
+		
+		logMap.put(productInfoMap, productInfoMap);
+		logMap.put(productTagListMap, productTagListMap);
+		logMap.put(deletedImageListMap, deletedImageListMap);
+		
+		this.telmsgLogService.addTelmsgLog("00", "00", "1", logMap);
 		Map productMap = new HashMap<>();
 		Map productTagInfoMap = new HashMap<>();
-		//Map reviewMap = new HashMap<>();
-		productMap.put("dataset", productInfoMap);
-		//reviewMap.put("dataset", reviewInfoMap);
 		
+		productMap.put("dataset", productInfoMap);
+		
+		//상품정보
 		ProductDTO productDTO = new ProductDTO();
 		productDTO = (ProductDTO) ParameterUtils.setDto(productMap, productDTO, "insert", sessionBean);
-			
-		productDTO.setUseYn("Y");
-		String _productId = this.productService.addProductInfo(productDTO);
 		
-		List rtnList = new ArrayList<>();
-		
-		if(uploadFile1 != null) rtnList.add(uploadFile1);
-		if(uploadFile2 != null) rtnList.add(uploadFile2);
-		if(uploadFile3 != null) rtnList.add(uploadFile3);
-		if(uploadFile4 != null) rtnList.add(uploadFile4);
-		if(uploadFile5 != null) rtnList.add(uploadFile5);
-		if(uploadFile6 != null) rtnList.add(uploadFile6);
-		if(uploadFile7 != null) rtnList.add(uploadFile7);
-		if(uploadFile8 != null) rtnList.add(uploadFile8);
-		if(uploadFile9 != null) rtnList.add(uploadFile9);
-		if(uploadFile10 != null) rtnList.add(uploadFile10);
-		
-		this.productImageService.productFileUploadList(_productId, rtnList);
-		
-		List<ProductTagInfoDTO> productTagInfoList = (List) productTagListMap.get("productTagList");
-		
-		int productTagInfoListSize = productTagInfoList.size();
-		
-		for( int i = 0; i < productTagInfoListSize; i++ ) {
-			productTagInfoMap = (Map) productTagInfoList.get(i);
-			
-			productTagInfoMap.put("productId", _productId);
+		if("".equals(productDTO.getUseYn()) ||  productDTO.getUseYn() == null) {
+			productDTO.setUseYn("Y");
 		}
 		
-		String _rtnMsg = this.productService.addProductTagInfo(productTagInfoList);
+		if("".equals(productDTO.getSellerId()) ||  productDTO.getSellerId() == null) {
+			productDTO.setSellerId(sessionBean.getUserId());
+		}
+		
+		if("".equals(productDTO.getBeginDate()) ||  productDTO.getBeginDate() == null) {
+			productDTO.setBeginDate("now()");
+		}
+		
+		//상품태그정보 리스트
+		List<ProductTagInfoDTO> productTagInfoList = (List) productTagListMap.get("productTagList");
+		
+		//이미지 삭제 리스트
+		List<ProductImageDTO> productDeleteImageList = (List) deletedImageListMap.get("deletedImageList");
+		
+		//이미지 리스트
+		List productImageList = new ArrayList<>();
+		if(productImage1 != null) productImageList.add(productImage1);
+		if(productImage2 != null) productImageList.add(productImage2);
+		if(productImage3 != null) productImageList.add(productImage3);
+		if(productImage4 != null) productImageList.add(productImage4);
+		if(productImage5 != null) productImageList.add(productImage5);
+		if(productImage6 != null) productImageList.add(productImage6);
+		if(productImage7 != null) productImageList.add(productImage7);
+		if(productImage8 != null) productImageList.add(productImage8);
+		if(productImage9 != null) productImageList.add(productImage9);
+		if(productImage10 != null) productImageList.add(productImage10);
+		
+		List noticeImageList = new ArrayList<>();
+		if(noticeImage1 != null) noticeImageList.add(noticeImage1);
+		if(noticeImage2 != null) noticeImageList.add(noticeImage2);
+		if(noticeImage3 != null) noticeImageList.add(noticeImage3);
+		if(noticeImage4 != null) noticeImageList.add(noticeImage4);
+		if(noticeImage5 != null) noticeImageList.add(noticeImage5);
+		
+		this.productService.addProductIntegratedInfo(productDTO, productImageList, noticeImageList, productDeleteImageList, productTagInfoList);
+		
+//		//상품등록 addProductIntegratedInfo
+//		String _productId = this.productService.addProductInfo(productDTO);
+//		//이미지 삭제
+//		this.productImageService.removeProductImageInfoList(productDeleteImageList);
+//		//이미지등록
+//		this.productImageService.productFileUploadList(_productId, rtnList);
+//		//태그정보 설정
+//		int productTagInfoListSize = productTagInfoList.size();
+//		
+//		for( int i = 0; i < productTagInfoListSize; i++ ) {
+//			productTagInfoMap = (Map) productTagInfoList.get(i);
+//			
+//			productTagInfoMap.put("productId", _productId);
+//		}
+//		//태그정보삭제
+//		this.productService.removeProductTagInfo(_productId);
+//		//태그정보등록
+//		this.productService.addProductTagInfo(productTagInfoList);
 		
 		Map rtnMap = new HashMap<>();
 		
@@ -146,7 +192,7 @@ public class ProductController {
 		
 		String rtnValue = JsonUtils.returnValue("0000", "조회되었습니다.", rtnMap).toString();
 		
-		log.info(rtnValue);
+		//log.info(rtnValue);
 		
 		return rtnValue;
 	}
@@ -190,14 +236,16 @@ public class ProductController {
 		
 		String rtnValue = JsonUtils.returnValue("0000", "조회되었습니다.", rtnMap).toString();
 		
-		log.info(rtnValue);
+		//log.info(rtnValue);
 		
 		return rtnValue;
 	}
 	
 	@ResponseBody
 	@RequestMapping("/productList")
-    public String getList(HttpServletRequest request, @RequestBody() Map map) throws JsonMappingException, JsonProcessingException, IllegalAccessException, InvocationTargetException {
+    public String getList(HttpServletRequest request
+    		, HttpServletResponse response
+    		, @RequestBody() Map map) throws IllegalAccessException, InvocationTargetException, IOException {
 		this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
 		ProductCDTO productCDTO = new ProductCDTO();
 		
@@ -205,7 +253,7 @@ public class ProductController {
 		
 		//List<Question> questionList = this.questionService.getList();
         //model.addAttribute("questionList", questionList);
-    	log.info("page:{}", productCDTO.getPageCount());
+    	//log.info("page:{}", productCDTO.getPageCount());
     	
     	if("".equals(productCDTO.getMaxPageCount()) || productCDTO.getMaxPageCount() == null) {
     		productCDTO.setMaxPageCount("10");
@@ -218,7 +266,12 @@ public class ProductController {
     		int _limitCnt = Integer.parseInt(productCDTO.getMaxPageCount());
     		
     		productCDTO.setPageCount(Integer.toString(_currentCnt * _limitCnt));
-    	}    	
+    	}
+    	
+    	if("Y".equals(productCDTO.getSellerSearchYn())) {
+    		productCDTO.setSellerSearchYn(this.sellerInfoService.getSellerYn(productCDTO.getUserId()));
+    	}
+    	
     	List<PageInfoDTO> pageInfo = this.productService.getPageInfo(productCDTO);
     	
     	List<ProductInfoListDTO> productList = this.productService.getList2(productCDTO);
@@ -228,7 +281,7 @@ public class ProductController {
 		rtnMap.put("productList", productList);
     	
     	String rtnValue = JsonUtils.returnValue("0000", "조회되었습니다.", rtnMap).toString();
-    	
+		
         return rtnValue;
     }
 	

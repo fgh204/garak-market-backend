@@ -59,17 +59,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
     		.csrf().disable()	
     		.addFilterBefore(corsConfig.corsFilter(),UsernamePasswordAuthenticationFilter.class)
     		.exceptionHandling()
-    		.authenticationEntryPoint(jwtAuthenticationEntryPoint) // 우리가 만든 클래스로 인증 실패 핸들링
-            .accessDeniedHandler(jwtAccessDeniedHandler) // 커스텀 인가 실패 핸들링
+    		.authenticationEntryPoint(jwtAuthenticationEntryPoint)
+            .accessDeniedHandler(jwtAccessDeniedHandler)
     		//.cors().configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues())
     		.and()
     			.sessionManagement()
     			.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
     		.and()
                 .authorizeRequests()
-                .antMatchers("/admin/login").permitAll()
+                .antMatchers("/garak/admin/login").permitAll()
                 .antMatchers("/css/**").permitAll()
-                .antMatchers("/**").permitAll()
+                //.antMatchers("/**").permitAll()
                 //.antMatchers("/**").hasRole("ADMIN")// 회원가입 경로는 인증없이 호출 가능
                 .anyRequest().authenticated() // 나머지 경로는 jwt 인증 해야함
            .and()

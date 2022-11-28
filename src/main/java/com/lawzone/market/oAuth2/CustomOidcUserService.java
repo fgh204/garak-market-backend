@@ -27,7 +27,7 @@ public class CustomOidcUserService extends OidcUserService{
 	@SneakyThrows
 	@Override
 	public OidcUser loadUser(OidcUserRequest request) throws OAuth2AuthenticationException {
-		log.info("CustomOidcUserService");
+		//log.info("CustomOidcUserService");
 		OAuth2UserService delegate = new DefaultOAuth2UserService();
 		OAuth2User oAuth2User = delegate.loadUser(request);
 		String reistrationId = request.getClientRegistration().getRegistrationId();

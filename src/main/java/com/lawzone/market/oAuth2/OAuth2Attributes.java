@@ -37,8 +37,8 @@ public class OAuth2Attributes {
 	
 	@SneakyThrows
 	public static OAuth2Attributes of(String registrationId, String userNameAttributeName, Map<String, Object> attributes) {
-		log.info("userNameAttributeName = {}", new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(userNameAttributeName));
-		log.info("attributes = {}", new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(attributes));
+		//log.info("userNameAttributeName = {}", new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(userNameAttributeName));
+		//log.info("attributes = {}", new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(attributes));
 		
 		String registrationIdToLower = registrationId.toLowerCase();
 		
@@ -72,9 +72,9 @@ public class OAuth2Attributes {
 		Map<String, Object> basicInfo = (Map<String, Object>) attributes;
 		Map<String, Object> accountInfo = (Map<String, Object>) attributes.get("kakao_account");
 		
-		log.info("basicInfo_id = {}", basicInfo.get("id"));
-		log.info("accountInfo_email = {}", accountInfo.get("email"));
-		log.info("accountInfo_email = {}", accountInfo.get("phone_number"));
+		//log.info("basicInfo_id = {}", basicInfo.get("id"));
+		//log.info("accountInfo_email = {}", accountInfo.get("email"));
+		//log.info("accountInfo_email = {}", accountInfo.get("phone_number"));
 		
 		return OAuth2Attributes.builder()
 				.oauthId(basicInfo.get("id").toString())

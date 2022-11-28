@@ -25,8 +25,8 @@ public class DoobalHeroUtils {
 	@Value("${dhero.token}")
     private String token;
 
-    @Value("${dhero.spotcode}")
-    private String spotcode;
+    //@Value("${dhero.spotcode}")
+    //private String spotcode;
     
     @Value("${dhero.endpoint}")
     private String endpoint;
@@ -35,16 +35,16 @@ public class DoobalHeroUtils {
     	Map res = new HashMap<>();
     	
     	JSONObject json = new JSONObject();
-		json.put("spotCode", this.spotcode);
-		json.put("receiverName", "api2복수건우편포함1");
-		json.put("receiverMobile", "01012341234");
-		json.put("receiverAddress", "서울 영등포구 도신로 31 (현대3차아파트) 123-1234");
-		json.put("receiverAddressPostalCode", "07376");
-		json.put("productName", "스타벅스 커피");
-		json.put("memoFromCustomer", "경비실");
-		json.put("productPrice", "15000");
-		json.put("orderIdFromCorp", "21051202");
-		json.put("print", "r");
+		json.put("spotCode", aMap.get("spotCode"));
+		json.put("receiverName", aMap.get("receiverName"));
+		json.put("receiverMobile", aMap.get("receiverMobile"));
+		json.put("receiverAddress", aMap.get("receiverAddress"));
+		json.put("receiverAddressPostalCode", aMap.get("receiverAddressPostalCode"));
+		json.put("productName", aMap.get("productName"));
+		json.put("memoFromCustomer", aMap.get("memoFromCustomer"));
+		json.put("productPrice", aMap.get("productPrice"));
+		json.put("orderIdFromCorp", aMap.get("orderIdFromCorp"));
+		//json.put("print", "r");
     	
     	CloseableHttpClient httpClient = HttpClientBuilder.create().build();
 		

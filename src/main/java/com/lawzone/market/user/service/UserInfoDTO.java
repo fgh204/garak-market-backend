@@ -1,11 +1,14 @@
 package com.lawzone.market.user.service;
 
-import javax.persistence.Column;
-import javax.persistence.Id;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
-import lombok.Data;
-
-@Data
+@AllArgsConstructor
+@EqualsAndHashCode
+@Getter
+@Setter
 public class UserInfoDTO {
 	private String userId;
 	private String username;

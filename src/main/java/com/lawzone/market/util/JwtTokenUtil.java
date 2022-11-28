@@ -41,13 +41,18 @@ import org.json.simple.JSONObject;
 @Component
 @RequiredArgsConstructor
 public class JwtTokenUtil{
-	private final long TOKEN_VALID_MILISECOND = 1000L * 60 * 60 * 10; // 10시간
+	private final long TOKEN_VALID_MILISECOND = 1000L * 60 * 60 * 168;// 일주일
+	//private final long TOKEN_VALID_MILISECOND = 1000L * 60 * 60 * 10;// 10시간
+	//private final long TOKEN_VALID_MILISECOND = 1000L * 10;
 	
 	@Value("${spring.jwt.secret}")
     private String secretKey;
 	
 	@Value("${lzmarket.service}") 
 	private String service;
+	
+	@Value("${lzmarket.jwttoken}") 
+	private String jwtTokenName;
 	
     /**
      * 토큰 생성
@@ -60,6 +65,7 @@ public class JwtTokenUtil{
 		userMap.put("email", userInfo.getEmail());
 		userMap.put("phoneNumber", userInfo.getPhoneNumber());
 		userMap.put("socialId", userInfo.getSocialId());
+		userMap.put("userLvl", userInfo.getUserLvl());
     	
 		JSONObject jsonObject = new JSONObject(userMap);
 		
@@ -83,7 +89,7 @@ public class JwtTokenUtil{
      * 토큰 유효여부 확인
      */
     public Boolean isValidToken(String token, String socialId) {
-        log.info("isValidToken token = {}", token);
+        //log.info("isValidToken token = {}", token);
         String subject = getSocialIdFromToken(token);
         return (subject.equals(socialId) && !isTokenExpired(token));
     }
@@ -124,21 +130,24 @@ public class JwtTokenUtil{
     
     public String resolveToken(HttpServletRequest req) {
         String _resolveToken = req.getHeader("Authorization");
-    	if("P".equals(this.service)) {
-    		if(_resolveToken == null) {
-            	Cookie[] myCookies = req.getCookies();
-            	
-            	if(myCookies != null) {
-            		for(int i = 0; i < myCookies.length; i++) {
-                		if("Authorization".equals(myCookies[i].getName())) {
-                			_resolveToken = myCookies[i].getValue();
-                			break;
-                		}
+        
+        if(_resolveToken == null) {
+        	Cookie[] myCookies = req.getCookies();
+        	
+        	if(myCookies != null) {
+        		for(int i = 0; i < myCookies.length; i++) {
+        			//log.error("myCookies[i].getName() ====== " + myCookies[i].getName());
+        			//log.error("myCookies[i].getValue() ====== " + myCookies[i].getValue());
+            		if(this.jwtTokenName.equals(myCookies[i].getName())) {
+            			_resolveToken = myCookies[i].getValue();
+            			break;
             		}
-            	}
-            }
-    	}else {
-    		_resolveToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMjEyMzE4NjExIiwidXNlckZvcm0iOiJ7XCJ1c2VyTm1cIjpcIuq5gO2YgeyImFwiLFwicGhvbmVOdW1iZXJcIjpcIjAxMDMzNTI0NTA5XCIsXCJzb2NpYWxJZFwiOlwiMjIxMjMxODYxMVwiLFwidXNlcklkXCI6XCIwMDAwMDAwMlwiLFwic2VsbGVyWW5cIjpcIllcIixcImVtYWlsXCI6XCJmZ2gyMDRAa2FrYW8uY29tXCJ9IiwiaWF0IjoxNjY3NzE1MjI1LCJleHAiOjE3OTkxMTUyMjV9.8awIlGay-A_gNib8iVSAc9LYPA5-p3vNuOSHCN6d2JI";
+        		}
+        	}
+        }
+        
+        if(!"P".equals(this.service) && _resolveToken == null) {
+        	_resolveToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMjEyMzE4NjExIiwidXNlckZvcm0iOiJ7XCJ1c2VyTm1cIjpcIuq5gO2YgeyImFwiLFwicGhvbmVOdW1iZXJcIjpcIjAxMDMzNTI0NTA5XCIsXCJzb2NpYWxJZFwiOlwiMjIxMjMxODYxMVwiLFwidXNlcklkXCI6XCIwMDAwMDAwMlwiLFwic2VsbGVyWW5cIjpcIllcIixcImVtYWlsXCI6XCJmZ2gyMDRAa2FrYW8uY29tXCJ9IiwiaWF0IjoxNjY3NzE1MjI1LCJleHAiOjE3OTkxMTUyMjV9.8awIlGay-A_gNib8iVSAc9LYPA5-p3vNuOSHCN6d2JI";
     	}
     	return _resolveToken;
     }

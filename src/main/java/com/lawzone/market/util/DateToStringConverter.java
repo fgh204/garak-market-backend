@@ -45,7 +45,7 @@ public class DateToStringConverter implements AttributeConverter<String, Date>{
 	        		}
         		}
         	}else {
-        		date = new Date();
+        		date = null;
         	}
         } catch (ParseException e) {
             LOGGER.error("[ERROR] 문자열을 Date 타입으로 변환하는데 실패하였습니다.", e);

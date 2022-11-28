@@ -27,28 +27,32 @@ public class TelmsgLogService {
 	@Transactional
 	public void addTelmsgLog(String ingrsPathCd, String dlngTpcd
 							, String trnrcvTpcd, Map telMsgDta) {
-		TelmsgLogInfo telmsgLogInfo = new TelmsgLogInfo();
+		try {
+			TelmsgLogInfo telmsgLogInfo = new TelmsgLogInfo();
 
-		telmsgLogInfo.setController(sessionBean.getController());
-		telmsgLogInfo.setDlngDttm("now()");
-		telmsgLogInfo.setMethod(sessionBean.getMethod());
-		telmsgLogInfo.setSessionId(sessionBean.getSessionId());
-		telmsgLogInfo.setSvcUrl(sessionBean.getSvcUrl());
-		telmsgLogInfo.setUserId(sessionBean.getUserId());
-		telmsgLogInfo.setUserIp(sessionBean.getUserIp());
-		//00 : 일반로그, 01 : 결제, 02 : 운송장  
-		telmsgLogInfo.setIngrsPathCd(ingrsPathCd);
-		//01_00 : 결제요청, 01_01 : 결제조회, 01_04 : 결제승인, 01_90 : 결제취소 
-		//02_00 : 운송장채번, 02_01 : 운송장번호조회, 01_90 : 운송장취소
-		telmsgLogInfo.setDlngTpcd(dlngTpcd);
-		//1 : 송신, 2 : 수신
-		telmsgLogInfo.setTrnrcvCfcd(trnrcvTpcd);
-		telmsgLogInfo.setDevice(sessionBean.getAgent());
-		//전문DATA
-		if(telMsgDta != null) {
-			telmsgLogInfo.setTelmsgDtaInfo(telMsgDta.toString());
+			telmsgLogInfo.setController(sessionBean.getController());
+			telmsgLogInfo.setDlngDttm("now()");
+			telmsgLogInfo.setMethod(sessionBean.getMethod());
+			telmsgLogInfo.setSessionId(sessionBean.getSessionId());
+			telmsgLogInfo.setSvcUrl(sessionBean.getSvcUrl());
+			telmsgLogInfo.setUserId(sessionBean.getUserId());
+			telmsgLogInfo.setUserIp(sessionBean.getUserIp());
+			//00 : 일반로그, 01 : 결제, 02 : 운송장  
+			telmsgLogInfo.setIngrsPathCd(ingrsPathCd);
+			//01_00 : 결제요청, 01_01 : 결제조회, 01_04 : 결제승인, 01_90 : 결제취소 
+			//02_00 : 운송장채번, 02_01 : 운송장번호조회, 01_90 : 운송장취소
+			telmsgLogInfo.setDlngTpcd(dlngTpcd);
+			//1 : 송신, 2 : 수신
+			telmsgLogInfo.setTrnrcvCfcd(trnrcvTpcd);
+			telmsgLogInfo.setDevice(sessionBean.getAgent());
+			//전문DATA
+			if(telMsgDta != null) {
+				telmsgLogInfo.setTelmsgDtaInfo(telMsgDta.toString());
+			}
+			
+			this.telmsgLogDAO.save(telmsgLogInfo);
+		} catch (Exception e) {
+			// TODO: handle exception
 		}
-		
-		this.telmsgLogDAO.save(telmsgLogInfo);
 	}
 }

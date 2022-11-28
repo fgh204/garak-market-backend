@@ -25,12 +25,12 @@ public class SellerInfo extends BaseTimeEntity{
 	private String shopName; 
 	
 	@Comment("사업장주소")
-	@NotNull
+	//@NotNull
 	@Column(columnDefinition = "varchar(300)")
 	private String businessAddress;
 
 	@Comment("사업자번호")
-	@NotNull
+	//@NotNull
 	@Column(columnDefinition = "varchar(30)")
 	private String businessNumber;
 
@@ -44,5 +44,5 @@ public class SellerInfo extends BaseTimeEntity{
 
 	@Comment("SPOTID")
 	@Column(unique = true, columnDefinition = "varchar(300)")
-	private String soptId;
+	private String spotId;
 }

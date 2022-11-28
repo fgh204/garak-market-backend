@@ -93,8 +93,6 @@ public class UtilService {
 		JpaResultMapper jpaResultMapper = new JpaResultMapper();
 		List rtnList = jpaResultMapper.list(nativeQuery, obj.getClass());
 		
-		//log.info("parameter1 = " + JsonUtils.returnValue("111", "222", products));
-		
 		em.close();
 		
 		return rtnList;

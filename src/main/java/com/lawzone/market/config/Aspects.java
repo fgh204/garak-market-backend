@@ -49,15 +49,19 @@ public class Aspects {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		
 		String userAgent = request.getHeader("User-Agent").toUpperCase();
+		
 		String agent = "";
 		
 		log.info("userAgent ================== " + userAgent);
+		//log.error("userAgent ================== " + request.getRemoteAddr());
+		//log.error("userAgent ================== " + request.getRemoteHost());
+		//log.error("userAgent ================== " + request.getServerName());
 		
 		if(userAgent.indexOf(IS_MOBILE) > -1){
 			if(userAgent.indexOf(IS_PHONE) == -1) {
 				agent = "M";
 			}else {
-				agent = "M";
+				agent = "P";
 			}
 		}else {
 			agent = "W";
@@ -67,7 +71,7 @@ public class Aspects {
 		
 		if(!"anonymousUser".equals(json)) {
 			ObjectMapper mapper = new ObjectMapper();
-	    	Map<String, String> userForm = mapper.readValue(json, Map.class);
+	    	Map userForm = mapper.readValue(json, Map.class);
 			
 	    	sessionBean.setUserId((String) userForm.get("userId"));
 			sessionBean.setUserNm((String) userForm.get("userNm"));
@@ -75,7 +79,13 @@ public class Aspects {
 			sessionBean.setEmail((String) userForm.get("email"));
 			sessionBean.setPhoneNumber((String) userForm.get("phoneNumber"));
 			sessionBean.setSocialId((String) userForm.get("socialId"));
-			sessionBean.setAgent(agent);
+			
+			if(userForm.get("userLvl") == null) {
+				sessionBean.setUserLvl("1");
+			}else {
+				sessionBean.setUserLvl(userForm.get("userLvl").toString());
+			}
+			
 		}
 		
 		Map params = new HashMap<>();
@@ -93,7 +103,7 @@ public class Aspects {
 //			params.put("http_method", request.getMethod());
 //			params.put("user_ip", userIp);
 //			params.put("session_id", sessionId);
-
+			sessionBean.setAgent(agent);
 			sessionBean.setSvcUrl(request.getRequestURI());
 			sessionBean.setController(joinPoint.getSignature().getDeclaringType().getName());
 			sessionBean.setMethod(joinPoint.getSignature().getName());

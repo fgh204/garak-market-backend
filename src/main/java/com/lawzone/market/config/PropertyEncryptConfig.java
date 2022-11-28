@@ -27,8 +27,8 @@ public class PropertyEncryptConfig {
 	
 	@Bean("jasyptStringEncryptor") 
 	public StringEncryptor stringEncryptor() { 
-		logger.info("encryptKey: "+encryptKey);
-		logger.info("algorithm: "+algorithm);
+		//logger.info("encryptKey: "+encryptKey);
+		//logger.info("algorithm: "+algorithm);
 		
 		StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor(); 
 		SimpleStringPBEConfig config = new SimpleStringPBEConfig(); 
@@ -40,7 +40,7 @@ public class PropertyEncryptConfig {
 		config.setStringOutputType("base64"); 
 		encryptor.setConfig(config); 
 		
-		logger.info("end");
+		//logger.info("end");
 		
 		return encryptor;
 	}

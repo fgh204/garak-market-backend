@@ -1,6 +1,4 @@
-package com.lawzone.market.admin.dto;
-
-import java.math.BigDecimal;
+package com.lawzone.market.admin.dto.order;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;

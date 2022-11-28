@@ -31,7 +31,7 @@ public class UserSecurityService implements UserDetailsService {
     
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<UserInfo> _userInfo = this.userInfoDAO.findByEmailAndPasswordIsNotNull(username);
+        Optional<UserInfo> _userInfo = this.userInfoDAO.findByEmail(username);
         if (_userInfo.isEmpty()) {
             throw new UsernameNotFoundException("사용자를 찾을수 없습니다.");
         }
@@ -45,6 +45,6 @@ public class UserSecurityService implements UserDetailsService {
         }
         //HttpHeaders httpHeaders = new HttpHeaders();
         //httpHeaders.add("Authorization", jwtTokenUtil.generateToken(userInfo.getSocialId()));
-        return new User(userInfo.getUserName(), userInfo.getPassword(), authorities);
+        return new User(userInfo.getUserName(), userInfo.getUserId(), authorities);
     }
 }

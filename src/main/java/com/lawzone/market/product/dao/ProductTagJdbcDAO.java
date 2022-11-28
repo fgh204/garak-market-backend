@@ -3,7 +3,7 @@ package com.lawzone.market.product.dao;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ProdustTagJdbcDAO	{
+public class ProductTagJdbcDAO	{
 	public String productTgaList() {
 		StringBuffer _query = new StringBuffer();
 		
@@ -17,6 +17,15 @@ public class ProdustTagJdbcDAO	{
 			.append("\n where pti.tag_id = ti.tag_id")
 			.append("\n and pti.product_id = ? ")
 			.append("\n and ti.use_yn = ? ");
+		
+		return _query.toString();
+	}
+	
+	public String removeProductTgaInfo() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n delete from lz_market.product_tag_info pti ")
+			.append("\n	where product_id = ? ");
 		
 		return _query.toString();
 	}

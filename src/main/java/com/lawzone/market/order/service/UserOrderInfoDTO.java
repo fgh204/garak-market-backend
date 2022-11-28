@@ -16,6 +16,8 @@ public class UserOrderInfoDTO {
 	private String orderDate;
 	private String orderStateCode;
 	private String orderStateName;
+//	private String orderDlngStateCode;
+//	private String orderDlngStateName;
 	
 	public UserOrderInfoDTO() {
 		

@@ -12,11 +12,12 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.lawzone.market.admin.dto.AdminPageInfoDTO;
+import com.lawzone.market.admin.dto.common.AdminPageInfoDTO;
 import com.lawzone.market.cart.service.CartInfo;
 import com.lawzone.market.cart.service.CartInfoDTO;
 import com.lawzone.market.order.service.UserOrderInfoDTO;
 import com.lawzone.market.product.service.PageInfoDTO;
+import com.lawzone.market.product.service.ProductCDTO;
 import com.lawzone.market.product.service.ProductDTO;
 import com.lawzone.market.product.service.ProductInfo;
 import com.lawzone.market.review.dao.ProductReviewInfoDAO;
@@ -76,14 +77,6 @@ public class ProductReviewInfoService {
 		ProductReviewInfo productReviewInfo = new ProductReviewInfo();
 		productReviewInfo = modelMapper.map(productReviewInfoCDTO, ProductReviewInfo.class);
 		
-//		List<ProductReviewInfo> aa = new ArrayList<>();
-//		
-//		aa.add(productReviewInfo);
-//		
-//		Iterable<ProductReviewInfo> itb = aa;
-//		
-//		this.productReviewInfoDAO.saveAll(aa);
-		
 		this.productReviewInfoDAO.delete(productReviewInfo);
 	}
 	
@@ -138,5 +131,16 @@ public class ProductReviewInfoService {
 		}
 		
 		return this.utilService.getQueryString(sql,pageInfoDTO,_queryValue);
+	}
+	
+	public List getSellerAverageScoreInfo(ProductCDTO productCDTO) {
+		String sql = this.productReviewInfoJdbcDAO.getAverageScoreInfo();
+		
+		ArrayList<String> _queryValue = new ArrayList<>();
+		_queryValue.add(0, productCDTO.getSellerId());
+		
+		ProductReviewAverageScoreDTO productReviewAverageScoreDTO = new ProductReviewAverageScoreDTO();
+		
+		return this.utilService.getQueryString(sql,productReviewAverageScoreDTO,_queryValue);
 	}
 }

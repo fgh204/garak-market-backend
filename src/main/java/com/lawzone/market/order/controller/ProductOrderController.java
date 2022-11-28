@@ -37,6 +37,7 @@ import com.lawzone.market.product.service.ProductDTO;
 import com.lawzone.market.product.service.ProductInfo;
 import com.lawzone.market.product.service.ProductService;
 import com.lawzone.market.telmsgLog.service.TelmsgLogService;
+import com.lawzone.market.user.service.SellerInfoService;
 import com.lawzone.market.user.service.UserInfo;
 import com.lawzone.market.user.service.UserInfoDTO;
 import com.lawzone.market.user.service.UserInfoService;
@@ -103,7 +104,8 @@ public class ProductOrderController {
 			}
 			mapOrderItemInfo.put("productPrice",_productPrice);
 			mapOrderItemInfo.put("orderItemStateCode","001");
-			log.info("_productStock.compareTo(_orderCount)============" + _productStock.compareTo(_orderCount));
+			mapOrderItemInfo.put("orderItemDlngStateCode","000");
+			//log.info("_productStock.compareTo(_orderCount)============" + _productStock.compareTo(_orderCount));
 			if(_productStock.compareTo(_orderCount) == -1) {
 				rtnProductId = _productId;
 				rtnProductName = productInfo.get(0).getProductName();
@@ -129,6 +131,7 @@ public class ProductOrderController {
 			productOrderDTO = (ProductOrderDTO) ParameterUtils.setDto(mapInsert, productOrderDTO, "insert", sessionBean);
 			productOrderDTO.setOrderCount(new BigDecimal(orderCount));
 			productOrderDTO.setOrderStateCode("001");
+			//productOrderDTO.setOrderDlngStateCode("000");
 			productOrderDTO.setOrderDate("now()");
 			productOrderDTO.setOrderName(orderName);
 			_orderNo = this.productOrderService.addProductOrderInfo(productOrderDTO);
@@ -155,11 +158,10 @@ public class ProductOrderController {
 			if(!"".equals(rtnProductId)) {
 				return JsonUtils.returnValue("9999", "재고 수량이 없습니다.", rtnMap).toString();
 			}else {
-				log.info("price ==== " + _price);
-				log.info("totalPrice ==== " + _totalPrice);
+				//log.info("price ==== " + _price);
+				//log.info("totalPrice ==== " + _totalPrice);
 				return JsonUtils.returnValue("9999", "금액이 잘못되었습니다.", rtnMap).toString();
 			}
-			
 		}
 		
 		//주문정보
@@ -210,11 +212,10 @@ public class ProductOrderController {
     		
     		productCDTO.setPageCount(Integer.toString(_currentCnt * _limitCnt));
     	}
-		
-		orderMap.put("userId", productCDTO.getUserId());
+    	orderMap.put("userId", productCDTO.getUserId());
     	orderMap.put("pageCount", productCDTO.getPageCount());
     	orderMap.put("maxPageCount", productCDTO.getMaxPageCount());
-		
+    	
     	List<PageInfoDTO> pageInfo = this.productOrderService.getCustOrderListPageInfo(orderMap);
 		List<UserOrderInfoDTO> userOrderInfo = this.productOrderService.getCustOrderList(orderMap);
 		
@@ -247,6 +248,8 @@ public class ProductOrderController {
 			_orderInfo.setOrderDate(userOrderInfo.get(i).getOrderDate());
 			_orderInfo.setOrderStateCode(userOrderInfo.get(i).getOrderStateCode());
 			_orderInfo.setOrderStateName(userOrderInfo.get(i).getOrderStateName());
+			//_orderInfo.setOrderDlngStateCode(userOrderInfo.get(i).getOrderDlngStateCode());
+			//_orderInfo.setOrderDlngStateName(userOrderInfo.get(i).getOrderDlngStateName());
 			
 			_custOrderListDTO.setOrderInfo(_orderInfo);
 			
@@ -254,11 +257,11 @@ public class ProductOrderController {
 			
 			itemStatCode = userOrderInfo.get(i).getOrderStateCode();
 			
-			if("004".equals(itemStatCode)) {
-				itemStatCode = "002";
-			}
+			//if("004".equals(itemStatCode)) {
+			//	itemStatCode = "002";
+			//}
 			
-			List<CustOrderItemListDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(orderNo,itemStatCode);
+			List<CustOrderItemListDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(orderNo,"");
 			
 			orderItemCnt = custOrderItemList.size();
 			

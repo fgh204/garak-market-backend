@@ -33,11 +33,11 @@ public class AwsConfig {
     
     @Bean
     public AmazonS3 amazonS3() {
-    	logger.info("accessKey: "+accessKey);
-    	logger.info("secretKey: "+secretKey);
-    	logger.info("region: "+region);
-    	logger.info("apikey: "+apikey);
-    	logger.info("privateKey: "+privateKey);
+    	//logger.info("accessKey: "+accessKey);
+    	//logger.info("secretKey: "+secretKey);
+    	//logger.info("region: "+region);
+    	//logger.info("apikey: "+apikey);
+    	//logger.info("privateKey: "+privateKey);
         AWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
         return AmazonS3ClientBuilder.standard()
                 .withRegion(region)

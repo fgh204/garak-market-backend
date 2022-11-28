@@ -47,6 +47,8 @@ public class PaymentService {
 	private final ProductOrderItemInfoDAO productOrderItemInfoDAO;
 	private final BootpayUtils bootpayUtils;
 	private final TelmsgLogService telmsgLogService;
+	private final ProductOrderDAO productOrderDAO;
+	
 	
 	@Resource
 	private SessionBean sessionBean;
@@ -80,8 +82,9 @@ public class PaymentService {
 		String sqlModifyOrderItemInfoStat = this.productOrderJdbcDAO.modifyOrderItemInfoStat("N");
 		ArrayList<String> _queryValue2 = new ArrayList<>();
 		_queryValue2.add(0, "003");
-		_queryValue2.add(1, orderNo);
-		_queryValue2.add(2, "001");
+		_queryValue2.add(1, "100");
+		_queryValue2.add(2, orderNo);
+		_queryValue2.add(3, "001");
 		
 		this.utilService.getQueryStringUpdate(sqlModifyOrderItemInfoStat,_queryValue2);
 		
@@ -125,7 +128,8 @@ public class PaymentService {
 	}
 	
 	@Transactional(rollbackFor = Exception.class)
-	public String paymentCancle(PaymentCancleDTO paymentCancleDTO, String _allCancleYn, Double _cancleAmt) {
+	public String paymentCancle(PaymentCancleDTO paymentCancleDTO, String _allCancleYn
+				, Double _cancleAmt, String _orderDlngStateCode) {
 		
 		String _orderNo = paymentCancleDTO.getOrderNo();
 		String _receiptId = paymentCancleDTO.getReceiptId();
@@ -161,26 +165,32 @@ public class PaymentService {
 			
 			String sqlModifyOrderInfoStat = this.productOrderJdbcDAO.modifyOrderInfoStat();
 			ArrayList<String> _queryValue1 = new ArrayList<>();
+			String productOrderStatCode = "003";
+			
 			if("Y".equals(_allCancleYn)) {
+				List<ProductOrderInfo> productOrderInfo = this.productOrderDAO.findByOrderNo(_orderNo);
+				productOrderStatCode = productOrderInfo.get(0).getOrderStateCode();
 				_queryValue1.add(0, "002");
+				//_queryValue1.add(1, "900");
 			}else {
 				_queryValue1.add(0, "004");
+				//_queryValue1.add(1, _orderDlngStateCode);
 			}
 			
 			_queryValue1.add(1, _orderNo);
-			_queryValue1.add(2, "003");
+			_queryValue1.add(2, productOrderStatCode);
 			
 			this.utilService.getQueryStringUpdate(sqlModifyOrderInfoStat,_queryValue1);
 			
 			String sqlModifyOrderItemInfoStat = this.productOrderJdbcDAO.modifyOrderItemInfoStat(_productIdYn);
 			ArrayList<String> _queryValue2 = new ArrayList<>();
 			_queryValue2.add(0, "002");
-			_queryValue2.add(1, _orderNo);
-			_queryValue2.add(2, "003");
+			_queryValue2.add(1, "900");
+			_queryValue2.add(2, _orderNo);
+			_queryValue2.add(3, "003");
 			if("Y".equals(_productIdYn)) {
-				_queryValue2.add(3, _productId);
+				_queryValue2.add(4, _productId);
 			}
-			
 			
 			this.utilService.getQueryStringUpdate(sqlModifyOrderItemInfoStat,_queryValue2);
 		}else {

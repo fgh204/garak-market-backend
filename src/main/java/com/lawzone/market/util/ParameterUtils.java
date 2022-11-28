@@ -81,8 +81,8 @@ public class ParameterUtils {
             String strValue = String.valueOf(value);
             String columnType = String.valueOf(beanMap.getType(key));
             
-            log.info("key===>" + key);
-            log.info("value===>" + value);
+            //log.info("key===>" + key);
+            //log.info("value===>" + value);
             
             if (value != null && !StringUtils.isNullString(strValue))
             {

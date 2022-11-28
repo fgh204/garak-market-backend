@@ -51,7 +51,7 @@ public class QuestionController {
     public String list(Model model, @RequestParam(value="page", defaultValue="0") int page, @RequestParam(value = "kw", defaultValue = "") String kw) {
         //List<Question> questionList = this.questionService.getList();
         //model.addAttribute("questionList", questionList);
-    	log.info("page:{}, kw:{}", page, kw);
+    	//log.info("page:{}, kw:{}", page, kw);
     	
 		//UtilComponent utilComponent = new UtilComponent();
     	//log.info("111111111111111111111===" + utilService.getNextVal("CART_NO"));

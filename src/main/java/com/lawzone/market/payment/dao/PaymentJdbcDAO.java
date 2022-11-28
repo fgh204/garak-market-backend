@@ -55,9 +55,9 @@ public class PaymentJdbcDAO {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select ") 
-				.append("\n	pi2.pg_pay_co_nm as pg_pay_co_nm ")
-				.append("\n , case when pi2.card_quota = '00' and payment_gb = 'card' then '일시불' ")
-				.append("\n when pi2.card_quota <> '00' and payment_gb = 'card' then concat(substring(pi2.card_quota,2,1), '개월') ")
+				.append("\n	pi2.payment_gb as pg_pay_co_nm ")
+				.append("\n , case when pi2.card_quota = '00'  then '일시불' ")
+				.append("\n when ifnull(pi2.card_quota,'') <> ''  then concat(substring(pi2.card_quota,2,1),'개월') ")
 				.append("\n else '' ")
 				.append("\n end as card_quota ")
 				.append("\n , ceil(payment_amount) as payment_amount ")

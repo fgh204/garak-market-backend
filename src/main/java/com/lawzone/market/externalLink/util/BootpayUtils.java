@@ -23,14 +23,14 @@ public class BootpayUtils {
     public Map getAccessToken() {      
         Map res = new HashMap<>();
     	
-        log.info("apikey=============" + apikey);
-        log.info("privateKey=========" + privateKey);
+        //log.info("apikey=============" + apikey);
+        //log.info("privateKey=========" + privateKey);
         
     	try {
         	Bootpay bootpay = new Bootpay(apikey, privateKey);
             res = bootpay.getAccessToken();
             
-            log.info("res=========" + res);
+            //log.info("res=========" + res);
             
             if(res.get("error_code") == null) {
                 System.out.println("goGetToken success: " + res);

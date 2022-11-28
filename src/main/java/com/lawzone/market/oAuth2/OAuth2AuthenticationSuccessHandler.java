@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -36,25 +37,53 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 	@Resource
 	private SessionBean sessionBean;
 	
+	@Value("${lzmarket.service}") 
+	private String service;
+	
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest httpServletRequest
 			, HttpServletResponse httpServletResponse, Authentication authentication) throws IOException, ServletException {
-		log.info("성공!");
+		//log.info("성공!");
 		//String[] path = httpServletRequest.getRequestURI().split("/");
 		//Provider provider = Provider.valueOf(path[path.length - 1].toUpperCase());
 		//String oauthId = authentication.getName();
-		log.info("authentication====" + authentication);
-		log.info("authentication====" + authentication.getName());
+		//log.info("authentication====" + authentication);
+		//log.info("authentication====" + authentication.getName());
 		String url = UriComponentsBuilder.fromUriString(this.url + "/product")
-				//.queryParam("provider", provider)
+				//.queryParam("token", sessionBean.getToken())
 				//.queryParam("oauthId", oauthId)
 				.build().toString();
+
+//		Cookie myCookie = new Cookie(this.token, sessionBean.getToken());
+//		myCookie.setPath("/"); // 모든 경로에서 접근 가능 하도록 설정
+//		myCookie.setHttpOnly(true);
+//		myCookie.setSecure(true);
+//		if("P".equals(this.service)) {
+//			myCookie.setDomain("domaado.me");
+//		}
 		
-		Cookie myCookie = new Cookie(this.token, sessionBean.getToken());
-		myCookie.setPath("/"); // 모든 경로에서 접근 가능 하도록 설정
-		myCookie.setHttpOnly(true);
-		//myCookie.setDomain("localhost");
-		httpServletResponse.addCookie(myCookie);
+		ResponseCookie accessTokenCookie;
+		
+		if("P".equals(this.service)) {
+			accessTokenCookie = ResponseCookie.from(this.token, sessionBean.getToken())
+	                .path("/")
+	                .secure(true)
+	                .httpOnly(true)
+	                .sameSite("None")
+	                .domain("domaado.me")
+	                .build();
+		}else {
+			accessTokenCookie = ResponseCookie.from(this.token, sessionBean.getToken())
+	                .path("/")
+	                .secure(true)
+	                .httpOnly(true)
+	                .sameSite("None")
+	                .domain("domaado.me")
+	                .build();
+		}
+		
+		//httpServletResponse.addCookie(myCookie);
+		httpServletResponse.setHeader("Set-Cookie", accessTokenCookie.toString());
 		httpServletResponse.sendRedirect(url);
 	}
 }

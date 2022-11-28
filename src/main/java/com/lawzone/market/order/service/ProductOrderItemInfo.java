@@ -49,6 +49,10 @@ public class ProductOrderItemInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "varchar(3)")
 	private String orderItemStateCode;
 	
+	@Comment("주문항목처리상태")
+	@Column(columnDefinition = "varchar(3)")
+	private String orderItemDlngStateCode;
+	
 	@Comment("장바구니번호")
 	private Long cartNumber;
 }

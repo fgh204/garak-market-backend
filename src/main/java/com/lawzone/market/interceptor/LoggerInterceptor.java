@@ -19,7 +19,7 @@ public class LoggerInterceptor implements HandlerInterceptor{
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         log.info("===============================================");
         log.info("==================== BEGIN ====================");
-        log.info("Request URI ===> " + request.getRequestURI());
+        //log.info("Request URI ===> " + request.getRequestURI());
         
         return HandlerInterceptor.super.preHandle(request, response, handler);
     }
