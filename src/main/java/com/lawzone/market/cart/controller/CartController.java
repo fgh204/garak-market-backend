@@ -39,7 +39,7 @@ public class CartController {
 	@ResponseBody
 	@PostMapping("/create")
 	public String addCartInfo(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
 		CartInfoDTO cartInfoDTO = new CartInfoDTO();
 		cartInfoDTO = (CartInfoDTO) ParameterUtils.setDto(map, cartInfoDTO, "insert", sessionBean);
 		Long cartNumber =  this.cartService.addCartInfo(cartInfoDTO);
@@ -56,7 +56,7 @@ public class CartController {
 	@ResponseBody
 	@PostMapping("/list")
 	public String getCartInfoList(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
 		CartInfoDTO cartInfoDTO = new CartInfoDTO();
 		cartInfoDTO = (CartInfoDTO) ParameterUtils.setDto(map, cartInfoDTO, "insert", sessionBean);
 		
@@ -74,7 +74,7 @@ public class CartController {
 	@ResponseBody
 	@PostMapping("/modify")
 	public String modifyCartInfo(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
 		CartInfoDTO cartInfoDTO = new CartInfoDTO();
 		cartInfoDTO = (CartInfoDTO) ParameterUtils.setDto(map, cartInfoDTO, "insert", sessionBean);
 		
@@ -88,7 +88,7 @@ public class CartController {
 	@ResponseBody
 	@PostMapping("/modifys")
 	public String modifyCartInfoList(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
 		Map cartItemListMap = (Map) map.get("dataset");
 		
 		List<CartInfoDTO> cartInfoList = (List) cartItemListMap.get("cartProductInfoList");
@@ -103,7 +103,7 @@ public class CartController {
 	@ResponseBody
 	@PostMapping("/remove")
 	public String removeCartInfoCartInfo(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
 		CartInfoDTO cartInfoDTO = new CartInfoDTO();
 		cartInfoDTO = (CartInfoDTO) ParameterUtils.setDto(map, cartInfoDTO, "insert", sessionBean);
 		this.cartService.removeCartInfo(cartInfoDTO);

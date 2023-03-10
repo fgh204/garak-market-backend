@@ -20,7 +20,6 @@ import org.hibernate.annotations.Where;
 
 import com.lawzone.market.config.BaseTimeEntity;
 import com.lawzone.market.product.service.ProductInfo;
-import com.lawzone.market.question.Question;
 
 import lombok.Data;
 
@@ -37,6 +36,11 @@ public class ProductImageInfo extends BaseTimeEntity{
 	@NotNull
 	@Column(columnDefinition = "varchar(12)")
 	private String productId;
+	
+	@Comment("주문번호")
+	@NotNull
+	@Column(columnDefinition = "varchar(12)")
+	private String orderNo;
 	
 	@Comment("파일명")
 	@NotNull

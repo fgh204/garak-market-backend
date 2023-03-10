@@ -23,6 +23,10 @@ public class AdminUserDTO {
 	private String spotId;
 	private Character sellerYn;
 	private Character useYn;
+	private String spotName;
+	private String businessAddress;
+	private String sellerPhoneNumber;
+	private String productCategoryCode;
 	
 	public AdminUserDTO() {
 		

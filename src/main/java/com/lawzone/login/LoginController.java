@@ -7,8 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.lawzone.market.question.QuestionForm;
-
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -18,11 +16,5 @@ public class LoginController {
 	public String getOAuth2UserInfo(String registrationId, Map<String, Object> attributes) {
 		System.out.println("attributes=====================" + attributes);
 		return "";
-    }
-	
-	@GetMapping("/login/create")
-    public String questionCreate(QuestionForm questionForm) {
-		System.out.println("attributes=====================");
-        return "";
     }
 }

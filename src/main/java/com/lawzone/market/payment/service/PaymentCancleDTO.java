@@ -23,6 +23,9 @@ public class PaymentCancleDTO {
 	private String receiptId;	
 	private BigDecimal paymentAmount;
 	private BigDecimal cancelledPaymentAmount;
+	private BigDecimal pointAmount;
+	private BigDecimal cancelledPointAmount;
+	private BigDecimal deliveryAmount;
 	private String message;
 	
 	public PaymentCancleDTO() {

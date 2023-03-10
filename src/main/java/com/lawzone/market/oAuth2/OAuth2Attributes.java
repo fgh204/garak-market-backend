@@ -16,6 +16,7 @@ public class OAuth2Attributes {
 	private final String nameAttributeKeys;
 	private final String oauthId;
 	private final String name;
+	private final String nickname;
 	private final String email;
 	private final String picture;
 	private final String phone_number;
@@ -24,7 +25,7 @@ public class OAuth2Attributes {
 	@Builder
 	public OAuth2Attributes(Map<String, Object> attributes, String nameAttributeKeys
 			, String oauthId, String name, String email, String picture
-			, String phone_number, Provider provider) {
+			, String phone_number, Provider provider, String nickname) {
 		this.attributes = attributes;
 		this.nameAttributeKeys = nameAttributeKeys;
 		this.oauthId = oauthId;
@@ -33,6 +34,7 @@ public class OAuth2Attributes {
 		this.picture = picture;
 		this.phone_number = phone_number;
 		this.provider = provider;
+		this.nickname = nickname;
 	}
 	
 	@SneakyThrows
@@ -71,17 +73,45 @@ public class OAuth2Attributes {
 	private static OAuth2Attributes ofKakao(String userNameAttributeName, Map<String, Object> attributes) {
 		Map<String, Object> basicInfo = (Map<String, Object>) attributes;
 		Map<String, Object> accountInfo = (Map<String, Object>) attributes.get("kakao_account");
+		Map<String, Object> profile = (Map<String, Object>) accountInfo.get("profile");
 		
-		//log.info("basicInfo_id = {}", basicInfo.get("id"));
-		//log.info("accountInfo_email = {}", accountInfo.get("email"));
-		//log.info("accountInfo_email = {}", accountInfo.get("phone_number"));
+//		log.error("basicInfo_id = {}", basicInfo.get("id"));
+//		log.error("basicInfo = {}", basicInfo);
+//		log.error("accountInfo = {}", accountInfo);
+//		log.error("profile = {}", profile);
+//		log.error("accountInfo_email = {}", accountInfo.get("email"));
+//		log.error("accountInfo_email = {}", accountInfo.get("phone_number"));
+		
+		String name = "";
+		String nickname = "";
+		String email = "";
+		String phone_number = "";
+		
+		if(profile != null) {
+			if(profile.get("nickname") != null) {
+				nickname = profile.get("nickname").toString();
+			}
+		}
+		
+		if(accountInfo.get("name") != null) {
+			name = accountInfo.get("name").toString();
+		}
+		
+		if(accountInfo.get("email") != null) {
+			email = accountInfo.get("email").toString();
+		}
+		
+		if(accountInfo.get("phone_number") != null) {
+			phone_number = "0" + accountInfo.get("phone_number").toString().substring(4).replaceAll("-", "");
+		}
 		
 		return OAuth2Attributes.builder()
 				.oauthId(basicInfo.get("id").toString())
-				.name(accountInfo.get("name").toString())
-				.email(accountInfo.get("email").toString())
-				.phone_number("0" + accountInfo.get("phone_number").toString().substring(4).replaceAll("-", ""))
+				.name(name)
+				.email(email)
+				.phone_number(phone_number)
 				.provider(Provider.KAKAO)
+				.nickname(nickname)
 				.attributes(basicInfo)
 				.nameAttributeKeys("id")
 				.build();

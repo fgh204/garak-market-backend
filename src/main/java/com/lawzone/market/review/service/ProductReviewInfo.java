@@ -32,17 +32,14 @@ public class ProductReviewInfo extends BaseTimeEntity{
 	private String userId;
 	
 	@Comment("리뷰제목")
-	@NotNull
 	@Column(columnDefinition = "varchar(300)")
 	private String reviewTitle;
 	
 	@Comment("리뷰내용")
-	@NotNull
 	@Column(columnDefinition = "TEXT")
 	private String reviewText;
 	
 	@Comment("상품점수")
-	@NotNull
 	@Column(columnDefinition = "DECIMAL(2,1)")
 	private String productScore;
 	
@@ -51,18 +48,29 @@ public class ProductReviewInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "DECIMAL(1,0)")
 	private String freshScore;
 	
+	@Comment("재구매점수")
+	@NotNull
+	@Column(columnDefinition = "DECIMAL(1,0)")
+	private String reorderScore;
+	
 	@Comment("맛점수")
 	@NotNull
 	@Column(columnDefinition = "DECIMAL(1,0)")
 	private String tasteScore;
 	
 	@Comment("포장점수")
-	@NotNull
 	@Column(columnDefinition = "DECIMAL(1,0)")
 	private String packagingScore;
 	
 	@Comment("배송점수")
 	@NotNull
 	@Column(columnDefinition = "DECIMAL(1,0)")
-	private String shippingScore;
+	//private String shippingScore;
+	private String deliveryScore;
+	
+	@Comment("주문번호")
+	@NotNull
+	@Column(columnDefinition = "varchar(12)")
+	//private String shippingScore;
+	private String orderNo;
 }

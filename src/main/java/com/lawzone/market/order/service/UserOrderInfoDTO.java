@@ -9,7 +9,7 @@ import lombok.ToString;
 
 @AllArgsConstructor
 @EqualsAndHashCode
-@ToString
+
 @Data
 public class UserOrderInfoDTO {
 	private String orderNo;

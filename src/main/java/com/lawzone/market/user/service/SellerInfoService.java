@@ -39,7 +39,7 @@ public class SellerInfoService {
 		
         if (sellerInfo.isPresent()) {
             if(passwordEncoder.matches(password, sellerInfo.get().getPassword())) {
-            	userInfo = userInfoDAO.findByUserId(sellerInfo.get().getSellerId());
+            	userInfo = userInfoDAO.findByUserIdAndUseYn(sellerInfo.get().getSellerId(), "Y");
             }else {
             	return userInfo;
             }

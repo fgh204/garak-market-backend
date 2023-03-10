@@ -21,10 +21,13 @@ public class ProductReviewInfoCDTO {
 	private BigDecimal freshScore;
 	private BigDecimal tasteScore;
 	private BigDecimal packagingScore;
-	private BigDecimal shippingScore;
+	private BigDecimal deliveryScore;
+	private BigDecimal reorderScore;
 	private String pageCount;
 	private String maxPageCount;
 	private String orderCode;
+	private String orderNo;
+	private String sellerId;
 	
 	public ProductReviewInfoCDTO() {
 		

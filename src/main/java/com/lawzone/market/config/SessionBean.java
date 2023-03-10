@@ -13,6 +13,7 @@ import lombok.Data;
 
 @Data
 @Component
+@Scope(value = WebApplicationContext.SCOPE_SESSION, proxyMode = ScopedProxyMode.TARGET_CLASS)
 @ToString
 public class SessionBean implements Serializable{
 	private static final long serialVersionUID = 1L;
@@ -31,4 +32,5 @@ public class SessionBean implements Serializable{
 	private String userIp;
 	private String agent;
 	private String userLvl;
+	private String inputData;
 }

@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -22,6 +23,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.SerializationUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.stereotype.Component;
 
 import com.lawzone.market.config.SessionBean;
 import com.lawzone.market.product.controller.ProductController;
@@ -30,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.json.JSONException;
 
 @Slf4j
+@Component
 public class ParameterUtils {
 	/**
 	 * 파라메터값 을 list로 
@@ -40,19 +43,18 @@ public class ParameterUtils {
 	public static List setDtoList(Map params, Object obj, String paramGb, SessionBean sessionBean) {
 		List returnParamList = null;
 		
+		List arrayParamList = new ArrayList();
+		List paramList = (List) params.get("dataset");
 		
-			List arrayParamList = new ArrayList();
-			List paramList = (List) params.get("dataset");
+		for(int i = 0;i < paramList.size(); i++ ) {
+			Map mapCdList = new HashMap();
+			mapCdList.put("dataset", (Map) paramList.get(i));
+			Object newObj = new Object();
+			newObj = SerializationUtils.clone((Serializable) obj);
 			
-			for(int i = 0;i < paramList.size(); i++ ) {
-				Map mapCdList = new HashMap();
-				mapCdList.put("dataset", (Map) paramList.get(i));
-				Object newObj = new Object();
-				newObj = SerializationUtils.clone((Serializable) obj);
-				
-				arrayParamList.add(setDto(mapCdList,newObj, paramGb, sessionBean));
-			}
-			returnParamList = arrayParamList;	
+			arrayParamList.add(setDto(mapCdList,newObj, paramGb, sessionBean));
+		}
+		returnParamList = arrayParamList;	
 		
 		return returnParamList;	
 	}
@@ -139,5 +141,25 @@ public class ParameterUtils {
 	    }
 	    String[] result = new String[emptyNames.size()];
 	    return emptyNames.toArray(result);
+	}
+	
+	public HashMap<String, Object> convertMap(HttpServletRequest request) {
+		 
+	    HashMap<String, Object> hmap = new HashMap<String, Object>();
+	    String key;
+	 
+	    Enumeration<?> enumeration = request.getParameterNames();
+	 
+	    while (enumeration.hasMoreElements()) {
+	        key = (String) enumeration.nextElement();
+	        if (request.getParameterValues(key).length > 1) {
+	            hmap.put(key, request.getParameterValues(key));
+	        } else {
+	            hmap.put(key, request.getParameter(key));
+	        }
+	 
+	    }
+	 
+	    return hmap;
 	}
 }

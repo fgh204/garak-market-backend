@@ -1,6 +1,5 @@
 package com.lawzone.market.config;
 
-import java.time.LocalDateTime;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,10 +7,13 @@ import java.util.Map;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -20,8 +22,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lawzone.market.telmsgLog.service.TelmsgLogService;
 
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.parser.JSONParser;
+import net.minidev.json.parser.ParseException;
 import net.sf.json.JSONObject;
 
 @Aspect
@@ -31,12 +36,19 @@ public class Aspects {
 	
 	public static final String IS_MOBILE = "MOBILE";
 	private static final String IS_PHONE = "PHONE";
-	
+
 	@Resource
 	private SessionBean sessionBean;
 	
 	@Value("${lzmarket.service}") 
 	private String service;
+	
+	@Autowired
+	private TelmsgLogService telmsgLogService;
+	
+	public void setTelmsgLogService(TelmsgLogService telmsgLogService) {
+        this.telmsgLogService = telmsgLogService;
+    }
 	
 	@Pointcut("execution(* com.lawzone.market.*.controller.*.*(..))")
 	public void controllerPointcut() {		
@@ -48,24 +60,51 @@ public class Aspects {
 
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		
-		String userAgent = request.getHeader("User-Agent").toUpperCase();
+		//String userAgent = request.getHeader("User-Agent").toUpperCase();
+		
+		String userAgent = request.getHeader("User-Agent");
 		
 		String agent = "";
 		
-		//log.info("userAgent ================== " + userAgent);
+		Object[] args = joinPoint.getArgs();
+		Map resultMap = new HashMap<>();
+		
+		for(Object obj : args) {
+			if(obj != null) {
+				if("LinkedHashMap".equals(obj.getClass().getSimpleName())) {
+					resultMap.put("data", obj);
+					break;
+				}
+			}
+        }
+		
+		//log.error("userAgent ================== " + userAgent);
 		//log.error("userAgent ================== " + request.getRemoteAddr());
 		//log.error("userAgent ================== " + request.getRemoteHost());
 		//log.error("userAgent ================== " + request.getServerName());
 		
-		if(userAgent.indexOf(IS_MOBILE) > -1){
-			if(userAgent.indexOf(IS_PHONE) == -1) {
-				agent = "M";
-			}else {
-				agent = "P";
-			}
+		log.info("svcUrl============" + request.getRequestURI());
+		boolean isMobile = userAgent.matches(".*(iPhone|iPod|iPad|BlackBerry|Android|Windows CE|LG|MOT|SAMSUNG|SonyEricsson).*");
+		
+		if(userAgent.indexOf("iosapp") > -1){
+			agent = "I";
+		}else if( userAgent.indexOf("androidapp") >-1){
+			agent = "A";
+		}else if(isMobile){
+			agent = "M";
 		}else {
 			agent = "W";
 		}
+		
+//		if(userAgent.indexOf(IS_MOBILE) > -1){
+//			if(userAgent.indexOf(IS_PHONE) == -1) {
+//				agent = "M";
+//			}else {
+//				agent = "P";
+//			}
+//		}else {
+//			agent = "W";
+//		}
 		
 		String json =  (String) authentication.getPrincipal();
 		
@@ -105,13 +144,22 @@ public class Aspects {
 //			params.put("session_id", sessionId);
 			sessionBean.setAgent(agent);
 			sessionBean.setSvcUrl(request.getRequestURI());
+			resultMap.put("svcUrl", request.getRequestURI());
 			sessionBean.setController(joinPoint.getSignature().getDeclaringType().getName());
+			resultMap.put("controller", joinPoint.getSignature().getDeclaringType().getName());
 			sessionBean.setMethod(joinPoint.getSignature().getName());
+			resultMap.put("method", joinPoint.getSignature().getName());
 			sessionBean.setSessionId(request.getSession().getId());
 			sessionBean.setUserIp(getClientIP(request));
 		}catch (Exception e) {
 			log.error("LoggerAspect error" , e);
 		}
+		
+		//TelmsgLogService telmsgLogService = new TelmsgLogService(null);
+		
+		//this.telmsgLogService = new TelmsgLogService(null);
+		
+		this.telmsgLogService.addTelmsgLog1("00", "00", "1", resultMap);
 		
 		//log.info("log : {}" + params);
 		
@@ -119,6 +167,16 @@ public class Aspects {
 		
 		return result;
 	}
+	
+//	@Around("execution(public void org.springframework.security.web.FilterChainProxy.doFilter(..))")
+//    public void handleRequestRejectedException (ProceedingJoinPoint pjp) throws Throwable {
+//        try {
+//            pjp.proceed();
+//        } catch (RequestRejectedException exception) {
+//            HttpServletResponse response = (HttpServletResponse) pjp.getArgs()[1];
+//            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+//        }
+//    }
 	
 	private static JSONObject getParams(HttpServletRequest request) {
 		JSONObject jSONObject = new JSONObject();
@@ -162,4 +220,23 @@ public class Aspects {
 		
 		return ip;
 	}
+	
+	@AfterReturning(value = "controllerPointcut()", returning = "obj")
+    public void afterReturn(JoinPoint joinPoint, Object obj) throws ParseException {
+        JSONParser parser = new JSONParser();
+        
+        if(obj != null) {
+        	Object obj2 = parser.parse( obj.toString());
+            
+            Map resultMap = new HashMap<>();
+            resultMap = (Map) obj2;
+            
+            if("9999".equals(resultMap.get("msgCd"))){
+            	Map logMap = new HashMap<>();
+            	logMap.put("msgNm", resultMap.get("msgNm"));
+            	
+        		this.telmsgLogService.addTelmsgLog("99", "00", "2", logMap,"");
+            }
+        }
+    }
 }

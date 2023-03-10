@@ -38,6 +38,21 @@ public class ProductOrderItemBookIdInfoDTO {
 	private String receiverAddressRoadDetail;
 	private String dongGroup;
 	private String placePageUrl;
+	private String recipientName;
+	private String phoneNumber;
+	private String subPhoneNumber;
+	private String address;
+	private String zonecode;
+	private String printYn;
+	private String deliveryMessage;
+	private BigDecimal productPrice;
+	private BigDecimal productCount;
+	private String productName;
+	private String orderDate;
+	private String deliveryStateCode;
+	private String sellerId;
+	private String productCategoryCode;
+	private String deliveryOrderId;
 	
 	public ProductOrderItemBookIdInfoDTO() {
 		

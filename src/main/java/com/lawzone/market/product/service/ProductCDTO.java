@@ -17,13 +17,14 @@ import lombok.Setter;
 public class ProductCDTO {
 	private String productId;
 	private String productName;
-	private String productCategoriesCode;
+	private String productCategoryCode;
 	private String pageCount;
 	private String userId;
 	private String maxPageCount;
 	private String sellerSearchYn;
 	private String sellerId;
 	private String sellerIdYn;
+	private String favoriteYn;
 	
 	public ProductCDTO() {
 		

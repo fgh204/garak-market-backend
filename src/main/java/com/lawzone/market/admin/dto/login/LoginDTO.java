@@ -12,6 +12,7 @@ import lombok.Setter;
 public class LoginDTO {
 	private String portalId;
 	private String portalPw;
+	private String oauthCode;
 	
 	public LoginDTO() {
 		

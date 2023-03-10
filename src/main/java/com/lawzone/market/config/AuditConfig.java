@@ -15,7 +15,14 @@ public class AuditConfig implements AuditorAware<String>{
 	
 	@Override
 	public Optional<String> getCurrentAuditor() {
-		return Optional.of(sessionBean.getUserId());
+		
+		String _userId = sessionBean.getUserId();
+		
+		if("".equals(_userId) || _userId == null ) {
+			_userId = "99999999";
+		}
+		
+		return Optional.of(_userId);
 	}
 	
 

@@ -17,7 +17,7 @@ public class LawzoneApplicationTests {
 		config.setStringOutputType("base64"); 
 		encryptor.setConfig(config); 
 
-		String plainText = "1111"; // 암호화 할 내용
+		String plainText = "jMpQlvAXiJ50UcHz0jZG"; // 암호화 할 내용
 		String encryptedText = encryptor.encrypt(plainText); // 암호화
 		String decryptedText = encryptor.decrypt(encryptedText); // 복호화
 		System.out.println("Enc:"

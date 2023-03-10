@@ -29,6 +29,7 @@ public class PaymentDTO {
 	private BigDecimal cancelledPaymentAmount;
 	private String pgName;
 	private String paymentGb;
+	private String paymentName;
 	private String paymentDttm;
 	private String cancelledPaymentDttm;
 	private String PaymentReqDttm;
@@ -40,6 +41,8 @@ public class PaymentDTO {
 	private String pgPayCoNm;
 	private String pgCustNm;
 	private String cardQuota;
+	private BigDecimal pointAmount;
+	private BigDecimal cancelledPointAmount;
 	
 	public PaymentDTO() {
 		

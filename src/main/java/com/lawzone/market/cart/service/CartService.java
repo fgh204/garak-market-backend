@@ -1,7 +1,9 @@
 package com.lawzone.market.cart.service;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,6 +157,43 @@ public class CartService {
 		ArrayList<String> _queryValue = new ArrayList<>();
 		_queryValue.add(0, cartInfoDTO.getUserId());
 		
-		return this.utilService.getQueryString(sql,cartInfoListDTO,_queryValue);
+		List<CartInfoListDTO> cartInfoList = this.utilService.getQueryString(sql,cartInfoListDTO,_queryValue); 
+ 		
+		int cartInfoListCnt = cartInfoList.size();
+		if(cartInfoListCnt > 0) {
+			//영업일여부
+			SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HHmm");
+			Date date = new Date();
+			String _date = sf.format(date);
+			String _dateArray[] =  _date.split(" ");
+			
+			String _toDate = _dateArray[0];
+			String _toTime = _dateArray[1];
+			int _time = Integer.parseInt(_toTime);
+			int _todayDeliveryTime = 0;
+			String slsDayYn = this.utilService.getSlsDayYn(_toDate);
+			
+			for(int i = 0; i < cartInfoListCnt; i++) {
+				if(cartInfoList.get(i).getTodayDeliveryStandardTime() == null) {
+					cartInfoList.get(i).setTodayDeliveryStandardTime("1000");
+				}
+				
+				_todayDeliveryTime = Integer.parseInt((String) cartInfoList.get(0).getTodayDeliveryStandardTime());
+				
+				if(_todayDeliveryTime >= _time && "Y".equals(slsDayYn)) {
+					cartInfoList.get(i).setTodayDeliveryYn("Y");
+				}else {
+					cartInfoList.get(i).setTodayDeliveryYn("N");
+				}
+				
+				//if("N".equals(slsDayYn) || "N".equals(cartInfoList.get(0).getTodayDeliveryYn())) {
+				//	cartInfoList.get(i).setSlsDate(this.utilService.getSlsDate(_toDate , "N"));
+				//}else {
+					cartInfoList.get(i).setSlsDate(this.utilService.getSlsDate(_toDate , cartInfoList.get(i).getTodayDeliveryYn()));
+				//}
+			}
+		}
+		
+		return cartInfoList;
 	}
 }

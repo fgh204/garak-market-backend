@@ -21,6 +21,9 @@ public class ProductInfoListDTO {
 	private String thumbnailImagePath;
 	private BigDecimal cumulativeSalesCount;
 	private String shopName;
+	private String todayDeliveryStandardTime;
+	private String productCategoryCode;
+	private String productCategorySmallName;
 	
 	public ProductInfoListDTO() {
 		// TODO Auto-generated constructor stub

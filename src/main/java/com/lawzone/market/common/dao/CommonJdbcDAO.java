@@ -74,4 +74,47 @@ public class CommonJdbcDAO {
 		
 		return _query.toString();
 	}
+	
+	public String dateInfoList(String slsDayYn) {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n SELECT ")
+			.append("\n 	DATE_FORMAT(sdi.sls_date, '%Y-%m-%d') as sls_date ")
+			.append("\n 	, sdi.sls_day_yn ")
+			.append("\n 	, sdi.fstdy_yn ")
+			.append("\n 	, sdi.wdcd ")
+			.append("\n 	, sdi.week_dgre_yymm ")
+			.append("\n 	, sdi.calnd_week_dgre ")
+			.append("\n from lz_market.sls_date_info sdi ")
+			.append("\n where sdi.week_dgre_yymm = ? ");
+			if(slsDayYn != null) {
+				_query.append("\n and sls_day_yn = ? ");
+			}
+		
+		return _query.toString();
+	}
+	
+	public String externalLinkInfo() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n SELECT ")
+			.append("\n eli.access_token  ")
+			.append("\n , eli.refresh_token ")
+			.append("\n , case when DATE_ADD(eli.update_datetime, INTERVAL 8 MINUTE) > now() then 'Y' else 'N' end ")
+			.append("\n from lz_market.external_link_info eli ")
+			.append("\n where eli.external_link_company_code = ? ");
+		
+		return _query.toString();
+	}
+	
+	public String modiifyExternalLinkInfo() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n update lz_market.external_link_info eli  ")
+			.append("\n set eli.access_token = ? ")
+			.append("\n , eli.update_datetime = now() ")
+			.append("\n where eli.external_link_company_code = ? ");
+		
+		return _query.toString();
+	}
 }

@@ -23,14 +23,13 @@ import lombok.NoArgsConstructor;
 @Data
 public class PaymentInfo extends BaseTimeEntity{
 	@Id
+	@Comment("주문번호")
+	@Column(columnDefinition = "varchar(12)")
+	private String orderNo;
+	
 	@Comment("부트페이 영수증ID")
 	@Column(columnDefinition = "varchar(50)")
 	private String receiptId;
-	
-	@Comment("주문번호")
-	@NotNull
-	@Column(columnDefinition = "varchar(12)")
-	private String orderNo;
 	
 	@Comment("주문명")
 	@Column(columnDefinition = "varchar(300)")
@@ -47,10 +46,18 @@ public class PaymentInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "DECIMAL (15,2)")
 	private BigDecimal paymentAmount;
 	
+	@Comment("포인트금액")
+	@Column(columnDefinition = "DECIMAL (15,2)")
+	private BigDecimal pointAmount;
+	
 	@Comment("결제취소금액")
 	@NotNull
 	@Column(columnDefinition = "DECIMAL (15,2)")
 	private BigDecimal cancelledPaymentAmount;
+	
+	@Comment("포인트취소금액")
+	@Column(columnDefinition = "DECIMAL (15,2)")
+	private BigDecimal cancelledPointAmount;
 	
 	@Comment("결제PG사명")
 	@NotNull
@@ -61,6 +68,11 @@ public class PaymentInfo extends BaseTimeEntity{
 	@NotNull
 	@Column(columnDefinition = "varchar(50)")
 	private String paymentGb;
+	
+	@Comment("결제방식")
+	@NotNull
+	@Column(columnDefinition = "varchar(50)")
+	private String paymentName;
 	
 	@Comment("결제완료일시")
 	@NotNull

@@ -58,6 +58,7 @@ public class CustomOAuth2AuthService implements OAuth2UserService<OAuth2UserRequ
 		OAuth2UserService delegate = new DefaultOAuth2UserService();
 		OAuth2User oAuth2User = delegate.loadUser(request);
 		String reistrationId = request.getClientRegistration().getRegistrationId();
+		String socialAccessToken = request.getAccessToken().getTokenValue();
 		String userNameAttributeName = request.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
 		OAuth2Attributes attributes = OAuth2Attributes.of(reistrationId, userNameAttributeName, oAuth2User.getAttributes());
 		//this.userInfoService.create((Map<String, Object>) attributes.getAttributes());		
@@ -72,30 +73,47 @@ public class CustomOAuth2AuthService implements OAuth2UserService<OAuth2UserRequ
 		UserInfo user = new UserInfo();
 		List<UserInfo> userInfo = 
 				this.userInfoDAO
-				.findBySocialIdAndEmailAndUserName(
+				.findBySocialIdAndEmailAndUseYn(
 						attributes.getOauthId()
 						,attributes.getEmail()
-						,attributes.getName());
+						, "Y");
+		
+		log.info("attributes.getOauthId() ====== " + attributes.getOauthId());
+		log.info("attributes.getEmail() ====== " +attributes.getEmail());
+		log.info("attributes.getName() ====== " + attributes.getName());
 		
 		if(userInfo.size() == 0) {
 			String userNumber = utilService.getNextVal("USER_ID");
 			
 			user.setUserId(StringUtils.leftPad(userNumber, 8,"0"));
 			user.setUserName(attributes.getName());
+			user.setNickname(attributes.getNickname());
 			user.setEmail(attributes.getEmail());
 			user.setSocialId(attributes.getOauthId());
 			user.setPhoneNumber(attributes.getPhone_number());
+			user.setUserLvl(1);
 			user.setSellerYn("N");
 			user.setUseYn("Y");
+			user.setAccessToken(socialAccessToken);
 			this.userInfoDAO.save(user).getUserId();
 			
 			List<UserInfo> userInfo2 = 
 					this.userInfoDAO
-					.findBySocialIdAndEmailAndUserName(
+					.findBySocialIdAndEmailAndUseYn(
 							attributes.getOauthId()
 							,attributes.getEmail()
-							,attributes.getName());
+							, "Y");
 			userInfo = userInfo2;
+		}else {
+//			if("N".equals(userInfo.get(0).getUseYn())) {
+//				userInfo.get(0).setUserName(attributes.getName());
+//				userInfo.get(0).setNickname(attributes.getNickname());
+//				userInfo.get(0).setPhoneNumber(attributes.getPhone_number());
+//				userInfo.get(0).setUseYn("Y");
+//			}
+			
+			userInfo.get(0).setAccessToken(socialAccessToken);
+			this.userInfoDAO.save(userInfo.get(0)).getUserId();
 		}
 		
 		userId = userInfo.get(0).getUserId();
@@ -104,8 +122,8 @@ public class CustomOAuth2AuthService implements OAuth2UserService<OAuth2UserRequ
 		email = userInfo.get(0).getEmail();
 		phoneNumber = userInfo.get(0).getPhoneNumber();
 		socialId = userInfo.get(0).getSocialId();
-
-		sessionBean.setToken(jwtTokenUtil.generateToken(userInfo.get(0)));
+		
+		sessionBean.setToken(jwtTokenUtil.generateToken(userInfo.get(0), null));
 		
 		return new DefaultOAuth2User(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")), attributes.getAttributes(), attributes.getNameAttributeKeys());
 	}

@@ -12,6 +12,14 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import org.springframework.stereotype.Component;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
 public class DateUtils {
 	public static String getCurrentDate(String pattern) throws NullPointerException, IllegalArgumentException
 	{
@@ -647,12 +655,24 @@ public class DateUtils {
 	 * @param dateType 리턴할 날자 타입
 	 * @return
 	 */
-	public static String addDate(String strDate, String strDateType, int type, int val, String dateType)
+	public static String addDate(String strDate, String strDateType, String type, int val, String dateType)
 	{
 		Date date = stringToDate(strDate, strDateType);
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
-		cal.add(type, val);
+		
+		type = type.toUpperCase();
+		int dateAddType = 0;
+		
+		if("Y".equals(type)) {
+			dateAddType = Calendar.YEAR;
+		} else if("M".equals(type)) {
+			dateAddType = Calendar.MONTH;
+		}else if("D".equals(type)) {
+			dateAddType = Calendar.DATE;
+		} 
+			
+		cal.add(dateAddType, val);
 		return dateToString(cal.getTime(), dateType);
 	}
 

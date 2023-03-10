@@ -15,6 +15,9 @@ public class ProductOrderDTO {
 	private String orderDate;
 	private BigDecimal orderCount;
 	private BigDecimal productTotalPrice;
+	private BigDecimal pointAmount;
+	private BigDecimal paymentAmount;
+	private BigDecimal deliveryAmount;
 	private String orderStateCode;
 	private String userId;
 	private String zonecode;

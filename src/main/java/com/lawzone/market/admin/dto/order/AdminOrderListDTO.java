@@ -22,6 +22,9 @@ public class AdminOrderListDTO {
 	private String orderItemDlngStateCode;
 	private String orderItemDlngStateName;
 	private String userName;
+	private String shopName;
+	private String deliveryStateCode;
+	private String deliveryStateCodeName;
 	
 	public AdminOrderListDTO() {
 		

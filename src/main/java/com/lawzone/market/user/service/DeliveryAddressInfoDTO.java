@@ -22,6 +22,7 @@ public class DeliveryAddressInfoDTO {
 	private String baseShippingYn;
 	private String phoneNumber;
 	private String subPhoneNumber;
+	private String bcode;
 	
 	public DeliveryAddressInfoDTO() {
 		

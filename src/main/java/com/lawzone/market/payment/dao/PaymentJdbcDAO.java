@@ -9,7 +9,7 @@ public class PaymentJdbcDAO {
 		
 		_query.append("\n update lz_market.product_order_info")
 			  .append("\n set order_state_code = ?")
-			  .append("\n , update_date = now()")
+			  .append("\n , update_datetime = now()")
 			  .append("\nwhere order_no = ?");	
 		return _query.toString();
 	}
@@ -19,7 +19,7 @@ public class PaymentJdbcDAO {
 		
 		_query.append("\n update lz_market.product_order_item_info") 
 				.append("\n	set order_item_state_code = ?")
-				.append("\n , update_date = now()")
+				.append("\n , update_datetime = now()")
 				.append("\nwhere order_no = ?");
 		return _query.toString();
 	}
@@ -35,6 +35,9 @@ public class PaymentJdbcDAO {
 				.append("\n , pi2.receipt_id as receipt_id ")
 				.append("\n , pi2.payment_amount as payment_amount ")
 				.append("\n , pi2.cancelled_payment_amount as cancelled_payment_amount ")
+				.append("\n , pi2.point_amount as point_amount")
+				.append("\n , pi2.cancelled_point_amount as cancelled_point_amount ")
+				.append("\n , poi.delivery_amount as delivery_amount ")
 				.append("\n , '' as message ")
 				.append("\n from lz_market.product_order_info poi")
 				.append("\n , lz_market.product_order_item_info poii ")
@@ -51,7 +54,7 @@ public class PaymentJdbcDAO {
 		return _query.toString();
 	}
 	
-	public String orderPaymentInfo() {
+	public String orderPaymentInfo(String userId) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select ") 
@@ -60,10 +63,35 @@ public class PaymentJdbcDAO {
 				.append("\n when ifnull(pi2.card_quota,'') <> ''  then concat(substring(pi2.card_quota,2,1),'개월') ")
 				.append("\n else '' ")
 				.append("\n end as card_quota ")
-				.append("\n , ceil(payment_amount) as payment_amount ")
-				.append("\n , ceil(cancelled_payment_amount) as cancelled_payment_amount ")
+				.append("\n , ceil(pi2.payment_amount) as payment_amount ")
+				.append("\n , ceil(poi.delivery_amount) as delivery_amount ")
+				.append("\n , ceil(pi2.cancelled_payment_amount) as cancelled_payment_amount ")
+				.append("\n , pi2.payment_name as payment_name ")
 				.append("\n from lz_market.payment_info pi2 ")
-				.append("\n where order_no = ? ");
+				.append("\n , lz_market.product_order_info poi ")
+				.append("\n where pi2.order_no = poi.order_no ")
+				.append("\n and  pi2.order_no = ? ");
+		if(!"".equals(userId)) {
+			_query.append("\n and poi.user_id = ? ");
+		}
+	
+		return _query.toString();
+	}
+	
+	public String getSellerPushId() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n select ") 
+				.append("\n	DISTINCT ui.push_id ")
+				.append("\n	, pi2.product_name ")
+				.append("\n	, ui.user_id ")
+				.append("\n from lz_market.product_order_item_info poii ")
+				.append("\n , lz_market.product_info pi2 ")
+				.append("\n , lz_market.user_info ui ")
+				.append("\n where poii.product_id = pi2.product_id ")
+				.append("\n and pi2.seller_id = ui.user_id ")
+				.append("\n and poii.order_no = ? ")
+				.append("\n and ui.push_id IS NOT NULL ");
 		
 		return _query.toString();
 	}

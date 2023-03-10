@@ -22,6 +22,9 @@ public class ProductInfoListPDTO {
 	private String thumbnailImagePath;
 	private BigDecimal cumulativeSalesCount;
 	private String shopName;
+	private String todayDeliveryStandardTime;
+	private String todayDeliveryYn;
+	private String slsDate;
 	
 	private ArrayList<TagInfoDTO> productTagList;
 	

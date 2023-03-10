@@ -1,5 +1,7 @@
 package com.lawzone.market.user.service;
 
+import java.math.BigDecimal;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -43,6 +45,36 @@ public class SellerInfo extends BaseTimeEntity{
 	private String password;
 
 	@Comment("SPOTID")
-	@Column(unique = true, columnDefinition = "varchar(300)")
+	@Column(unique = true, columnDefinition = "varchar(50)")
 	private String spotId;
+	
+	@Comment("SPOTNAME")
+	@Column(columnDefinition = "varchar(300)")
+	private String spotName;
+	
+	@Comment("소개글")
+	@Column(unique = true, columnDefinition = "MEDIUMTEXT")
+	private String introductionText;
+	
+	@Comment("판매자전화번호")
+	@Column(columnDefinition = "varchar (11)")
+	private String sellerPhoneNumber;
+	
+	@Comment("상품카테고리코드")
+	@Column(columnDefinition = "CHAR(9)")
+	private String productCategoryCode;
+	
+	@Comment("배송금액")
+	@Column(columnDefinition = "DECIMAL (15,2)")
+	private BigDecimal deliveryAmount;
+	
+	@Comment("지역코드")
+	@NotNull
+	@Column(columnDefinition = "varchar(5)")
+	private String zonecode;
+	
+	@Comment("판매자지역코드")
+	@NotNull
+	@Column(columnDefinition = "varchar(5)")
+	private String sellerZonecode;
 }

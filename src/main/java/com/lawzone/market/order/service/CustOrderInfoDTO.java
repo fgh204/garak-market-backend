@@ -16,6 +16,7 @@ public class CustOrderInfoDTO {
 	private String userName;
 	private String zonecode;
 	private BigDecimal totalPrice;
+	private BigDecimal pointAmount;
 	private String address;
 	private String detailAddress;
 	private String orderName;

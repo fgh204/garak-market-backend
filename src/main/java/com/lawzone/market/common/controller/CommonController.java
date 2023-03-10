@@ -38,7 +38,7 @@ public class CommonController {
 	@ResponseBody
 	@PostMapping("/boilerplateInfo/create")
 	public String addBoilerplateInfo(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
 		BoilerplateInfoDTO boilerplateInfoDTO = new BoilerplateInfoDTO();
 		boilerplateInfoDTO = (BoilerplateInfoDTO) ParameterUtils.setDto(map, boilerplateInfoDTO, "insert", sessionBean);
 		
@@ -52,7 +52,7 @@ public class CommonController {
 	@ResponseBody
 	@PostMapping("/boilerplateInfo/list")
 	public String getBoilerplateList(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
 		BoilerplateInfoDTO boilerplateInfoDTO = new BoilerplateInfoDTO();
 		boilerplateInfoDTO = (BoilerplateInfoDTO) ParameterUtils.setDto(map, boilerplateInfoDTO, "insert", sessionBean);
 		

@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.lawzone.market.product.service.ProductInfo;
-import com.lawzone.market.question.Question;
 
 public interface ProductDAO extends JpaRepository<ProductInfo, String>{
 	List<ProductInfo> findByproductName(String productName);

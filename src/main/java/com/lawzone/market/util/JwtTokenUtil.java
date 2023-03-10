@@ -1,5 +1,7 @@
 package com.lawzone.market.util;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -14,6 +16,8 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -35,6 +39,9 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemReader;
 import org.json.simple.JSONObject;
 
 @Slf4j
@@ -57,7 +64,7 @@ public class JwtTokenUtil{
     /**
      * 토큰 생성
      */
-    public String generateToken(UserInfo userInfo) {
+    public String generateToken(UserInfo userInfo, Long tokenValidTime) {
     	Map userMap = new HashMap<>();
 		userMap.put("userId", userInfo.getUserId());
 		userMap.put("userNm", userInfo.getUserName());
@@ -71,16 +78,23 @@ public class JwtTokenUtil{
 		
         Claims claims = Jwts.claims().setSubject((String) userMap.get("socialId"));
         claims.put("userForm", jsonObject.toString());
-        return createToken(claims); // socialIdf를 subject로 해서 token 생성
+        return createToken(claims, tokenValidTime); // socialIdf를 subject로 해서 token 생성
     }
 
     @SuppressWarnings("deprecation")
-	private String createToken(Claims claims) {
+	private String createToken(Claims claims, Long _tokenValidTime) {
+    	Long tokenValidTime = TOKEN_VALID_MILISECOND;
+    	if(_tokenValidTime == null) {
+    		tokenValidTime = TOKEN_VALID_MILISECOND;
+    	}else {
+    		tokenValidTime = _tokenValidTime;
+    	}
+
         return Jwts.builder()
         		.setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setClaims(claims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + TOKEN_VALID_MILISECOND))
+                .setExpiration(new Date(System.currentTimeMillis() + tokenValidTime))
                 .signWith(SignatureAlgorithm.HS256,Base64.getEncoder().encodeToString(this.secretKey.getBytes()))
                 .compact();
     }
@@ -146,7 +160,7 @@ public class JwtTokenUtil{
         	}
         }
         
-        if(!"P".equals(this.service) && _resolveToken == null) {
+        if("D".equals(this.service) && _resolveToken == null) {
         	_resolveToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMjEyMzE4NjExIiwidXNlckZvcm0iOiJ7XCJ1c2VyTm1cIjpcIuq5gO2YgeyImFwiLFwicGhvbmVOdW1iZXJcIjpcIjAxMDMzNTI0NTA5XCIsXCJzb2NpYWxJZFwiOlwiMjIxMjMxODYxMVwiLFwidXNlcklkXCI6XCIwMDAwMDAwMlwiLFwic2VsbGVyWW5cIjpcIllcIixcImVtYWlsXCI6XCJmZ2gyMDRAa2FrYW8uY29tXCJ9IiwiaWF0IjoxNjY3NzE1MjI1LCJleHAiOjE3OTkxMTUyMjV9.8awIlGay-A_gNib8iVSAc9LYPA5-p3vNuOSHCN6d2JI";
     	}
     	return _resolveToken;
@@ -194,5 +208,23 @@ public class JwtTokenUtil{
         	log.info("JWT 토큰이 잘못되었습니다.");
         }
         return false;
+    }
+    
+    private byte[] readPrivateKey(String keyPath) {
+
+    	Resource resource = new ClassPathResource(keyPath);
+        byte[] content = null;
+
+        try (FileReader keyReader = new FileReader(resource.getFile());
+             PemReader pemReader = new PemReader(keyReader)) {
+            {
+                PemObject pemObject = pemReader.readPemObject();
+                content = pemObject.getContent();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return content;
     }
 }

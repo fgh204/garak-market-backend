@@ -4,15 +4,18 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
@@ -28,7 +31,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lawzone.market.admin.service.AdminProductDTO;
+import com.lawzone.market.image.dao.ProductImageDAO;
 import com.lawzone.market.image.dao.ProductImageJdbcDAO;
+import com.lawzone.market.image.service.ProductImageInfo;
 import com.lawzone.market.image.service.ProductImageService;
 import com.lawzone.market.order.service.ProductOrderItemInfoId;
 import com.lawzone.market.product.controller.ProductController;
@@ -37,6 +43,8 @@ import com.lawzone.market.product.dao.ProductJdbcDAO;
 import com.lawzone.market.product.dao.ProductTagDAO;
 import com.lawzone.market.product.dao.ProductTagJdbcDAO;
 import com.lawzone.market.product.dao.TagDAO;
+import com.lawzone.market.user.dao.SellerInfoDAO;
+import com.lawzone.market.user.service.SellerInfo;
 import com.lawzone.market.util.ParameterUtils;
 import com.lawzone.market.util.UtilService;
 
@@ -52,24 +60,28 @@ public class ProductService {
 	private final ProductTagDAO productTagDAO;
 	private final ProductTagJdbcDAO produstTagJdbcDAO;
 	private final ProductJdbcDAO productJdbcDAO;
+	private final SellerInfoDAO sellerInfoDAO;
 	private final ModelMapper modelMapper;
 	private final UtilService utilService;
 	private final ProductImageService productImageService;
 	private final ProductImageJdbcDAO productImageJdbcDAO;
+	private final ProductImageDAO productImageDAO;
+	private final EntityManager em;
 	
 	@Transactional
 	public String addProductInfo(ProductDTO productDTO) {
-		//상품등록
-		//이미지 등록
-		//이미지 삭제
-		//대표이미지 설정
-		//상품태그 삭제
-		//상품태그 등록
 		if("".equals(productDTO.getProductId()) || productDTO.getProductId() == null) {
 			
 			String productId = utilService.getNextVal("PRODUCT_ID");
 			
 			productDTO.setProductId(productId);
+			
+			Optional<SellerInfo> sellerInfo = this.sellerInfoDAO.findBySellerId(productDTO.getSellerId());
+			
+			if(sellerInfo.isPresent()) {
+				productDTO.setProductCategoryCode(sellerInfo.get().getProductCategoryCode());
+			}
+			
 		}
 		
 		ProductInfo productInfo = new ProductInfo();
@@ -105,17 +117,51 @@ public class ProductService {
 		
 		ProductInfoDTO productInfoDTO = new ProductInfoDTO();
 		
-		return this.utilService.getQueryString(sql,productInfoDTO,_queryValue);
+		List<ProductInfoDTO> _productList = this.utilService.getQueryString(sql,productInfoDTO,_queryValue);
+		
+		//영업일여부
+		SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HHmm");
+		Date date = new Date();
+		String _date = sf.format(date);
+		String _dateArray[] =  _date.split(" ");
+		
+		String _toDate = _dateArray[0];
+		String _toTime = _dateArray[1];
+		int _time = Integer.parseInt(_toTime);
+		int _todayDeliveryTime = 0;
+		String slsDayYn = this.utilService.getSlsDayYn(_toDate);
+		
+		if(_productList.get(0).getTodayDeliveryStandardTime() == null) {
+			_productList.get(0).setTodayDeliveryStandardTime("1000");
+		}
+		
+		_todayDeliveryTime = Integer.parseInt((String) _productList.get(0).getTodayDeliveryStandardTime());
+		
+		if(_todayDeliveryTime >= _time && "Y".equals(slsDayYn)) {
+			_productList.get(0).setTodayDeliveryYn("Y");
+		}else {
+			_productList.get(0).setTodayDeliveryYn("N");
+		}
+		
+		//if("N".equals(_productList.get(0).getTodayDeliveryYn())) {
+			_productList.get(0).setSlsDate(this.utilService.getSlsDate(_toDate , _productList.get(0).getTodayDeliveryYn()));
+		//}else {
+		//	_productList.get(0).setSlsDate(this.utilService.getSlsDate(_toDate , "Y"));
+		//}
+		
+		return _productList;
 	}
 	
 	public List getList2(ProductCDTO productCDTO) throws IllegalAccessException, InvocationTargetException {
-		String categoriesCodeYn = "N";
+		String categoryCodeYn = "N";
 		String productIdYn = "N";
 		String productNameYn = "N";
+		String favoriteYn = productCDTO.getFavoriteYn();
+		String sellerId = productCDTO.getSellerId();
 		String sellerYn = productCDTO.getSellerSearchYn();
 		String sellerIdYn = productCDTO.getSellerIdYn();
-		if(!"".equals(productCDTO.getProductCategoriesCode()) && productCDTO.getProductCategoriesCode() != null){
-			categoriesCodeYn = "Y";
+		if(!"".equals(productCDTO.getProductCategoryCode()) && productCDTO.getProductCategoryCode() != null){
+			categoryCodeYn = "Y";
 		}
 		
 		if(!"".equals(productCDTO.getProductId()) && productCDTO.getProductId() != null){
@@ -126,15 +172,15 @@ public class ProductService {
 			productNameYn = "Y";
 		}
 		String sql = this.productJdbcDAO.pageListQuery(productCDTO.getPageCount(), productCDTO.getMaxPageCount()
-														,categoriesCodeYn, productIdYn, productNameYn, sellerYn);
+														,categoryCodeYn, productIdYn, productNameYn, sellerYn, favoriteYn, sellerId);
 		ProductInfoListDTO productInfoListDTO = new ProductInfoListDTO();
 		
 		ArrayList<String> _queryValue = new ArrayList<>();
 		
 		int paramCnt = 0;
 		
-		if("Y".equals(categoriesCodeYn)) {
-			_queryValue.add(paramCnt, productCDTO.getProductCategoriesCode());
+		if("Y".equals(categoryCodeYn)) {
+			_queryValue.add(paramCnt, productCDTO.getProductCategoryCode());
 			paramCnt++;
 		}
 		
@@ -156,6 +202,16 @@ public class ProductService {
 				_queryValue.add(paramCnt, productCDTO.getUserId());
 				paramCnt++;
 			}
+		} else {
+			if(!("".equals(sellerId) || sellerId == null)) {
+				_queryValue.add(paramCnt, productCDTO.getSellerId());
+				paramCnt++;
+			}
+		}
+		
+		if("Y".equals(favoriteYn)) {
+			_queryValue.add(paramCnt, productCDTO.getUserId());
+			paramCnt++;
 		}
 		
 		List<ProductInfoListDTO> productList = this.utilService.getQueryString(sql,productInfoListDTO,_queryValue);
@@ -174,6 +230,18 @@ public class ProductService {
 		
 		ParameterUtils ParameterUtils = new ParameterUtils();
 		
+		//영업일여부
+		SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HHmm");
+		Date date = new Date();
+		String _date = sf.format(date);
+		String _dateArray[] =  _date.split(" ");
+		
+		String _toDate = _dateArray[0];
+		String _toTime = _dateArray[1];
+		int _time = Integer.parseInt(_toTime);
+		int _todayDeliveryTime = 0;
+		String slsDayYn = this.utilService.getSlsDayYn(_toDate);
+
 		for(int i = 0; i < productListSize; i++) {
 			productInfoListInfo = new ProductInfoListPDTO();
 			
@@ -185,6 +253,26 @@ public class ProductService {
 			productInfoListInfo.setThumbnailImagePath(productList.get(i).getThumbnailImagePath());
 			productInfoListInfo.setCumulativeSalesCount(productList.get(i).getCumulativeSalesCount());
 			productInfoListInfo.setShopName(productList.get(i).getShopName());
+			
+			if(productList.get(i).getTodayDeliveryStandardTime() == null) {
+				productInfoListInfo.setTodayDeliveryStandardTime("1000");
+			}else {
+				productInfoListInfo.setTodayDeliveryStandardTime(productList.get(i).getTodayDeliveryStandardTime());
+			}
+			
+			_todayDeliveryTime = Integer.parseInt(productList.get(i).getTodayDeliveryStandardTime());
+			
+			if(_todayDeliveryTime >= _time && "Y".equals(slsDayYn)) {
+				productInfoListInfo.setTodayDeliveryYn("Y");
+			}else {
+				productInfoListInfo.setTodayDeliveryYn("N");
+			}
+			
+			//if("N".equals(productInfoListInfo.getTodayDeliveryYn())) {
+				productInfoListInfo.setSlsDate(this.utilService.getSlsDate(_toDate , productInfoListInfo.getTodayDeliveryYn()));
+			//}else {
+			//	productInfoListInfo.setSlsDate(this.utilService.getSlsDate(_toDate , "Y"));
+			//}
 			
 			productInfoListPDTO.add(i, productInfoListInfo);
 			
@@ -202,13 +290,15 @@ public class ProductService {
 	}
 	
 	public List getPageInfo(ProductCDTO productCDTO) {
-		String categoriesCodeYn = "N";
+		String categoryCodeYn = "N";
 		String productIdYn = "N";
 		String productNameYn = "N";
+		String favoriteYn = productCDTO.getFavoriteYn();
+		String sellerId = productCDTO.getSellerId();
 		String sellerYn = productCDTO.getSellerSearchYn();
 		String sellerIdYn = productCDTO.getSellerIdYn();
-		if(!"".equals(productCDTO.getProductCategoriesCode()) && productCDTO.getProductCategoriesCode() != null){
-			categoriesCodeYn = "Y";
+		if(!"".equals(productCDTO.getProductCategoryCode()) && productCDTO.getProductCategoryCode() != null){
+			categoryCodeYn = "Y";
 		}
 		
 		if(!"".equals(productCDTO.getProductId()) && productCDTO.getProductId() != null){
@@ -220,15 +310,15 @@ public class ProductService {
 		}
 		
 		String sql = this.productJdbcDAO.pageQuery(productCDTO.getMaxPageCount()
-				,categoriesCodeYn, productIdYn, productNameYn, sellerYn);
+				,categoryCodeYn, productIdYn, productNameYn, sellerYn, favoriteYn, sellerId);
 		PageInfoDTO pageInfoDTO = new PageInfoDTO();
 		
 		ArrayList<String> _queryValue = new ArrayList<>();
 		
 		int paramCnt = 0;
 		
-		if("Y".equals(categoriesCodeYn)) {
-			_queryValue.add(paramCnt, productCDTO.getProductCategoriesCode());
+		if("Y".equals(categoryCodeYn)) {
+			_queryValue.add(paramCnt, productCDTO.getProductCategoryCode());
 			paramCnt++;
 		}
 		
@@ -250,7 +340,16 @@ public class ProductService {
 				_queryValue.add(paramCnt, productCDTO.getUserId());
 				paramCnt++;
 			}
-			
+		} else {
+			if(!("".equals(sellerId) || sellerId == null)) {
+				_queryValue.add(paramCnt, productCDTO.getSellerId());
+				paramCnt++;
+			}
+		}
+		
+		if("Y".equals(favoriteYn)) {
+			_queryValue.add(paramCnt, productCDTO.getUserId());
+			paramCnt++;
 		}
 		
 		return this.utilService.getQueryString(sql,pageInfoDTO,_queryValue);
@@ -385,15 +484,17 @@ public class ProductService {
 	
 	@Transactional(rollbackFor = Exception.class)
 	public void addProductIntegratedInfo(ProductDTO productDTO, List productImageList, List noticeImageList
-										, List deleteImageList, List tagInfoList) throws IllegalStateException, IOException {
+										, List deletedProductImageList, List deletedNoticeImageList, List tagInfoList) throws IllegalStateException, IOException {
 		//상품등록
 		String _productId = this.addProductInfo(productDTO);
 		//상품 이미지 등록
-		this.productImageService.productFileUploadList(_productId, productImageList, "01");
+		this.productImageService.modifyProductImageInfoList(productImageList, _productId, "01");
 		//콘텐츠 이미지 등록
-		this.productImageService.productFileUploadList(_productId, noticeImageList, "02");
+		this.productImageService.modifyProductImageInfoList(productImageList, _productId, "02");
 		//이미지 삭제
-		this.productImageService.removeProductImageInfoList(deleteImageList);
+		this.productImageService.removeProductImageInfoList(deletedProductImageList, _productId);
+		//이미지 삭제
+		this.productImageService.removeProductImageInfoList(deletedNoticeImageList, _productId);
 		//대표이미지 설정
 		String delegateFileNumber = this.productImageJdbcDAO.delegateFileNumber();
 		ArrayList<String> _queryValue = new ArrayList<>();
@@ -428,5 +529,93 @@ public class ProductService {
 //		ProductInfo productInfo = new ProductInfo();
 //		productInfo = modelMapper.map(productDTO, ProductInfo.class);
 //		return this.productDAO.save(productInfo).getProductId();
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	public void addProductInfoList(ProductDTO productDTO, List productImageList, List tagInfoList) throws IllegalStateException, IOException {
+		//상품등록
+		String _productId = this.addProductInfo(productDTO);
+		//상품 이미지 등록
+		this.productImageService.mergeProductImageInfoList(productImageList, _productId, "");
+		//콘텐츠 이미지 등록
+		//this.productImageService.modifyProductImageInfoList(productImageList, _productId, "02");
+		//이미지 삭제
+		//this.productImageService.removeProductImageInfoList(deletedProductImageList, _productId);
+		//이미지 삭제
+		//this.productImageService.removeProductImageInfoList(deletedNoticeImageList, _productId);
+		//대표이미지 설정
+		String delegateFileNumber = this.productImageJdbcDAO.delegateFileNumber();
+		ArrayList<String> _queryValue = new ArrayList<>();
+		_queryValue.add(0, _productId);
+		_queryValue.add(1, "01");
+		String fileNumber = this.utilService.getQueryStringChk(delegateFileNumber, _queryValue);
+		
+		if(!"".equals(fileNumber)){
+			String setDelegateFileNumber = this.productImageJdbcDAO.setDelegateFileNumber();
+			ArrayList<String> _queryValue1 = new ArrayList<>();
+			_queryValue1.add(0, fileNumber);
+			_queryValue1.add(1, _productId);
+			this.utilService.getQueryStringUpdate(setDelegateFileNumber, _queryValue1);
+		}
+		//상품태그 삭제
+		this.removeProductTagInfo(_productId);
+		//상품태그 등록
+		int productTagInfoListSize = tagInfoList.size();
+		Map productTagInfoMap = new HashMap<>();
+		for( int i = 0; i < productTagInfoListSize; i++ ) {
+			productTagInfoMap = (Map) tagInfoList.get(i);
+			
+			productTagInfoMap.put("productId", _productId);
+		}
+		this.addProductTagInfo(tagInfoList);
+		
+//		if("".equals(productDTO.getProductId()) || productDTO.getProductId() == null) {
+//			
+//			String productId = utilService.getNextVal("PRODUCT_ID");
+//			
+//			productDTO.setProductId(productId);
+//		}
+//		
+//		ProductInfo productInfo = new ProductInfo();
+//		productInfo = modelMapper.map(productDTO, ProductInfo.class);
+//		return this.productDAO.save(productInfo).getProductId();
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	public String productCopyOrigin(ProductDTO productDTO, String userId) {
+		String productId = "";
+		
+		List<ProductInfo> productInfo = this.productDAO.findByProductId(productDTO.getOriginalProductId());
+		
+		if(productInfo.size() > 0) {
+			//상품정보
+			productId = utilService.getNextVal("PRODUCT_ID");
+			
+			ArrayList<String> _queryValue = new ArrayList<>();
+			
+			_queryValue.add(0, productId);
+			_queryValue.add(1, userId);
+			_queryValue.add(2, userId);
+			_queryValue.add(3, productDTO.getOriginalProductId());
+			
+			//상품복사 
+			this.utilService.getQueryStringUpdate(this.productJdbcDAO.productInfoCopyOrigin(), _queryValue);
+			//productInfo.get(0).setProductId(productId);
+			//this.productDAO.save(productInfo.get(0));
+			//상품이미지복사 
+			this.utilService.getQueryStringUpdate(this.productImageJdbcDAO.productImeageCopyOrigin(), _queryValue);
+			//상품태그복사 
+			this.utilService.getQueryStringUpdate(this.produstTagJdbcDAO.productTagCopyOrigin(), _queryValue);
+		}
+		
+		return productId;
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	public void modifyProductPrice(AdminProductDTO adminProductDTO) {
+		
+		List<ProductInfo> productInfo = this.productDAO.findByProductId(adminProductDTO.getProductId());
+		
+		productInfo.get(0).setProductPrice(new BigDecimal(adminProductDTO.getChangProductPrice()));
 	}
 }

@@ -15,8 +15,7 @@ contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
      if(IpUtils.getMyIpByProd()){
       
      }
-     System.out.println("11111111111111");
       %>
-    테스트 페이지
+    domaado!
   </body>
 </html>

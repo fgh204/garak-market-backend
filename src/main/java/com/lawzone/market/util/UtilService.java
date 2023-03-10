@@ -104,9 +104,9 @@ public class UtilService {
 		
 		if(arryList != null) {
 			for(int i = 0; i < arryList.size(); i++) {
-				nativeQuery.setParameter((i+1),arryList.get(i).toString());
+				nativeQuery.setParameter((i+1),(String) arryList.get(i));
 				
-				log.info("Parameter" + (i+1) + "==============" + arryList.get(i).toString());
+				log.info("Parameter" + (i+1) + "==============" + (String) arryList.get(i));
 			}
 		}
 		int query = nativeQuery.executeUpdate();
@@ -119,7 +119,7 @@ public class UtilService {
 	public String getQueryStringChk(String queryString, ArrayList arryList) {
 		String sql = queryString;
 		Query nativeQuery = em.createNativeQuery(sql);
-		
+		log.info(sql);
 		if(arryList != null) {
 			for(int i = 0; i < arryList.size(); i++) {
 				nativeQuery.setParameter((i+1),arryList.get(i).toString());
@@ -127,10 +127,54 @@ public class UtilService {
 				log.info("Parameter" + (i+1) + "==============" + arryList.get(i).toString());
 			}
 		}
-		String chkVal = nativeQuery.getSingleResult().toString();
+		String chkVal = "";
 		
+		Object objChkVal = nativeQuery.getSingleResult();
+		
+		if(objChkVal != null) {
+			chkVal = objChkVal.toString();
+		}
+
 		em.close();
 		
 		return chkVal;
+	}
+	
+	public String getSlsDayYn(String kw) {
+	
+		String sql = " select sdi.sls_day_yn "
+				+ " from lz_market.sls_date_info sdi "
+				+ " where sdi.sls_date = ? ";
+		
+		Query nativeQuery = em.createNativeQuery(sql)
+							  .setParameter(1,kw);
+		
+		String slsDayYn = nativeQuery.getSingleResult().toString();
+		
+		em.close();
+		
+		return slsDayYn;
+	}
+	
+	public String getSlsDate(String kw, String standDayYn) {
+		String _standDayGb = ">"; 
+		if("Y".equals(standDayYn)) {
+			_standDayGb = ">=";
+		}
+		
+		String sql = " select sdi.sls_date "
+				+ " from lz_market.sls_date_info sdi "
+				+ " where sdi.sls_date " + _standDayGb + " ? "
+				+ " and sdi.sls_day_yn = 'Y' "
+				+ " limit 1 ";
+		
+		Query nativeQuery = em.createNativeQuery(sql)
+							  .setParameter(1,kw);
+		
+		String slsDayYn = nativeQuery.getSingleResult().toString();
+		
+		em.close();
+		
+		return slsDayYn;
 	}
 }

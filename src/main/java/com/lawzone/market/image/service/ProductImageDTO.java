@@ -15,14 +15,15 @@ import lombok.Setter;
 public class ProductImageDTO {
 	private Long imageFileNumber;
 	private String productId;
+	private String orderNo;
 	private String fileName;
 	private String originFileName;
 	private String thumbnailImagePath;
 	private String delegateThumbnailYn;
 	private String imageCfcd;
 	private Long fileSize;
-	private Date createDate;
-	private Date updateDate;
+	private Date createDatetime;
+	private Date updateDatetime;
 	
 	public ProductImageDTO() {
 		

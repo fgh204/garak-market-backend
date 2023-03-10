@@ -22,11 +22,10 @@ public class ProductOrderItemBookIdInfoId implements Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-
-	@Comment("운송장번호")
-	@Column(columnDefinition = "varchar (20)")
-	private String bookId;
-
+	@Comment("orderIdFromCorp")
+	@Column(columnDefinition = "varchar (100)")
+	private String orderIdFromCorp;
+	
 	@Comment("주문번호")
 	@Column(columnDefinition = "varchar (12)")
 	private String orderNo;

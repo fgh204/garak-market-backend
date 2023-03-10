@@ -12,8 +12,12 @@ public class ProductOrderItemDTO {
 	private String productId;
 	private BigDecimal productCount;
 	private BigDecimal productPrice;
+	private BigDecimal totalProductPrice;
+	private BigDecimal pointAmount;
 	private String orderItemStateCode;
 	private String orderItemDlngStateCode;
+	private String deliveryStateCode;
+	private String sellerId;
 	private Long cartNumber;
 	
 	public ProductOrderItemDTO() {

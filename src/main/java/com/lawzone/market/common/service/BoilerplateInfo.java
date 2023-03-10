@@ -28,14 +28,14 @@ public class BoilerplateInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "varchar(8)")
 	private String userId;
 	
-	@Comment("상용구명")
+	@Comment("상용구제목")
 	@NotNull
 	@Column(columnDefinition = "varchar(300)")
 	private String boilerplateName;
 	
 	@Comment("상용구내용")
 	@NotNull
-	@Column(columnDefinition = "text")
+	@Column(columnDefinition = "mediumtext")
 	private String boilerplateText;
 	
 	@Comment("사용여부")

@@ -25,15 +25,15 @@ import lombok.Getter;
 public abstract class BaseTimeEntity {
 	@CreatedDate
 	@Comment("등록일자")
-	@Column(name="create_date", length=20 ,updatable = false)
+	@Column(name="create_datetime", length=20 ,updatable = false)
 	@Convert(converter=BaseDateToStringConverter.class)
-    private String createDate;
+    private String createDatetime;
 	
     @LastModifiedDate
     @Comment("수정일자")
-    @Column(name="update_date", length=20)
+    @Column(name="update_datetime", length=20)
     @Convert(converter=BaseDateToStringConverter.class)
-    private String updateDate;
+    private String updateDatetime;
     
     @CreatedBy
 	@Comment("등록자")

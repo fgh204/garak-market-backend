@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.lawzone.market.aws.service.S3Upload;
+import com.lawzone.market.aws.service.S3Controller;
 import com.lawzone.market.file.FileDto;
 import com.lawzone.market.image.dao.ProductImageDAO;
 import com.lawzone.market.image.service.ProductImageDTO;
@@ -47,7 +47,7 @@ public class FileController {
 	private final ProductImageService productImageService;
 	private final ModelMapper modelMapper;
 	
-	private final S3Upload s3Upload;
+	private final S3Controller s3Upload;
 	
 	@ResponseBody
 	@PostMapping("/upload2")
@@ -101,9 +101,9 @@ public class FileController {
 				
 				File newFileName = new File(productImageDTO.getFileName());
 	
-				String _productId = productImageService.addProductImageInfo(productImageDTO);
+				Long _fileNumber = productImageService.addProductImageInfo(productImageDTO);
 				
-				if(_productId != null) {
+				if(_fileNumber != null) {
 					file.transferTo(newFileName);
 				}
 			}
@@ -138,7 +138,7 @@ public class FileController {
 				
 				list.add(productImageDTO);
 				
-				String imeageUrl = s3Upload.upload(file, _fileName);
+				String imeageUrl = s3Upload.upload(file, _fileName, "");
 				
 				//log.info("imeageUrl===" + imeageUrl);
 				
@@ -178,7 +178,7 @@ public class FileController {
 				
 				list.add(productImageDTO);
 				
-				String imeageUrl = s3Upload.upload(file, _fileName);
+				String imeageUrl = s3Upload.upload(file, _fileName, "");
 				
 				//log.info("imeageUrl===" + imeageUrl);
 				

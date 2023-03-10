@@ -13,7 +13,6 @@ import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Comment;
 
-import com.lawzone.market.answer.Answer;
 import com.lawzone.market.config.BaseTimeEntity;
 import com.lawzone.market.user.SiteUser;
 import com.lawzone.market.util.DateToStringConverter;
@@ -49,6 +48,18 @@ public class ProductOrderInfo extends BaseTimeEntity{
 	@NotNull
 	@Column(columnDefinition = "DECIMAL (15,2)")
 	private BigDecimal productTotalPrice;
+	
+	@Comment("주문금액")
+	@Column(columnDefinition = "DECIMAL (15,2)")
+	private BigDecimal paymentAmount;
+	
+	@Comment("배송금액")
+	@Column(columnDefinition = "DECIMAL (15,2)")
+	private BigDecimal deliveryAmount;
+	
+	@Comment("포인트금액")
+	@Column(columnDefinition = "DECIMAL (15,2)")
+	private BigDecimal pointAmount;
 	
 	@Comment("주문상태")
 	@Column(columnDefinition = "varchar(3)")

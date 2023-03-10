@@ -21,6 +21,13 @@ public class CartInfoListDTO {
 	private String thumbnailImagePath;
 	private String shopName;
 	private String sellerName;
+	private String todayDeliveryStandardTime;
+	private String todayDeliveryYn;
+	private String slsDate;
+	private BigInteger productStock;
+	private String productCategoryCode;
+	private String productCategorySmallName;
+	private String sellerId;
 	
 	public CartInfoListDTO() {
 		

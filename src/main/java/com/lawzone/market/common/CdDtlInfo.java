@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 public class CdDtlInfo extends BaseTimeEntity{
 	
 	@EmbeddedId
-	private CdDtlInfoId cdDtlInfoId;
+	private CdDtlInfoId id;
 	
 	@Comment("상세코드명")
 	@Column(columnDefinition = "varchar (500)")

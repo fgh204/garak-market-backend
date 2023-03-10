@@ -1,13 +1,19 @@
 package com.lawzone.market.payment.controller;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,20 +23,30 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.lawzone.market.config.SessionBean;
+import com.lawzone.market.externalLink.util.AppPush;
+import com.lawzone.market.externalLink.util.AppPushDTO;
 import com.lawzone.market.externalLink.util.BootpayUtils;
 import com.lawzone.market.order.service.CustOrderInfoDTO;
 import com.lawzone.market.order.service.CustOrderItemListDTO;
+import com.lawzone.market.order.service.OrderPaymentDTO;
+import com.lawzone.market.order.service.OrderPaymentInfo;
 import com.lawzone.market.order.service.ProductOrderInfo;
 import com.lawzone.market.order.service.ProductOrderItemInfo;
 import com.lawzone.market.order.service.ProductOrderService;
 import com.lawzone.market.payment.service.PaymentCancleDTO;
 import com.lawzone.market.payment.service.PaymentDTO;
 import com.lawzone.market.payment.service.PaymentService;
+import com.lawzone.market.payment.service.PushIdDTO;
+import com.lawzone.market.payment.service.TempPaymentInfo;
+import com.lawzone.market.payment.service.TempPaymentInfoDTO;
+import com.lawzone.market.point.service.PointInfoCDTO;
+import com.lawzone.market.point.service.PointService;
 import com.lawzone.market.product.service.ProductInfo;
 import com.lawzone.market.product.service.ProductService;
 import com.lawzone.market.telmsgLog.service.TelmsgLogService;
 import com.lawzone.market.util.JsonUtils;
 import com.lawzone.market.util.ParameterUtils;
+import com.lawzone.market.util.SlackWebhook;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,26 +61,50 @@ public class PaymentController {
 	private final ProductService productService;
 	private final PaymentService paymentService;
 	private final TelmsgLogService telmsgLogService;
+	private final ParameterUtils parameterUtils;
+	private final SlackWebhook slackWebhook;
+	private final AppPush appPush;
+	private final PointService pointService;
+	private final ModelMapper modelMapper;
 	
 	@Resource
 	private SessionBean sessionBean;
 	
 	@ResponseBody
+	@PostMapping("/redirectConfirm")
+	public String redirectConfirm(HttpServletRequest request,  HttpServletResponse response) throws IOException {
+		Map map = parameterUtils.convertMap(request);
+		Map paymentMap = new HashMap<>();
+		Map rtnMap = new HashMap<>();
+		
+		paymentMap.put("dataset", map);
+		
+		paymentConfirm(paymentMap);
+		//response.sendRedirect("http://localhost:4200/payment");
+		return JsonUtils.returnValue("0000", "취소가능한 주문이 없습니다.", rtnMap).toString();
+	}
+	
+	@ResponseBody
 	@PostMapping("/confirm")
 	public String paymentConfirm(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
-		this.telmsgLogService.addTelmsgLog("01", "00", "1", map);
+		return paymentConfirm(map);
+	}
+	public String paymentConfirm(Map map) throws JsonMappingException, JsonProcessingException {
+		this.telmsgLogService.addTelmsgLog("01", "00", "1", map,"");
 		Map rtnMap = new HashMap<>();
 		
 		Map paymentMap = new HashMap<>();
 		
 		paymentMap = (Map) map.get("dataset");
-		
+		String userId = sessionBean.getUserId();
 		String _event = (String) paymentMap.get("event");
 		String _receiptId = (String) paymentMap.get("receipt_id");
 		String _orderNo = (String) paymentMap.get("order_id");
 		String orderDate = "";
 		BigDecimal paymentPrice = new BigDecimal("0");
 		BigDecimal orderPrice = new BigDecimal("0");
+		BigDecimal pointAmount = new BigDecimal("0");
+		BigDecimal cancelledPointAmount = new BigDecimal("0");
 		BigDecimal paymentOrderStock = new BigDecimal("0");
 		
 		
@@ -72,9 +112,9 @@ public class PaymentController {
 		Map paymentData = new HashMap<>();
 		Map receiptCancleData = new HashMap<>();
 		
-		this.telmsgLogService.addTelmsgLog("01", "01", "1", map);
+		this.telmsgLogService.addTelmsgLog("01", "01", "1", map,"");
 		receiptData = this.bootpayUtils.getBootpayReceipt(_receiptId);
-		this.telmsgLogService.addTelmsgLog("01", "01", "2", receiptData);
+		this.telmsgLogService.addTelmsgLog("01", "01", "2", receiptData,"");
 		
 		if(receiptData.get("error_code") != null) {
 			//log.info("receiptData================" + receiptData);
@@ -84,12 +124,21 @@ public class PaymentController {
 		paymentPrice = new BigDecimal(receiptData.get("price").toString());
 		
 		//주문정보
-		List<CustOrderInfoDTO> custOrderInfo = this.productOrderService.getCustOrderInfoByOrderNo(_orderNo, "001");
+		List<CustOrderInfoDTO> custOrderInfo = this.productOrderService.getCustOrderInfoByOrderNo(_orderNo, "001", "", "Y");
 		orderPrice = new BigDecimal(custOrderInfo.get(0).getTotalPrice().toString());
+		pointAmount = new BigDecimal(custOrderInfo.get(0).getPointAmount().toString());
 		//orderDate = custOrderInfo.get(0).getTotalPrice().toString();
 		
+		PointInfoCDTO pointInfoCDTO = new PointInfoCDTO();
+		pointInfoCDTO.setUserId(userId);
+		BigDecimal point = this.pointService.getPointAmount(pointInfoCDTO);
+		
+		if(point.compareTo(pointAmount) < 0) {
+			return JsonUtils.returnValue("0001", "포인트 금액이 일치하지 않습니다.", rtnMap).toString();
+		}
+		
 		//주문항목정보
-		List<CustOrderItemListDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(_orderNo, "001");
+		List<CustOrderItemListDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(_orderNo, "001", "", "N");
 		
 		int cnt = custOrderItemList.size();
 		String _productId = "";
@@ -110,9 +159,9 @@ public class PaymentController {
 		}
 		
 		if(paymentPrice.compareTo(orderPrice) == 0 && "Y".equals(paymentConfirm)) {
-			this.telmsgLogService.addTelmsgLog("01", "04", "1", map);
+			this.telmsgLogService.addTelmsgLog("01", "04", "1", map,"");
 			paymentData = this.bootpayUtils.getBootpayConfirm(_receiptId);
-			this.telmsgLogService.addTelmsgLog("01", "04", "2", paymentData);
+			this.telmsgLogService.addTelmsgLog("01", "04", "2", paymentData,"");
 			if(paymentData.get("error_code") == null) {
 				try {
 					PaymentDTO paymentDTO = new PaymentDTO();
@@ -121,6 +170,7 @@ public class PaymentController {
 					String _order_no = (String) paymentData.get("order_id");
 					String _order_name = (String) paymentData.get("order_name");
 					String _payment_gb = (String) paymentData.get("method_origin");
+					String _payment_name = (String) paymentData.get("method");
 					String _method_symbol = (String) paymentData.get("method_symbol");
 					String _payment_dttm = (String) paymentData.get("purchased_at");
 					String _payment_req_dttm = (String) paymentData.get("requested_at");
@@ -143,7 +193,7 @@ public class PaymentController {
 					Map tidMap = new HashMap<>();
 					tidMap = (Map) paymentData.get(_method_symbol + "_data");
 					_pg_id = (String) tidMap.get("tid");
-					if("card".equals(_payment_gb)) {
+					if("card".equals(_method_symbol)) {
 						Map cardData = new HashMap<>();
 						
 						cardData = (Map) paymentData.get("card_data");
@@ -170,6 +220,8 @@ public class PaymentController {
 					paymentDTO.setCancelledPaymentDttm(_cancelled_payment_dttm);
 					paymentDTO.setOrderDate("now()");
 					paymentDTO.setPaymentAmount(_payment_amount);
+					paymentDTO.setPointAmount(pointAmount);
+					paymentDTO.setCancelledPointAmount(cancelledPointAmount);
 					paymentDTO.setPgName(_pg_name);
 					paymentDTO.setReceiptUrl(_receipt_url);
 					paymentDTO.setApproveNo(_approve_no);
@@ -179,12 +231,57 @@ public class PaymentController {
 					paymentDTO.setPgPayCoCd(_pg_pay_co_cd);
 					paymentDTO.setPgPayCoNm(_pg_pay_co_nm);
 					paymentDTO.setCardQuota(_card_quota);
+					paymentDTO.setPaymentName(_payment_name);
 					
 					//결제처리
-					this.paymentService.addPaymentInfo(paymentDTO);
+					this.paymentService.addPaymentInfo(paymentDTO, userId);
 					//this.productOrderService.modifyProductOrderInfoStat("003",_orderNo);
 					//this.productOrderService.modifyProductOrderItemInfoStat("003",_orderNo);
 					//this.productService.modifyProductStock(_orderNo);
+					
+					StringBuilder slackMsg = new StringBuilder();
+					slackMsg.append("주문번호 : ")
+					.append(_order_no)
+					.append("\n상품명 : ")
+					.append(_order_name)
+					.append("\n결제금액 : ")
+					.append(_payment_amount)
+					.append("\n구매자 : ")
+					.append(sessionBean.getUserNm())
+					.append("\n결제방법 : ")
+					.append(_payment_gb)
+					.append("\n결제수단 : ")
+					.append(_payment_name);
+					
+					//slackWebhook.
+					this.slackWebhook.postSlackMessage(slackMsg.toString(), "01");
+					
+					List<PushIdDTO> pushIdList = this.paymentService.getSellerPushId(_order_no);
+					
+					AppPushDTO appPushDTO = new AppPushDTO();
+					
+					appPushDTO.setAllYn("N");
+					appPushDTO.setTitle("[도매도] 신규주문 알림!");
+					appPushDTO.setUrl("");
+					
+					String sellerId = "";
+					
+					ArrayList<String> push = new ArrayList<>();
+					for(int i = 0; i < pushIdList.size(); i++) {
+						push = new ArrayList<>();
+						sellerId = pushIdList.get(i).getUserId();
+						if("00000069".equals(sellerId)) {
+							push.add(0, "e01fc4e3-92bb-486c-aa8c-f7c88d4514b9");
+						}else if("00000070".equals(sellerId)) {
+							push.add(0, "ae63fb01-b52c-459a-b51b-509ecd93f22a");
+						}else if("00000072".equals(sellerId)) {
+							push.add(0, "ace1539a-3b58-4fe4-814a-3d1c76eeecb3");
+						} 
+						appPushDTO.setContent("상품 : " + pushIdList.get(i).getProductName());
+						appPushDTO.setPushList(push);
+						
+						this.appPush.getAppPush(appPushDTO);
+					}
 				}catch (Exception e) {
 					receiptCancleData = this.bootpayUtils.getBootpayReceiptCancel(_receiptId, "관리자", "승인오류", null);
 					//log.info("receiptCancleData========= " + receiptCancleData);
@@ -196,19 +293,21 @@ public class PaymentController {
 		}
 		rtnMap.put("orderNo", _orderNo);
 		
-		return JsonUtils.returnValue("0000", "결제가 완료되었습니다", rtnMap).toString();
+		return JsonUtils.returnValue("0000", "결제가 완료되었습니다", rtnMap).toString();	
 	}
 	
 	@ResponseBody
 	@PostMapping("/cancel")
 	public String paymentCancle(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
-		this.telmsgLogService.addTelmsgLog("01", "00", "1", map);
+		this.telmsgLogService.addTelmsgLog("01", "00", "1", map,"");
 		Map rtnMap = new HashMap<>();
 		String rtnMsg = "";
 		PaymentCancleDTO paymentCancleDTO = new PaymentCancleDTO();
 		paymentCancleDTO = (PaymentCancleDTO) ParameterUtils.setDto(map, paymentCancleDTO, "insert", sessionBean);
 		
 		String _orderNo = paymentCancleDTO.getOrderNo();
+		String userId = sessionBean.getUserId();
+		String userNm = sessionBean.getUserNm();
 		String _productId = paymentCancleDTO.getProductId();
 		String _receiptId = "";
 		String _allCancleYn = "N";
@@ -217,14 +316,26 @@ public class PaymentController {
 		BigDecimal _orderTotalAmt = new BigDecimal("0");
 		BigDecimal _paymentAmount = new BigDecimal("0");
 		BigDecimal _cancelledPaymentAmount = new BigDecimal("0");
+		BigDecimal _pointAmount = new BigDecimal("0");
+		BigDecimal _pointAmt = new BigDecimal("0");
+		BigDecimal _cancelledPointAmount = new BigDecimal("0");
+		BigDecimal _deliveryAmount = new BigDecimal("0");
+		BigDecimal _cancelledPointAmt = new BigDecimal("0");
+		BigDecimal _addPointAmt = new BigDecimal("0");
 		BigDecimal _paymentAmt = new BigDecimal("0");
+		BigDecimal _totalPaymentAmt = new BigDecimal("0");
 		BigDecimal _amt = new BigDecimal("0");
 		Double _cancleAmt = 0.0;
+		
+		BigDecimal _orderAmount = new BigDecimal("0");
+		BigDecimal _cancelledOrderAmount = new BigDecimal("0");
+		BigDecimal _orderDeliveryAmount = new BigDecimal("0");
 		
 		//주문상태확인
 		List<ProductOrderItemInfo> productOrderItemInfo = this.productOrderService.getProductOrderItemInfoByOrderNoAndProductId(_orderNo, _productId);
 		String _orderItemStateCode = productOrderItemInfo.get(0).getOrderItemStateCode();
 		String _orderItemDlngStateCode = productOrderItemInfo.get(0).getOrderItemDlngStateCode();
+		String _sellerId = productOrderItemInfo.get(0).getSellerId();
 		
 		if("002".equals(_orderItemStateCode)) {
 			return JsonUtils.returnValue("0000", "이미 취소된 주문입니다.", rtnMap).toString();
@@ -234,27 +345,73 @@ public class PaymentController {
 				List<PaymentCancleDTO> _paymentCancleList = this.paymentService.getPaymentCancleInfo(paymentCancleDTO);
 				
 				if(_paymentCancleList.size() > 0) {
+					Optional<OrderPaymentInfo> orderPaymentInfo = this.productOrderService.getOrderPaymentInfo(_orderNo, _sellerId);
+					
 					_productTotalAmt = _paymentCancleList.get(0).getProductTotalAmt();
 					_orderTotalAmt = _paymentCancleList.get(0).getOrderTotalAmt();
 					_receiptId = _paymentCancleList.get(0).getReceiptId();
 					_paymentAmount = _paymentCancleList.get(0).getPaymentAmount();
+					_deliveryAmount = _paymentCancleList.get(0).getDeliveryAmount();
 					_cancelledPaymentAmount = _paymentCancleList.get(0).getCancelledPaymentAmount();
+					_pointAmount = _paymentCancleList.get(0).getPointAmount();
+					_cancelledPointAmt = _paymentCancleList.get(0).getCancelledPointAmount();
+					_cancelledPointAmount = _paymentCancleList.get(0).getCancelledPointAmount();
 					_paymentAmt = _paymentAmount.subtract(_cancelledPaymentAmount);
+					_pointAmt = _pointAmount.subtract(_cancelledPointAmount);
 					paymentCancleDTO.setReceiptId(_receiptId);
 					
+					_orderAmount = new BigDecimal("0");
+					_cancelledOrderAmount = new BigDecimal("0");
+					_orderDeliveryAmount = new BigDecimal("0");
+					
+					_totalPaymentAmt = _paymentAmt.add(_pointAmt);
 					//취소처리
 					_amt = _productTotalAmt;
 					if(_productId == null || "".equals(_productId)) {
 						_amt = _orderTotalAmt;
 					}
 					
-					if(_paymentAmt.compareTo(_amt) >= 0) {
-						_cancleAmt = _amt.doubleValue();
-						if(_paymentAmt.compareTo(_amt) == 0) {
+					_orderAmount = orderPaymentInfo.get().getOrderAmount();
+					_cancelledOrderAmount = orderPaymentInfo.get().getCancelledOrderAmount();
+					_orderDeliveryAmount = orderPaymentInfo.get().getDeliveryAmount();
+					
+					_orderAmount = _orderAmount.subtract(_cancelledOrderAmount);
+					
+					_cancelledOrderAmount = _cancelledOrderAmount.add(_amt);
+					
+					if(_amt.compareTo(_orderAmount) == 0) {
+						_amt = _amt.add(_orderDeliveryAmount);
+					} 
+					
+					if(_totalPaymentAmt.compareTo(_amt) >= 0) {
+						if(_totalPaymentAmt.compareTo(_amt) == 0) {
+							_cancleAmt = _paymentAmt.doubleValue();
+							_cancelledPointAmount = _cancelledPointAmount.add(_pointAmt);
+							
 							_allCancleYn = "Y";
+						} else {
+							if(_paymentAmt.compareTo(_amt) >= 0) {
+								_cancleAmt = _amt.doubleValue();
+							} else {
+								_cancleAmt = _paymentAmt.doubleValue();
+								_cancelledPointAmount = _cancelledPointAmount.add(_amt.subtract(_paymentAmt));
+							}
 						}
-						this.telmsgLogService.addTelmsgLog("01", "90", "1", map);
-						_rtnMsg = this.paymentService.paymentCancle(paymentCancleDTO, _allCancleYn, _cancleAmt, _orderItemDlngStateCode);
+						_addPointAmt = _cancelledPointAmount.subtract(_cancelledPointAmt);
+						//if(_paymentAmt.compareTo(_amt) == 0) {
+						//	_allCancleYn = "Y";
+						//}
+						this.telmsgLogService.addTelmsgLog("01", "90", "1", map,"");
+						
+						OrderPaymentDTO orderPaymentDTO = new OrderPaymentDTO();
+						
+						orderPaymentDTO.setOrderNo(_orderNo);
+						orderPaymentDTO.setSellerId(_sellerId);
+						orderPaymentDTO.setCancelledOrderAmount(_cancelledOrderAmount);
+						
+						_rtnMsg = this.paymentService.paymentCancle(paymentCancleDTO, orderPaymentDTO,_allCancleYn, _cancleAmt,_cancelledPointAmount
+																	, _addPointAmt, _orderItemDlngStateCode, userId, userNm);
+						this.telmsgLogService.addTelmsgLog("01", "90", "2", map,"");
 					}else {
 						return JsonUtils.returnValue("9999", "취소금액불일치", rtnMap).toString();
 					}
@@ -267,7 +424,8 @@ public class PaymentController {
 				}else {
 					return JsonUtils.returnValue("9999", "결제취소건이 없습니다.", rtnMap).toString();
 				}
-			}else if("200".equals(_orderItemDlngStateCode) || "300".equals(_orderItemDlngStateCode)) {
+			}else if("200".equals(_orderItemDlngStateCode) 
+					|| "300".equals(_orderItemDlngStateCode)) {
 				//취소요청만 가능
 				this.productOrderService.modifyOrderItemStatInfo(_orderNo, _productId, "800");
 				return JsonUtils.returnValue("0000", "취소요청 하였습니다.", rtnMap).toString();
@@ -276,5 +434,39 @@ public class PaymentController {
 				return JsonUtils.returnValue("0000", "취소가능한 주문이 없습니다.", rtnMap).toString();
 			}
 		}
+	}
+	
+	@ResponseBody
+	@PostMapping("/addTempPaymentInfo")
+	public String addTempPaymentInfo(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		Map rtnMap = new HashMap<>();
+		
+		TempPaymentInfoDTO tempPaymentInfoDTO = new TempPaymentInfoDTO();
+		tempPaymentInfoDTO = (TempPaymentInfoDTO) ParameterUtils.setDto(map, tempPaymentInfoDTO, "insert", sessionBean);
+		
+		this.paymentService.addTempPaymentInfo(tempPaymentInfoDTO);
+		
+		return JsonUtils.returnValue("0000", "저장 되었습니다.", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/tempPaymentInfo")
+	public String getTempPaymentInfo(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		Map rtnMap = new HashMap<>();
+		
+		TempPaymentInfoDTO tempPaymentInfoDTO = new TempPaymentInfoDTO();
+		tempPaymentInfoDTO = (TempPaymentInfoDTO) ParameterUtils.setDto(map, tempPaymentInfoDTO, "insert", sessionBean);
+		
+		Optional<TempPaymentInfo> tempPaymentInfo = this.paymentService.getTempPaymentInfo(tempPaymentInfoDTO);
+		
+		if(tempPaymentInfo.isPresent()) {
+			rtnMap.put("tempPaymentInfo", tempPaymentInfo.get());
+		}else {
+			rtnMap.put("tempPaymentInfo", "");
+		}
+		
+		return JsonUtils.returnValue("0000", "조회 되었습니다.", rtnMap).toString();
 	}
 }

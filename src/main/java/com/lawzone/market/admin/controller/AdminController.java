@@ -63,7 +63,7 @@ public class AdminController {
     		, @RequestParam(value = "endDate", defaultValue = "") String endDate
     		, @RequestParam(value = "sttatCd", defaultValue = "") String sttatCd
     		) {
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", null);
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", null);
     	//log.info("page:{}, kw:{}", page, kw,beginDate, endDate, sttatCd);
     	
     	//Page<AdminProductOrderListDTO> paging = this.productOrderService.getList(page, kw);
@@ -110,7 +110,7 @@ public class AdminController {
 	
 	@GetMapping("/login")
     public String login(UserLoginForm userLoginForm, ServletRequest request, HttpServletResponse response) {
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", null);
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", null);
 		String token = jwtTokenUtil.resolveToken((HttpServletRequest) request);
 		if (token != null && jwtTokenUtil.validateToken(token)) {
 			return "redirect:/admin/order/list";
@@ -126,7 +126,7 @@ public class AdminController {
 	
 	@PostMapping("/login")
     public String userLogin(@Valid UserLoginForm userLoginForm, BindingResult bindingResult, HttpServletResponse response) {
-		this.telmsgLogService.addTelmsgLog("00", "00", "1", null);
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", null);
 		System.out.println("UserCreateForm" + userLoginForm);
 		System.out.println("UserCreateForm" + userLoginForm.getPassword());
 		
@@ -139,7 +139,7 @@ public class AdminController {
 			bindingResult.rejectValue("password", "PASSWORD_MISMATCH", "비밀번호가 일치하지 않습니다.");
 			return "th/login_form";
 		}else {
-			Cookie myCookie = new Cookie("Authorization", jwtTokenUtil.generateToken(userInfo.get()));
+			Cookie myCookie = new Cookie("Authorization", jwtTokenUtil.generateToken(userInfo.get(), null));
 			myCookie.setPath("/"); // 모든 경로에서 접근 가능 하도록 설정
 			response.addCookie(myCookie);
 			return "redirect:/admin/order/list";

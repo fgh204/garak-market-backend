@@ -45,6 +45,16 @@ public class ProductOrderItemInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "DECIMAL (15,2)")
 	private BigDecimal productPrice;
 	
+	@Comment("총상품가격")
+	@NotNull
+	@Column(columnDefinition = "DECIMAL (15,2)")
+	private BigDecimal totalProductPrice;
+	
+	@Comment("포인트금액")
+	@NotNull
+	@Column(columnDefinition = "DECIMAL (15,2)")
+	private BigDecimal pointAmount;
+	
 	@Comment("주문항목상태")
 	@Column(columnDefinition = "varchar(3)")
 	private String orderItemStateCode;
@@ -55,4 +65,12 @@ public class ProductOrderItemInfo extends BaseTimeEntity{
 	
 	@Comment("장바구니번호")
 	private Long cartNumber;
+	
+	@Comment("배송상태코드")
+	@Column(columnDefinition = "varchar(3)")
+	private String deliveryStateCode;
+	
+	@Comment("판매자ID")
+	@Column(columnDefinition = "varchar(8)")
+	private String sellerId;
 }

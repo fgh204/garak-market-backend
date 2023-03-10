@@ -18,6 +18,8 @@ public class CustOrderItemListDTO {
 	private String orderItemStateName;
 	private BigDecimal productCount;
 	private BigDecimal productPrice;
+	private BigDecimal pointAmount;
+	private BigDecimal totalProductPrice;
 	private String thumbnailImagePath;
 	private String productId;
 	private String orderItemDlngStateCode;

@@ -17,6 +17,7 @@ public class MarketUserDTO {
 	private String email;
 	private String nickname;
 	private String userId;
+	private String pushId;
 	
 	public MarketUserDTO() {
 		

@@ -17,6 +17,9 @@ public class MarketUserInfoDTO {
 	private String email;
 	private String nickname;
 	private String profileImagesPath;
+	private String backgroundImagePath;
+	private String introductionText;
+	private String socialName;
 	
 	public MarketUserInfoDTO() {
 		

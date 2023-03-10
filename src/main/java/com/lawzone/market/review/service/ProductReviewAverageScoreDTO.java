@@ -17,7 +17,7 @@ public class ProductReviewAverageScoreDTO {
 	private BigDecimal freshAverageScore;
 	private BigDecimal tasteAverageScore;
 	private BigDecimal packagingAverageScore;
-	private BigDecimal shippingAverageScore;
+	private BigDecimal deliveryAverageScore;
 	private BigInteger sellerReviewCount;
 	
 	public ProductReviewAverageScoreDTO() {

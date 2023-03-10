@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.Comment;
 
 import com.lawzone.market.config.BaseTimeEntity;
+import com.lawzone.market.util.BaseDateToStringConverter;
 import com.lawzone.market.util.DateToStringConverter;
 
 import lombok.Data;
@@ -38,13 +39,17 @@ public class ProductInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "DECIMAL (5)")
 	private BigDecimal productStock;
 	
+	@Comment("상품무게")
+	@Column(columnDefinition = "DECIMAL(7)")
+	private BigDecimal productWeight;
+	
 	@Comment("상품설명")
 	@Column(columnDefinition = "TEXT")
 	private String productDesc;
 	
 	@Comment("상품카테고리코드")
 	@Column(columnDefinition = "CHAR(9)")
-	private String productCategoriesCode;
+	private String productCategoryCode;
 	
 	@Comment("판매시작일")
 	@Column(name="begin_date", length=20)
@@ -65,6 +70,9 @@ public class ProductInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "varchar(8)")
 	private String sellerId;
 	
-	//@OneToMany(fetch = FetchType.LAZY, mappedBy = "productId")
-    //private List<ProductImageInfo> productImageInfo;
+	@Comment("오늘배송기준시간")
+    //@Column(name="today_delivery_standard_time", length=20)
+    //@Convert(converter=BaseDateToStringConverter.class)
+	@Column(columnDefinition = "varchar(4)")
+    private String todayDeliveryStandardTime;
 }

@@ -15,7 +15,9 @@ public class PaymentInfoDTO {
 	private String pgPayCoNm;
 	private String cardQuota;
 	private BigInteger paymentAmount;
+	private BigInteger deliveryAmount;
 	private BigInteger cancelledPaymentAmount;
+	private String paymentMethod;
 	
 	public PaymentInfoDTO() {
 		

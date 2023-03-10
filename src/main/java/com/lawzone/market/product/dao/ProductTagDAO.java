@@ -9,5 +9,5 @@ import com.lawzone.market.product.service.ProductTagInfo;
 import com.lawzone.market.product.service.ProductTagInfoDTO;
 
 public interface ProductTagDAO extends JpaRepository<ProductTagInfo, String>{
-	List<ProductTagInfoDTO> findByproductTagInfoIdProductId(String productId);
+	List<ProductTagInfo> findByproductTagInfoIdProductId(String productId);
 }

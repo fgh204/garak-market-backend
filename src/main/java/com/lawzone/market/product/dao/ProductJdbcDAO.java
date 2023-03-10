@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProductJdbcDAO {
 	public String pageListQuery(String pageCnt, String maxPageCnt
-			, String cateCodeYn , String productIdYn , String productNameYn, String sellerYn) {
+			, String cateCodeYn , String productIdYn , String productNameYn, String sellerYn, String favoriteYn, String sellerId) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select")
@@ -20,17 +20,28 @@ public class ProductJdbcDAO {
 			  .append("\n where poii.product_id = pi2.product_id ")
 			  .append("\n and poii.order_item_state_code = '003'),0) as cumulative_sales_count ")
 			  .append("\n , si.shop_name as shopName ")
+			  .append("\n , pi2.today_delivery_standard_time as today_delivery_standard_time ")
+			  .append("\n , pi2.product_category_code as productCategoryCode ")
+			  .append("\n , pci.product_category_small_name as productCategorySmallName ")
 			  .append("\n from lz_market.product_info pi2")
 			  .append("\n , lz_market.product_image_info pii")
 			  .append("\n , lz_market.seller_info si")
-			  .append("\n where pi2.product_id = pii.product_id")
+			  .append("\n , lz_market.product_category_info pci");
+			  if("Y".equals(favoriteYn)) {
+				  _query.append("\n 	, lz_market.seller_favorite_info sfi");
+			  }
+			  _query.append("\n where pi2.product_id = pii.product_id")
 			  .append("\n and pi2.seller_id = si.seller_id ")
-			  .append("\n and pii.delegate_thumbnail_yn = 'Y' ")
+			  .append("\n and pi2.product_category_code = pci.product_category_code  ");
+			  if("Y".equals(favoriteYn)) {
+					_query.append("\n and si.seller_id = sfi.seller_id ");
+				}
+			  _query.append("\n and pii.delegate_thumbnail_yn = 'Y' ")
 			  .append("\n and pii.image_cfcd = '01' ")
 			  .append("\n and pi2.use_yn = 'Y'");
 		
 		if("Y".equals(cateCodeYn)) {
-			_query.append("\n and pi2.product_categories_code like concat('%',?,'%')");
+			_query.append("\n and pi2.product_category_code like concat('%',?,'%')");
 		}
 		
 		if("Y".equals(productIdYn)) {
@@ -43,14 +54,23 @@ public class ProductJdbcDAO {
 		
 		if("Y".equals(sellerYn)) {
 			_query.append("\n and pi2.seller_id = ?");
+		} else {
+			if(!("".equals(sellerId) || sellerId == null)) {
+				_query.append("\n and pi2.seller_id = ?");
+			}
 		}
+		
+		if("Y".equals(favoriteYn)) {
+			_query.append("\n and sfi.user_id = ? ");
+		}
+		
 		_query.append("\n order by pi2.product_id DESC")
 			  .append("\n limit " + pageCnt + ", " + maxPageCnt);
 		return _query.toString();
 	}
 	
 	public String pageQuery(String maxPageCnt
-			, String cateCodeYn , String productIdYn , String productNameYn, String sellerYn) {
+			, String cateCodeYn , String productIdYn , String productNameYn, String sellerYn, String favoriteYn, String sellerId) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select")
@@ -59,13 +79,24 @@ public class ProductJdbcDAO {
 			  .append("\n from lz_market.product_info pi2")
 			  .append("\n 	, lz_market.product_image_info pii")
 			  .append("\n 	, lz_market.seller_info si")
-			  .append("\n where pi2.product_id = pii.product_id")
+			  .append("\n 	, lz_market.product_category_info pci ");
+			  if("Y".equals(favoriteYn)) {
+				  _query.append("\n 	, lz_market.seller_favorite_info sfi");
+			  }
+			  
+		_query.append("\n where pi2.product_id = pii.product_id")
 			  .append("\n and pi2.seller_id = si.seller_id ")
-			  .append("\n and pii.delegate_thumbnail_yn = 'Y'")
+			  .append("\n and pi2.product_category_code = pci.product_category_code ");
+		
+		if("Y".equals(favoriteYn)) {
+			  _query.append("\n and si.seller_id = sfi.seller_id");
+		  }
+		
+		_query.append("\n and pii.delegate_thumbnail_yn = 'Y'")
 			  .append("\n and pii.image_cfcd = '01'")
 			  .append("\n and pi2.use_yn = 'Y'");
 		if("Y".equals(cateCodeYn)) {
-			_query.append("\n and pi2.product_categories_code = ?");
+			_query.append("\n and pi2.product_category_code = ?");
 		}
 		if("Y".equals(productIdYn)) {
 			_query.append("\n and pi2.product_id = ?");
@@ -76,6 +107,14 @@ public class ProductJdbcDAO {
 		}
 		if("Y".equals(sellerYn)) {
 			_query.append("\n and pi2.seller_id = ?");
+		} else {
+			if(!("".equals(sellerId) || sellerId == null)) {
+				_query.append("\n and pi2.seller_id = ?");
+			}
+		}
+		
+		if("Y".equals(favoriteYn)) {
+			_query.append("\n and sfi.user_id = ? ");
 		}
 		return _query.toString();
 	}
@@ -110,10 +149,10 @@ public class ProductJdbcDAO {
 				.append("\n 	, ceil(pi2.product_stock) as product_stock ")
 				.append("\n 	, pi2.product_desc as product_desc ")
 				.append("\n 	, pi2.use_yn as use_yn ")
-				.append("\n 	, pi2.product_categories_code as product_categories_code ")
+				.append("\n 	, pi2.product_category_code as product_category_code ")
 				.append("\n 	, pi2.seller_id as seller_id ")
-				.append("\n 	, DATE_FORMAT(pi2.create_date, '%Y-%m-%d %H:%i:%s') as create_date ")
-				.append("\n 	, DATE_FORMAT(pi2.update_date, '%Y-%m-%d %H:%i:%s') as update_date ")
+				.append("\n 	, DATE_FORMAT(pi2.create_datetime, '%Y-%m-%d %H:%i:%s') as create_datetime ")
+				.append("\n 	, DATE_FORMAT(pi2.update_datetime, '%Y-%m-%d %H:%i:%s') as update_datetime ")
 				.append("\n 	, si.shop_name as shop_name ")
 				.append("\n 	, ui.user_name as user_name ")
 				.append("\n 	, (select pii.thumbnail_image_path  from lz_market.product_image_info pii ")
@@ -121,12 +160,44 @@ public class ProductJdbcDAO {
 				.append("\n 	and pii.delegate_thumbnail_yn = 'Y' ")
 				.append("\n 	and pii.image_cfcd = '01' ")
 				.append("\n 	limit 1) as thumbnail_image_path ")
+				.append("\n 	, ui.profile_images_path as profile_images_path ")
+				.append("\n 	, pi2.today_delivery_standard_time as today_delivery_standard_time ")
+				.append("\n 	, '' as todayDeliveryYn ")
+				.append("\n 	, '' as slsDate ")
+				.append("\n 	, pi2.product_weight ")
 				.append("\n FROM lz_market.product_info pi2 ")
 				.append("\n 	, lz_market.seller_info si ")
 				.append("\n 	, lz_market.user_info ui ")
 				.append("\n WHERE pi2.seller_id = si.seller_id ")
 				.append("\n and pi2.seller_id = ui.user_id ")
 				.append("\n and pi2.product_id= ? ");
+		
+		return _query.toString();
+	}
+	
+	public String productInfoCopyOrigin() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n insert into lz_market.product_info(product_id, begin_date, end_date, product_name, product_price, product_stock ")
+				.append("\n 	, product_desc, use_yn, product_category_code, seller_id,today_delivery_standard_time, create_datetime, update_datetime, create_user, update_user) ")
+				.append("\n select ")
+				.append("\n 	? ")
+				.append("\n 	, b.begin_date ")
+				.append("\n 	, b.end_date ")
+				.append("\n 	, b.product_name ")
+				.append("\n 	, b.product_price ")
+				.append("\n 	, b.product_stock ")
+				.append("\n 	, b.product_desc ")
+				.append("\n 	, b.use_yn ")
+				.append("\n 	, b.product_category_code ")
+				.append("\n 	, b.seller_id ")
+				.append("\n 	, b.today_delivery_standard_time ")
+				.append("\n 	, now() ")
+				.append("\n 	, now() ")
+				.append("\n 	, ? ")
+				.append("\n 	, ? ")
+				.append("\n from lz_market.product_info b ")
+				.append("\n where b.product_id = ? ");
 		
 		return _query.toString();
 	}

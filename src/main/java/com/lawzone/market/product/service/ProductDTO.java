@@ -17,10 +17,13 @@ public class ProductDTO {
 	private BigDecimal productPrice;
 	private BigDecimal productStock;
 	private String productDesc;
-	private String productCategoriesCode;
+	private String productCategoryCode;
 	private String beginDate;
 	private String page;
 	private String endDate;
 	private String useYn;
 	private String sellerId;
+	private String originalProductId;
+	private String todayDeliveryStandardTime;
+	private BigDecimal productWeight;
 }

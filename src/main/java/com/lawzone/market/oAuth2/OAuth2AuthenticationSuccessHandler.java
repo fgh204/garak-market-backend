@@ -78,7 +78,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 	                .secure(true)
 	                .httpOnly(true)
 	                .sameSite("None")
-	                .domain("domaado.me")
 	                .build();
 		}
 		

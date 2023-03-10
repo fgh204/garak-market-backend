@@ -23,13 +23,18 @@ public class ProductInfoDTO {
 	private BigInteger productStock;
 	private String productDesc;
 	private Character useYn;
-	private String productCategoriesCode;
+	private String productCategoryCode;
 	private String sellerId;
-	private String createDate;
-	private String updateDate;
+	private String createDatetime;
+	private String updateDatetime;
 	private String shopName;
 	private String sellerName;
 	private String thumbnailImagePath;
+	private String sellerProfileImagePath;
+	private String todayDeliveryStandardTime;
+	private String todayDeliveryYn;
+	private String slsDate;
+	private BigDecimal productWeight;
 	
 	public ProductInfoDTO() {
 		

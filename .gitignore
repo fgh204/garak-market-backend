@@ -13,6 +13,7 @@ build/
 .settings
 .springBeans
 .sts4-cache
+/src/main/resources/65S86F3A58.p8
 /src/main/resources/application.properties
 /src/main/resources/application-test.properties
 /src/main/resources/application-prod.properties

@@ -47,6 +47,11 @@ public class DeliveryAddressInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "varchar(12)")
 	private String roadnameCode;
 	
+	@Comment("법정동/리 코드")
+	@NotNull
+	@Column(columnDefinition = "varchar(20)")
+	private String bcode;
+	
 	@Comment("주소")
 	@NotNull
 	@Column(columnDefinition = "varchar(300)")
