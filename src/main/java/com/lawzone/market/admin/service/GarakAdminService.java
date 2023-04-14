@@ -30,6 +30,8 @@ import com.lawzone.market.admin.dto.order.BookIdListInfoDTO;
 import com.lawzone.market.admin.dto.user.AdminUserCDTO;
 import com.lawzone.market.admin.dto.user.AdminUserDTO;
 import com.lawzone.market.admin.dto.user.BoilerplateDTO;
+import com.lawzone.market.admin.dto.user.KakaoTargetPointDTO;
+import com.lawzone.market.admin.dto.user.KakaoTargetReviewDTO;
 import com.lawzone.market.common.dao.BoilerplateInfoJdbcDAO;
 import com.lawzone.market.common.dao.ExternalLinkInfoDAO;
 import com.lawzone.market.common.service.CommonService;
@@ -240,15 +242,16 @@ public class GarakAdminService {
 		if(_sellerLoginInfo.isPresent() && !_sellerLoginInfo.get().getSellerId().equals(sellerId)) {
 			_rtnMsg = "사용중인 ID 입니다.";
 		}else {
-			if(adminUserDTO.getSpotId() == null || "".equals(adminUserDTO.getSpotId())) {
-				adminUserDTO.setSpotId("");
-			}
+			//if(adminUserDTO.getSpotId() == null || "".equals(adminUserDTO.getSpotId())) {
+			//	adminUserDTO.setSpotId("");
+			//}
 			
-			Optional<SellerInfo> _sellerSpotIdInfo = this.sellerInfoDAO.findBySpotId(adminUserDTO.getSpotId());
-			if(_sellerSpotIdInfo.isPresent() && !_sellerSpotIdInfo.get().getSellerId().equals(sellerId)) {
-				_rtnMsg = "사용중인 SPOTID 입니다.";
-			}else {
-				if("Y".equals(adminUserDTO.getSellerYn().toString())) {
+			Optional<SellerInfo> _sellerSpotIdInfo = this.sellerInfoDAO.findBySellerId(adminUserDTO.getSellerId());
+			//if(_sellerSpotIdInfo.isPresent() && !_sellerSpotIdInfo.get().getSellerId().equals(sellerId)) {
+			//	_rtnMsg = "사용중인 SPOTID 입니다.";
+			//}else {
+				//if("Y".equals(adminUserDTO.getSellerYn().toString())) {
+				if(!("".equals(adminUserDTO.getLoginId()) || adminUserDTO.getLoginId() == null)) {
 					Optional<SellerInfo> sellerInfo = this.sellerInfoDAO.findBySellerId(adminUserDTO.getSellerId());
 					
 					if(sellerInfo.isPresent()) {
@@ -263,8 +266,9 @@ public class GarakAdminService {
 						_queryValue2.add(6, adminUserDTO.getBusinessAddress());
 						_queryValue2.add(7, adminUserDTO.getSellerPhoneNumber());
 						_queryValue2.add(8, adminUserDTO.getProductCategoryCode());
-						_queryValue2.add(9, userId);
-						_queryValue2.add(10, adminUserDTO.getSellerId());
+						_queryValue2.add(9, adminUserDTO.getMarketExposureYn());
+						_queryValue2.add(10, userId);
+						_queryValue2.add(11, adminUserDTO.getSellerId());
 						
 						this.utilService.getQueryStringUpdate(sql2, _queryValue2);
 					}else {
@@ -273,14 +277,15 @@ public class GarakAdminService {
 						
 						this.sellerInfoDAO.save(_sellerInfo);
 					}
-				}else {
-					Optional<SellerInfo> sellerInfo = this.sellerInfoDAO.findBySellerId(adminUserDTO.getSellerId());
-					if(sellerInfo.isPresent()) {
-						this.sellerInfoDAO.deleteById(adminUserDTO.getSellerId());
-					}
 				}
+				//}else {
+				//	Optional<SellerInfo> sellerInfo = this.sellerInfoDAO.findBySellerId(adminUserDTO.getSellerId());
+				//	if(sellerInfo.isPresent()) {
+				//		this.sellerInfoDAO.deleteById(adminUserDTO.getSellerId());
+				//	}
+				//}
 			_rtnMsg = "저장되었습니다.";
-			}
+			//}
 		}
 		return _rtnMsg;
 	}
@@ -304,7 +309,7 @@ public class GarakAdminService {
 		ArrayList<String> _queryValue = new ArrayList<>();
 		_queryValue.add(_queryValueIdx, "100");
 		_queryValueIdx++;
-		_queryValue.add(_queryValueIdx, "0");
+		_queryValue.add(_queryValueIdx, "N");
 		_queryValueIdx++;
 		_queryValue.add(_queryValueIdx, _beginDate);
 		_queryValueIdx++;
@@ -317,7 +322,7 @@ public class GarakAdminService {
 		
 		_queryValue.add(_queryValueIdx, "100");
 		_queryValueIdx++;
-		_queryValue.add(_queryValueIdx, "0");
+		_queryValue.add(_queryValueIdx, "Y");
 		_queryValueIdx++;
 		_queryValue.add(_queryValueIdx, _beginDate);
 		_queryValueIdx++;
@@ -364,6 +369,8 @@ public class GarakAdminService {
 					productOrderItemBookIdInfoDTO.setDeliveryStateCode("100");
 					productOrderItemBookIdInfoDTO.setSellerId(bookIdBasicInfoList.get(i).getSellerId());
 					productOrderItemBookIdInfoDTO.setProductCategoryCode(bookIdBasicInfoList.get(i).getProductCategoryCode());
+					productOrderItemBookIdInfoDTO.setAccessMethodText(bookIdBasicInfoList.get(i).getAccessMethodText());
+					productOrderItemBookIdInfoDTO.setCombinedDeliveryYn(bookIdBasicInfoList.get(i).getCombinedDeliveryYn());
 					
 					productOrderItemBookIdInfoId = modelMapper.map(productOrderItemBookIdInfoDTO, ProductOrderItemBookIdInfoId.class);
 					productOrderItemBookIdInfo = modelMapper.map(productOrderItemBookIdInfoDTO, ProductOrderItemBookIdInfo.class);
@@ -504,7 +511,7 @@ public class GarakAdminService {
 		String _toDate = _dateArray[0];
 		String _toTime = _dateArray[1];
 		int _time = Integer.parseInt(_toTime);
-		int _todayDeliveryTime = 1030;
+		int _todayDeliveryTime = 2230;
 		String slsDayYn = this.utilService.getSlsDayYn(_toDate);
 		String _spotId = "";
 		String _spotName = "";
@@ -514,6 +521,7 @@ public class GarakAdminService {
 		String _shopName = "";
 		String _deliveryTime = "";
 		String _productCategoryCode = "";
+		String _combinedDeliveryYn = "";
 		String _sellerId = "";
 		String _phoneNumber = "";
 		String _recipientName = "";
@@ -522,7 +530,11 @@ public class GarakAdminService {
 		String resultMessage = "";
 		BigDecimal deliveryAmount = new BigDecimal(0);
 		BigDecimal amountZero = new BigDecimal(0);
-		String _sql = this.productOrderItemBookIdInfoJdbcDAO.adminBookIdSellerInfo();
+		String _sql = "";
+		String _sql1 = this.productOrderItemBookIdInfoJdbcDAO.adminBookIdSellerInfo();
+		String _sql2 = this.productOrderItemBookIdInfoJdbcDAO.adminBookIdSellerInfo2();
+		int _productCnt = 0;
+		
 		ArrayList<String> _queryValue = new ArrayList<>();
 		
 		AdminBookIdSellerInfoDTO adminBookIdSellerInfoDTO = new AdminBookIdSellerInfoDTO();
@@ -535,6 +547,9 @@ public class GarakAdminService {
 		List shippingList = (List) shippingMap.get("shipping_places");
 		
 		Map shippinInfo = (Map) shippingList.get(0);
+		
+		List<TodayProductDTO> productList = new ArrayList<>();
+		TodayProductDTO productInfo = new TodayProductDTO();
 		
 		for (int i = 0; i < _cnt; i++ ) {
 			listMap = (Map) bookIdList.get(i);
@@ -552,10 +567,20 @@ public class GarakAdminService {
 			_productId = (String) listMap.get("productId");
 			_productCategoryCode = (String) listMap.get("productCategoryCode");
 			_sellerId = (String) listMap.get("sellerId");
-			_queryValue = new ArrayList<>();
-			_queryValue.add(0, _orderNo);
-			_queryValue.add(1, _productId);
-
+			_combinedDeliveryYn = (String) listMap.get("combinedDeliveryYn");
+			if("N".equals(_combinedDeliveryYn)) {
+				_sql = _sql1;
+				
+				_queryValue = new ArrayList<>();
+				_queryValue.add(0, _orderNo);
+				_queryValue.add(1, _productId);
+			} else {
+				_sql = _sql2;
+				_queryValue = new ArrayList<>();
+				_queryValue.add(0, _orderNo);
+				_queryValue.add(1, _sellerId);
+			}
+			
 			List<AdminBookIdSellerInfoDTO> adminBookIdSellerInfo = this.utilService.getQueryString(_sql,adminBookIdSellerInfoDTO,_queryValue);
 			
 			_spotId = adminBookIdSellerInfo.get(0).getSpotId();
@@ -601,13 +626,37 @@ public class GarakAdminService {
 					req.put("receiverAddress", listMap.get("address"));
 					req.put("receiverPostalCode", listMap.get("zonecode"));
 					req.put("receiverMemo", listMap.get("deliveryMessage"));
+					req.put("accessMethod", listMap.get("accessMethodText"));
 					
-					req.put("productName", listMap.get("productName"));
-					req.put("productCategory", _categoryName);
-					req.put("productPrice", listMap.get("productPrice"));
-					req.put("productSellerName", _spotName);
-					req.put("orderNo", _orderNo);
-					req.put("orderDttm", _orderDttm);
+					
+					productList = new ArrayList<>();
+					
+					_productCnt = adminBookIdSellerInfo.size();
+					
+					for(int j = 0; j < _productCnt; j++) {
+						productInfo = new TodayProductDTO();
+						
+						productInfo.setProductId(adminBookIdSellerInfo.get(j).getProductId());
+						productInfo.setProductName(adminBookIdSellerInfo.get(j).getProductName());
+						productInfo.setProductCategory(adminBookIdSellerInfo.get(j).getCategoryName());
+						productInfo.setProductSellerName(_spotName);
+						productInfo.setProductPrice(adminBookIdSellerInfo.get(j).getProductPrice());
+						productInfo.setOrderDttm(_orderDttm);
+						productInfo.setProductCount(adminBookIdSellerInfo.get(j).getProductCount());
+						
+						productList.add(productInfo);
+					}
+					
+//					req.put("productId", _productId);
+//					req.put("productName", listMap.get("productName"));
+//					req.put("productCategory", _categoryName);
+//					req.put("productPrice", listMap.get("productPrice"));
+//					req.put("productSellerName", _spotName);
+					req.put("orderNo", listMap.get("orderIdFromCorp"));
+//					req.put("orderDttm", _orderDttm);
+					
+					req.put("productList", productList);
+					
 					req.put("shippingPlaceId", shippinInfo.get("id"));
 					req.put("access_token",access_token);
 					
@@ -657,12 +706,12 @@ public class GarakAdminService {
 							productOrderItemBookIdInfo.get().setDeliveryStateCode("300");
 							//_productCategoryCode
 							
-							if(deliveryAmount.compareTo(amountZero) == 0) {
+							if("Y".equals(_combinedDeliveryYn)) {
 								//this.productOrderService.modifyOrderItemStatInfo(_orderNo, _productId, "300");
-								this.productOrderService.modifyOrderItemStatInfoDeliveryByProduct(_orderNo, _productId, "300", "300");
+								this.productOrderService.modifyOrderItemStatInfoDeliveryBySellerId(_orderNo, _sellerId, "300", "300");
 							} else {
 								//this.productOrderService.modifyOrderItemStatInfo2(_orderNo, _sellerId, "300");
-								this.productOrderService.modifyOrderItemStatInfoDeliveryBySellerId(_orderNo, _sellerId, "300", "300");
+								this.productOrderService.modifyOrderItemStatInfoDeliveryByProduct(_orderNo, _productId, "300", "300");
 							}
 							
 //							if("002000000".equals(_productCategoryCode)) {
@@ -1004,12 +1053,25 @@ public class GarakAdminService {
 	
 	@Transactional(rollbackFor = Exception.class)
 	public List getSettlementList(AdminOrderCDTO adminOrderCDTO) {
-		String sql = this.adminJdbcDAO.settlementList();
+		String sql = this.adminJdbcDAO.settlementList(adminOrderCDTO);
+		
+		String searchGb = adminOrderCDTO.getSearchGb();
+		String searchValue = adminOrderCDTO.getSearchValue();
+		String orderDateBf = adminOrderCDTO.getOrderDateBf();
+		String orderDateAf = adminOrderCDTO.getOrderDateAf();
 		
 		SettlementListDTO settlementListDTO = new SettlementListDTO();
 		
 		ArrayList<String> _queryValue = new ArrayList<>();
-		
+		_queryValue.add(0, orderDateBf);
+		_queryValue.add(1, orderDateBf);
+		_queryValue.add(2, orderDateBf);
+		_queryValue.add(3, orderDateAf);
+		_queryValue.add(4, orderDateAf);
+		_queryValue.add(5, orderDateAf);
+		if(!"00".equals(searchGb)) {
+			_queryValue.add(6, searchValue);
+		}
 		return this.utilService.getQueryString(sql,settlementListDTO,_queryValue);
 	}
 	
@@ -1184,5 +1246,36 @@ public class GarakAdminService {
 			}
 		}
 	return adminOrderList;
+	}
+	
+	public List getKakaoTargetList(AdminUserCDTO adminUserCDTO) {
+		String sql = "";
+		String beginDate = adminUserCDTO.getBeginDate();
+		String endDate = adminUserCDTO.getEndDate();
+		String searchGb = adminUserCDTO.getSearchGb();
+		String reviewYn = adminUserCDTO.getReviewYn();
+		
+		List kakaoTargetList;
+		
+		ArrayList<String> _queryValue = new ArrayList<>();
+		_queryValue.add(0, beginDate);
+		_queryValue.add(1, endDate);
+		
+		if("01".equals(searchGb)){
+			sql = this.adminJdbcDAO.kakaoTargetPointList();
+			KakaoTargetPointDTO kakaoTargetPoint = new KakaoTargetPointDTO();
+			kakaoTargetList = this.utilService.getQueryString(sql,kakaoTargetPoint,_queryValue);
+		} else {
+			sql = this.adminJdbcDAO.kakaoTargetReviewList(adminUserCDTO);
+			KakaoTargetReviewDTO kakaoTargetReview = new KakaoTargetReviewDTO();
+			
+			if(!"%".equals(adminUserCDTO.getReviewYn())) {
+				_queryValue.add(2, adminUserCDTO.getReviewYn());
+			}
+			
+			kakaoTargetList = this.utilService.getQueryString(sql,kakaoTargetReview,_queryValue);
+		}
+		
+		return kakaoTargetList;
 	}
 }

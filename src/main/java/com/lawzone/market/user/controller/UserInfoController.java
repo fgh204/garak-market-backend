@@ -8,6 +8,7 @@ import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.security.PrivateKey;
+import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
@@ -57,7 +58,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.amazonaws.util.IOUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.lawzone.market.common.service.CommonService;
 import com.lawzone.market.config.SessionBean;
+import com.lawzone.market.externalLink.util.TodayUtils;
 import com.lawzone.market.image.service.ProductImageDTO;
 import com.lawzone.market.point.service.PointInfoCDTO;
 import com.lawzone.market.point.service.PointService;
@@ -74,6 +77,8 @@ import com.lawzone.market.user.service.DeliveryAddressInfoDTO;
 import com.lawzone.market.user.service.MarketSignupDTO;
 import com.lawzone.market.user.service.MarketUserDTO;
 import com.lawzone.market.user.service.MarketUserInfoDTO;
+import com.lawzone.market.user.service.PointConfirmDTO;
+import com.lawzone.market.user.service.SearchWordCDTO;
 import com.lawzone.market.user.service.SellerFavoriteCDTO;
 import com.lawzone.market.user.service.SellerFavoriteDTO;
 import com.lawzone.market.user.service.StoreInfoCDTO;
@@ -103,10 +108,12 @@ public class UserInfoController {
 	private final PointService pointService;
 	private final ProductReviewInfoService productReviewInfoService;
 	private final SlackWebhook slackWebhook;
-	
-	@Value("${lzmarket.service}") 
+	private final CommonService commonService;
+	private final TodayUtils todayUtils;
+
+	@Value("${lzmarket.service}")
 	private String service;
-	
+
 	@Resource
 	private SessionBean sessionBean;
 
@@ -221,14 +228,24 @@ public class UserInfoController {
 		PointInfoCDTO pointInfoCDTO = new PointInfoCDTO();
 		pointInfoCDTO = (PointInfoCDTO) ParameterUtils.setDto(map, pointInfoCDTO, "insert", sessionBean);
 		List<MarketUserInfoDTO> marketUserInfo = this.userInfoService.getUserInfo(pointInfoCDTO.getUserId());
+		List<PointConfirmDTO> pointConfirmInfo = this.userInfoService.getPointConfirmInfo(pointInfoCDTO.getUserId());
 
 		BigDecimal point = this.pointService.getPointAmount(pointInfoCDTO);
-		
+
 		Map rtnMap = new HashMap<>();
 		Map pointMap = new HashMap<>();
 		pointMap.put("amount", point);
 		rtnMap.put("userInfo", marketUserInfo.get(0));
 		rtnMap.put("pointInfo", pointMap);
+		
+		Boolean isConfirmed = false;
+		
+		if(pointConfirmInfo.size() > 0) {
+			if("Y".equals(pointConfirmInfo.get(0).getIsConfirmed())) {
+				isConfirmed = true;
+			}
+		}
+		rtnMap.put("isPointConfirmed", isConfirmed);
 		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
 	}
 
@@ -270,7 +287,7 @@ public class UserInfoController {
 	public String addProfileImages(HttpServletRequest request,
 			@RequestPart(value = "file", required = false) MultipartFile[] uploadFile) throws IOException {
 		Map rtnMap = new HashMap<>();
-		//this.telmsgLogService.addTelmsgLog("00", "00", "1", rtnMap);
+		// this.telmsgLogService.addTelmsgLog("00", "00", "1", rtnMap);
 
 		this.userInfoService.addProfileImages(uploadFile, sessionBean.getUserId());
 
@@ -429,7 +446,7 @@ public class UserInfoController {
 		if (_userInfo.isPresent()) {
 			String _token = this.jwtTokenUtil.generateToken(_userInfo.get(), null);
 			ResponseCookie accessTokenCookie;
-			
+
 			String serviceNm = "";
 
 			accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", _token).path("/").secure(true).httpOnly(true)
@@ -497,7 +514,7 @@ public class UserInfoController {
 
 		Map rtnMap = new HashMap<>();
 
-		List<UserInfo> userInfo = this.userInfoService.getDomaadoUserMembershipWithdrawal(sessionBean.getUserId());
+		List<UserInfo> userInfo = this.userInfoService.getDomaadoUserMembershipWithdrawal(marketSignupDTO);
 
 		if (userInfo.size() > 0) {
 			if (userInfo.get(0).getAccessToken() != null) {
@@ -606,7 +623,7 @@ public class UserInfoController {
 			dlngTpcd = "00";
 		}
 
-		this.telmsgLogService.addTelmsgLog("50", telmsgLogDTO.getDlngTpcd(), "1", dataMap,"");
+		this.telmsgLogService.addTelmsgLog("50", telmsgLogDTO.getDlngTpcd(), "1", dataMap, "");
 		Map rtnMap = new HashMap<>();
 		return JsonUtils.returnValue("0000", "저장되었습니다", rtnMap).toString();
 	}
@@ -669,10 +686,12 @@ public class UserInfoController {
 		marketSignupDTO = (MarketSignupDTO) ParameterUtils.setDto(map, marketSignupDTO, "insert", sessionBean);
 
 		userMap = this.userInfoService.autoSignin(marketSignupDTO);
-		
+
 		String token = userMap.get("token").toString();
 		String accessToken = userMap.get("accessToken").toString();
-		
+		String userId = userMap.get("userId").toString();
+		String previousUrl = marketSignupDTO.getPreviousUrl();
+
 		if (!("".equals(token) || token == null)) {
 			if (this.jwtTokenUtil.validateToken(token)) {
 				ResponseCookie accessTokenCookie;
@@ -680,7 +699,20 @@ public class UserInfoController {
 				accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", token).path("/").secure(true)
 						.httpOnly(true).sameSite("None").domain("domaado.me").build();
 				response.setHeader("Set-Cookie", accessTokenCookie.toString());
+				
+				List<PointConfirmDTO> pointConfirmInfo = this.userInfoService.getPointConfirmInfo(userId);
+				
+				Boolean isConfirmed = false;
+				
+				if(pointConfirmInfo.size() > 0) {
+					if("Y".equals(pointConfirmInfo.get(0).getIsConfirmed())) {
+						isConfirmed = true;
+					}
+				}
+				rtnMap.put("isPointConfirmed", isConfirmed);
+				
 				userMap.put("token", accessToken);
+				userMap.put("previousUrl", previousUrl);
 				return JsonUtils.returnValue("0000", "조회되었습니다.", rtnMap).toString();
 			} else {
 				return JsonUtils.returnValue("9999", "만료된 토큰입니다.", rtnMap).toString();
@@ -733,24 +765,70 @@ public class UserInfoController {
 		rtnMap.put("domaadoVersion", domaadoVersion);
 		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
 	}
-	
+
 	@ResponseBody
 	@PostMapping("/getStore")
 	public String getStore(HttpServletRequest request, @RequestBody(required = true) Map map)
 			throws JsonMappingException, JsonProcessingException {
-		
+
 		StoreInfoCDTO storeInfoCDTO = new StoreInfoCDTO();
 		storeInfoCDTO = (StoreInfoCDTO) ParameterUtils.setDto(map, storeInfoCDTO, "insert", sessionBean);
-		
+
 		storeInfoCDTO.setUserId(sessionBean.getUserId());
-		
+
 		List<PageInfoDTO> pageInfo = this.userInfoService.getStorePageInfo(storeInfoCDTO);
-		
+
 		List<StoreInfoPDTO> storeInfoList = this.userInfoService.getStoreInfoList(storeInfoCDTO);
-		
+
 		Map rtnMap = new HashMap<>();
 		rtnMap.put("pageInfo", pageInfo.get(0));
 		rtnMap.put("shopList", storeInfoList);
+		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
+	}
+
+	@ResponseBody
+	@PostMapping("/validateAddress")
+	public String validateAddress(HttpServletRequest request, @RequestBody(required = true) Map map)
+			throws ClientProtocolException, ParseException, IOException {
+
+		DeliveryAddressInfoDTO deliveryAddressInfoDTO = new DeliveryAddressInfoDTO();
+		deliveryAddressInfoDTO = (DeliveryAddressInfoDTO) ParameterUtils.setDto(map, deliveryAddressInfoDTO, "insert",
+				sessionBean);
+
+		String access_token = this.commonService.getTodayAccessToken();
+
+		Map aMap = new HashMap<>();
+
+		aMap.put("access_token", access_token);
+		aMap.put("address", deliveryAddressInfoDTO.getAddress());
+		aMap.put("postal_code", deliveryAddressInfoDTO.getZonecode());
+
+		Map validateMap = this.todayUtils.getvalidateAddress(aMap);
+
+		Boolean isValidate = false;
+
+		if (validateMap.get("service_status") != null) {
+			if ("ACTIVE".equals(validateMap.get("service_status"))) {
+				isValidate = true;
+			}
+		}
+
+		Map rtnMap = new HashMap<>();
+		rtnMap.put("isValidate", isValidate);
+		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
+	}
+
+	@ResponseBody
+	@PostMapping("/searchWord")
+	public String getSearchWord(HttpServletRequest request, @RequestBody(required = true) Map map)
+			throws JsonMappingException, JsonProcessingException {
+		SearchWordCDTO searchWordCDTO = new SearchWordCDTO();
+		searchWordCDTO = (SearchWordCDTO) ParameterUtils.setDto(map, searchWordCDTO, "insert", sessionBean);
+
+		List searchWordList = this.userInfoService.getSearchWord(searchWordCDTO);
+
+		Map rtnMap = new HashMap<>();
+		rtnMap.put("searchWordList", searchWordList);
 		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
 	}
 }

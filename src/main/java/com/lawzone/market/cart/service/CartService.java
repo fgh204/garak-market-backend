@@ -171,9 +171,19 @@ public class CartService {
 			String _toTime = _dateArray[1];
 			int _time = Integer.parseInt(_toTime);
 			int _todayDeliveryTime = 0;
-			String slsDayYn = this.utilService.getSlsDayYn(_toDate);
-			
+			String slsDayYn = "N";
+			String slsDateList[];
+			String slsDateText = "";
 			for(int i = 0; i < cartInfoListCnt; i++) {
+				slsDateText = cartInfoList.get(i).getSlsDateText();
+				
+				if(slsDateText.indexOf(_toDate) > -1) {
+					slsDayYn = "N";
+				} else {
+					slsDayYn = this.utilService.getSlsDayYn(_toDate);
+				}
+				
+				slsDateList = slsDateText.split(";");
 				if(cartInfoList.get(i).getTodayDeliveryStandardTime() == null) {
 					cartInfoList.get(i).setTodayDeliveryStandardTime("1000");
 				}
@@ -189,7 +199,7 @@ public class CartService {
 				//if("N".equals(slsDayYn) || "N".equals(cartInfoList.get(0).getTodayDeliveryYn())) {
 				//	cartInfoList.get(i).setSlsDate(this.utilService.getSlsDate(_toDate , "N"));
 				//}else {
-					cartInfoList.get(i).setSlsDate(this.utilService.getSlsDate(_toDate , cartInfoList.get(i).getTodayDeliveryYn()));
+					cartInfoList.get(i).setSlsDate(this.utilService.getSlsDate(_toDate , cartInfoList.get(i).getTodayDeliveryYn(), slsDateList));
 				//}
 			}
 		}

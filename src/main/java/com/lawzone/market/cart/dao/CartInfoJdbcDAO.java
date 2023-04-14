@@ -23,6 +23,7 @@ public class CartInfoJdbcDAO {
 			  .append("\n	, pci.product_category_code ")
 			  .append("\n	, pci.product_category_small_name ")
 			  .append("\n	, si.seller_id ")
+			  .append("\n , ifnull((select cdi.dtl_code_text  from lz_market.cd_dtl_info cdi where cdi.code_no = 8 and cdi.dtl_code = pi2.seller_id),'') as slsDateText ")
 			  .append("\n from lz_market.cart_info ci")
 			  .append("\n 	 , lz_market.product_info pi2 ")
 			  .append("\n 	 , lz_market.product_image_info pii ")

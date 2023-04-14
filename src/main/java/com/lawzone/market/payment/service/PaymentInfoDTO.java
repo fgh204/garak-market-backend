@@ -1,5 +1,6 @@
 package com.lawzone.market.payment.service;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import lombok.AllArgsConstructor;
@@ -18,6 +19,12 @@ public class PaymentInfoDTO {
 	private BigInteger deliveryAmount;
 	private BigInteger cancelledPaymentAmount;
 	private String paymentMethod;
+	private BigInteger finalPaymentAmount;
+	private BigInteger pointAmount;
+	private BigInteger cancelledPointAmount;
+	private BigInteger finalPointAmount;
+	private BigDecimal finalDeliveryAmount;
+	private BigDecimal cancelledDeliveryAmount;
 	
 	public PaymentInfoDTO() {
 		

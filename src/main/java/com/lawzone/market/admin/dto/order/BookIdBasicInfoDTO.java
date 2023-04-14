@@ -25,6 +25,8 @@ public class BookIdBasicInfoDTO {
 	private String orderDate;
 	private String sellerId;
 	private String productCategoryCode;
+	private String accessMethodText;
+	private String combinedDeliveryYn;
 	
 	public BookIdBasicInfoDTO() {
 		

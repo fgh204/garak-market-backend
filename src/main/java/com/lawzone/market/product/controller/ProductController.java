@@ -254,6 +254,7 @@ public class ProductController {
 				return JsonUtils.returnValue("0000", "복사할 상품정보가 없습니다", rtnMap).toString();
 			}else {
 				productDTO.setProductId(_poductId);
+				productDTO.setUseYn("Y");
 			}
 		}
 		

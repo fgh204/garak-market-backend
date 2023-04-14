@@ -25,6 +25,11 @@ public class CustOrderInfoDTO {
 	private String phoneNumber;
 	private String subPhoneNumber;
 	private String deliveryMessage;
+	private String deliveryLocationCfcd;
+	private String deliveryLocationCfcdNm;
+	private String accessMethodCfcd;
+	private String accessMethodCfcdNm;
+	private String accessMethodText;
 	//private String orderDlngStateCode;
 	//private String orderDlngStateName;
 	

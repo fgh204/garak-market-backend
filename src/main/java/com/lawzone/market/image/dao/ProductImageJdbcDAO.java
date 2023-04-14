@@ -32,7 +32,7 @@ public class ProductImageJdbcDAO {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n insert INTO lz_market.product_image_info(image_cfcd, origin_file_name, file_name, file_size, thumbnail_image_path ")
-				.append("\n 	, delegate_thumbnail_yn, product_id, create_datetime, update_datetime, create_user, update_user) ")
+				.append("\n 	, delegate_thumbnail_yn, product_id, create_datetime, update_datetime, create_user, update_user, order_no) ")
 				.append("\n select ")
 				.append("\n 	image_cfcd ")
 				.append("\n 	, origin_file_name ")
@@ -45,6 +45,7 @@ public class ProductImageJdbcDAO {
 				.append("\n 	, now() ")
 				.append("\n 	, ? ")
 				.append("\n 	, ? ")
+				.append("\n 	, order_no ")
 				.append("\n from lz_market.product_image_info b ")
 				.append("\n where b.product_id = ? ");
 		

@@ -19,6 +19,8 @@ import com.lawzone.market.cart.service.CartInfoDTO;
 import com.lawzone.market.image.service.ProductImageListDTO;
 import com.lawzone.market.image.service.ProductImageService;
 import com.lawzone.market.order.service.UserOrderInfoDTO;
+import com.lawzone.market.point.service.PointInfoCDTO;
+import com.lawzone.market.point.service.PointService;
 import com.lawzone.market.product.service.PageInfoDTO;
 import com.lawzone.market.product.service.ProductCDTO;
 import com.lawzone.market.product.service.ProductDTO;
@@ -39,6 +41,7 @@ public class ProductReviewInfoService {
 	private final ProductImageService productImageService;
 	private final ModelMapper modelMapper;
 	private final UtilService utilService;
+	private final PointService pointService;
 	
 	@Transactional
 	public String addProductReviewInfo(ProductReviewInfoCDTO productReviewInfoCDTO, List reviewImageList) {
@@ -57,7 +60,20 @@ public class ProductReviewInfoService {
 			Optional<ProductReviewInfo> _productReviewInfo = this.productReviewInfoDAO.findByProductIdAndUserIdAndOrderNo(_productId, _userId, _orderNo);
 			
 			if (_productReviewInfo.isPresent()) {
+				//수정
 				productReviewInfoCDTO.setReviewNumber(_productReviewInfo.get().getReviewNumber());
+			} else {
+				//신규
+				PointInfoCDTO pointInfoCDTO = new PointInfoCDTO();
+				pointInfoCDTO.setUserId(_userId);
+				pointInfoCDTO.setEventCode("002");
+				if(reviewImageList.size() == 0) {
+					pointInfoCDTO.setEventId("00002");
+				} else {
+					pointInfoCDTO.setEventId("00003");
+				}
+				
+				this.pointService.addPoint(pointInfoCDTO);
 			}
 			
 			ProductReviewInfo productReviewInfo = new ProductReviewInfo();

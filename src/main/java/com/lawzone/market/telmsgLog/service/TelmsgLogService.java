@@ -1,5 +1,6 @@
 package com.lawzone.market.telmsgLog.service;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
@@ -7,10 +8,14 @@ import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lawzone.market.common.CdDtlInfo;
+import com.lawzone.market.common.dao.CdDtlInfoDAO;
 import com.lawzone.market.config.SessionBean;
 import com.lawzone.market.review.service.ProductReviewInfo;
 import com.lawzone.market.review.service.ProductReviewInfoDTO;
 import com.lawzone.market.telmsgLog.dao.TelmsgLogDAO;
+import com.lawzone.market.user.dao.UserTrackingInfoDAO;
+import com.lawzone.market.user.service.UserTrackingInfo;
 import com.lawzone.market.util.SlackWebhook;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 public class TelmsgLogService {
 	private final TelmsgLogDAO telmsgLogDAO;
 	private final SlackWebhook slackWebhook;
+	private final UserTrackingInfoDAO userTrackingInfoDAO;
+	private final CdDtlInfoDAO cdDtlInfoDAO;
 	
 	@Resource
 	private SessionBean sessionBean;
@@ -103,6 +110,19 @@ public class TelmsgLogService {
 			}
 			
 			this.telmsgLogDAO.save(telmsgLogInfo);
+			
+			if(sessionBean.getUserId() != null) {
+				List<CdDtlInfo> cdDtlInfoList = this.cdDtlInfoDAO.findByIdCodeNoAndDtlCodeNameAndUseYn("15",sessionBean.getSvcUrl() , "Y");
+				
+				if(cdDtlInfoList.size() > 0) {
+					UserTrackingInfo userTrackingInfo = new UserTrackingInfo();
+					
+					userTrackingInfo.setUserId(sessionBean.getUserId());
+					userTrackingInfo.setSvcUrl(sessionBean.getSvcUrl());
+					
+					this.userTrackingInfoDAO.save(userTrackingInfo);
+				}
+			}
 		} catch (Exception e) {
 			// TODO: handle exception
 		}

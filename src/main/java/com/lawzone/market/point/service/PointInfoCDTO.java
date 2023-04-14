@@ -12,10 +12,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PointInfoCDTO {
-	private String socialId;
+	private String userId;
 	private String eventCode;
 	private String eventId;
-	private String userId;
 	private BigDecimal pointValue;
 	private String pointCode;
 	private String pointStateCode;
@@ -23,6 +22,11 @@ public class PointInfoCDTO {
 	private String pointExpirationDatetime;
 	private Long pointSaveId;
 	private Long pointOriginalId;
+	private String expirationDateGb;
+	private BigDecimal expirationDateValue;
+	private String monthValue;
+	private String maxPageCount;
+	private String pageCount;
 	
 	public PointInfoCDTO() {
 		

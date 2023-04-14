@@ -39,7 +39,9 @@ public class UtilService {
 		_kw = kw;
 		if("ORDER_NO".equals(kw)){
 			_kw = kw + "_" + _dateFormat.substring(0,4);
-		}
+		} else if("NOTICE_ID".equals(kw)){
+			_kw = kw + "_" + _dateFormat.substring(0,4);
+		} 
 		
 		String sql = "select "
 				+ "nextval(?) "
@@ -65,9 +67,11 @@ public class UtilService {
 		
 		if("PRODUCT_ID".equals(kw)) {
 			_rtnId = StringUtils.leftPad(nextVal, 12,"0");
-		}else if("ORDER_NO".equals(kw)){
+		} else if("ORDER_NO".equals(kw)){
 			_rtnId = _dateFormat.substring(0,4) + StringUtils.leftPad(nextVal, 8,"0");
-		}else {
+		} else if("NOTICE_ID".equals(kw)){
+			_rtnId = _dateFormat.substring(0,4) + StringUtils.leftPad(nextVal, 6,"0");
+		} else {
 			_rtnId = nextVal;
 		}
 		
@@ -119,7 +123,6 @@ public class UtilService {
 	public String getQueryStringChk(String queryString, ArrayList arryList) {
 		String sql = queryString;
 		Query nativeQuery = em.createNativeQuery(sql);
-		log.info(sql);
 		if(arryList != null) {
 			for(int i = 0; i < arryList.size(); i++) {
 				nativeQuery.setParameter((i+1),arryList.get(i).toString());
@@ -156,19 +159,29 @@ public class UtilService {
 		return slsDayYn;
 	}
 	
-	public String getSlsDate(String kw, String standDayYn) {
+	public String getSlsDate(String kw, String standDayYn, String[] slsDateList) {
 		String _standDayGb = ">"; 
 		if("Y".equals(standDayYn)) {
 			_standDayGb = ">=";
 		}
 		
-		String sql = " select sdi.sls_date "
-				+ " from lz_market.sls_date_info sdi "
-				+ " where sdi.sls_date " + _standDayGb + " ? "
-				+ " and sdi.sls_day_yn = 'Y' "
-				+ " limit 1 ";
+		StringBuffer _query = new StringBuffer();
+		int cnt = slsDateList.length;
 		
-		Query nativeQuery = em.createNativeQuery(sql)
+		_query.append("\n select sdi.sls_date ")
+			  .append("\n from lz_market.sls_date_info sdi ")
+			  .append("\n where sdi.sls_date " + _standDayGb + " ? ")
+			  .append("\n and sdi.sls_day_yn = 'Y' ");
+			  
+			  for(int i = 0; i < cnt; i++ ) {
+				  if(!"".equals(slsDateList[i])) {
+					  _query.append("\n and sdi.sls_date <> '" + slsDateList[i] + "'");
+				  }
+			  }
+			  
+		_query.append("\n limit 1 ");
+		
+		Query nativeQuery = em.createNativeQuery(_query.toString())
 							  .setParameter(1,kw);
 		
 		String slsDayYn = nativeQuery.getSingleResult().toString();

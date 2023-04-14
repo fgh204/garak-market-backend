@@ -3,11 +3,14 @@ package com.lawzone.market.user.service;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.modelmapper.ModelMapper;
@@ -22,10 +25,13 @@ import com.lawzone.market.admin.service.SettlementListDTO;
 import com.lawzone.market.aws.service.S3Controller;
 import com.lawzone.market.common.CdDtlInfo;
 import com.lawzone.market.common.dao.CdDtlInfoDAO;
+import com.lawzone.market.common.dao.CommonJdbcDAO;
 import com.lawzone.market.image.dao.ProductImageDAO;
 import com.lawzone.market.image.service.ProductImageDTO;
 import com.lawzone.market.image.service.ProductImageInfo;
 import com.lawzone.market.payment.service.PaymentInfo;
+import com.lawzone.market.point.service.PointInfoCDTO;
+import com.lawzone.market.point.service.PointService;
 import com.lawzone.market.product.service.PageInfoDTO;
 import com.lawzone.market.product.service.ProductInfoListPDTO;
 import com.lawzone.market.user.dao.DeliveryAddressInfoDAO;
@@ -37,6 +43,7 @@ import com.lawzone.market.user.dao.UserInfoDAO;
 import com.lawzone.market.user.dao.UserInfoJdbcDAO;
 import com.lawzone.market.util.AES256Util;
 import com.lawzone.market.util.JwtTokenUtil;
+import com.lawzone.market.util.ParameterUtils;
 import com.lawzone.market.util.UtilService;
 
 import lombok.RequiredArgsConstructor;
@@ -60,6 +67,8 @@ public class UserInfoService {
 	private final SellerFavoriteInfoJdbcDAO sellerFavoriteInfoJdbcDAO;
 	private final JwtTokenUtil jwtTokenUtil;
 	private final CdDtlInfoDAO cdDtlInfoDAO;
+	private final PointService pointService;
+	private final CommonJdbcDAO commonJdbcDAO;
 	
 	public UserInfo create(Map<String, Object> userMap) {
 		UserInfo user = new UserInfo();
@@ -483,13 +492,15 @@ public class UserInfoService {
     }
 	
 	@Transactional(rollbackFor = Exception.class)
-	public List getDomaadoUserMembershipWithdrawal(String userId) {
+	public List getDomaadoUserMembershipWithdrawal(MarketSignupDTO marketSignupDTO) {
 		Boolean _rtn = false;
 		
-		List<UserInfo> userInfo = this.userInfoDAO.findByUserId(userId);
+		List<UserInfo> userInfo = this.userInfoDAO.findByUserId(marketSignupDTO.getUserId());
 		
 		if(userInfo.size() > 0) {
 			userInfo.get(0).setUseYn("N");
+			userInfo.get(0).setWithdrawalReasonCode(marketSignupDTO.getWithdrawalReasonCode());
+			userInfo.get(0).setWithdrawalReasonText(marketSignupDTO.getWithdrawalReasonText());
 			_rtn = true;
 			
 			return userInfo;
@@ -590,6 +601,23 @@ public class UserInfoService {
 			isRegistered = false;
 		}
 		
+		PointInfoCDTO pointInfoCDTO = new PointInfoCDTO();
+		pointInfoCDTO.setUserId(userInfo.get(0).getUserId());
+		pointInfoCDTO.setEventCode("002");
+		pointInfoCDTO.setEventId("00001");
+		this.pointService.addPoint(pointInfoCDTO);
+		
+		List<PointConfirmDTO> pointConfirmInfo = getPointConfirmInfo(userId);
+		
+		Boolean isConfirmed = false;
+		
+		if(pointConfirmInfo.size() > 0) {
+			if("Y".equals(pointConfirmInfo.get(0).getIsConfirmed())) {
+				isConfirmed = true;
+			}
+		}
+		rtnMap.put("isPointConfirmed", isConfirmed);
+		
 		rtnMap.put("token" , token);
 		rtnMap.put("socialAccessToken" , socialAccessToken);
 		rtnMap.put("loginId" , userInfo.get(0).getLoginId());
@@ -650,6 +678,7 @@ public class UserInfoService {
 	public Map autoSignin(MarketSignupDTO marketSignupDTO) {
 		String token = "";
 		String accessToken = "";
+		String userId = "";
 		Map userMap = new HashMap<>();
 		Optional<UserInfo> userInfo = this.userInfoDAO.findByLoginIdAndPasswordAndUseYn(
 				marketSignupDTO.getLoginId(),marketSignupDTO.getPassword(), "Y");
@@ -657,10 +686,12 @@ public class UserInfoService {
 		if(userInfo.isPresent()) {
 			token = userInfo.get().getToken();
 			accessToken = userInfo.get().getAccessToken();
+			userId = userInfo.get().getUserId();
 		}else {
 			
 		}
 		userMap.put("token", token);
+		userMap.put("userId", userId);
 		userMap.put("accessToken", accessToken);
 	return userMap;
     }
@@ -752,5 +783,85 @@ public class UserInfoService {
 		}
 		
 		return productInfoList;
+    }
+	
+	@Transactional(rollbackFor = Exception.class)
+	public List getSearchWord(SearchWordCDTO searchWordCDTO) {
+		int listCnt = 0;
+		
+		if(searchWordCDTO.getWordListCount() != null) {
+			listCnt = searchWordCDTO.getWordListCount();
+		}
+		
+		if(listCnt == 0) {
+			listCnt = 5;
+		}
+		String _listCnt = Integer.toString(listCnt);
+		String sql = this.commonJdbcDAO.selectCdDtlInfo(_listCnt);
+		
+		//and si.product_category_code = ?
+		SearchWordDTO searchWordDTO = new SearchWordDTO();
+		ArrayList<String> _queryValue = new ArrayList<>();
+		_queryValue.add(0, "14");
+		
+		List<SearchWordDTO> searchWordList = this.utilService.getQueryString(sql,searchWordDTO,_queryValue);
+		
+		return searchWordList;
+    }
+	
+	@Transactional(rollbackFor = Exception.class)
+	public void setSearchWord() {
+		String sql = this.userInfoJdbcDAO.searchWord();
+		String removeSearchWord = this.commonJdbcDAO.removeCdDtlInfo();
+		String addSearchWord = this.commonJdbcDAO.insertCdDtlInfo();
+	
+		//and si.product_category_code = ?
+		SearchWordDTO searchWordDTO = new SearchWordDTO();
+		ArrayList<String> _queryValue = new ArrayList<>();
+		
+		List<SearchWordDTO> searchWordList = this.utilService.getQueryString(sql,searchWordDTO,_queryValue);
+		
+		if(searchWordList.size() > 0) {
+			Comparator<SearchWordDTO> compareByCnt = Comparator.comparing( SearchWordDTO::getSearchCount );
+			
+			List<SearchWordDTO> sortedList = searchWordList.stream()
+					.sorted(compareByCnt.reversed())
+					.collect(Collectors.toList());
+			
+			//코드삭제
+			ArrayList<String> _removeQueryValue = new ArrayList<>();
+			_removeQueryValue.add(0,"14");
+			this.utilService.getQueryStringUpdate(removeSearchWord, _removeQueryValue);
+			//코드등록
+			int cnt = sortedList.size();
+			String searchCntText = "";
+			ArrayList<String> _addQueryValue = new ArrayList<>();
+			for(int i = 0; i < cnt; i++) {
+				searchCntText = Integer.toString(i + 1);
+				
+				_addQueryValue = new ArrayList<>();
+				_addQueryValue.add(0, "14");
+				_addQueryValue.add(1, StringUtils.leftPad(searchCntText, 5, "0"));
+				_addQueryValue.add(2, sortedList.get(i).getSearchWord());
+				_addQueryValue.add(3, sortedList.get(i).getSearchCount().toString());
+				_addQueryValue.add(4, "Y");
+				
+				this.utilService.getQueryStringUpdate(addSearchWord, _addQueryValue);
+			}
+		}
+		
+    }
+	
+	public List getPointConfirmInfo(String userId) {
+		String _query = this.userInfoJdbcDAO.pointConfirmInfo();
+		
+		ArrayList<String> _queryValue = new ArrayList<>();
+		_queryValue.add(0, userId);
+		_queryValue.add(1, "15");
+		_queryValue.add(2, "Y");
+		
+		PointConfirmDTO pointConfirmDTO = new PointConfirmDTO();
+		
+		return this.utilService.getQueryString(_query, pointConfirmDTO, _queryValue);
     }
 }

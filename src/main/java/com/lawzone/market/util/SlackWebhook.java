@@ -25,6 +25,9 @@ public class SlackWebhook {
 	    
 	 	@Value(value = "${slack.channel.paymentcancel}")
 	    String paymentcancel;
+	 	
+	 	@Value(value = "${slack.channel.paymentcancelrequest}")
+	    String paymentcancelrequest;
 	    
 	 	@Value(value = "${slack.channel.errorlog}")
 	    String errorLog;
@@ -37,10 +40,12 @@ public class SlackWebhook {
 	    		String channel = "";
 		    	if("01".equals(sendGb)) {
 		    		channel = payment;
-		    	} else if("99".equals(sendGb)) {
+		    	} else if ("99".equals(sendGb)) {
 		    		channel = errorLog;
-		    	} else {
+		    	} else if ("02".equals(sendGb)) {
 		    		channel = paymentcancel;
+		    	} else if ("03".equals(sendGb)) {
+		    		channel = paymentcancelrequest;
 		    	}
 		    	
 		    	 RestTemplate restTemplate = new RestTemplate();

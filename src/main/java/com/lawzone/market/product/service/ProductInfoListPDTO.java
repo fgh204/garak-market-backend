@@ -25,6 +25,7 @@ public class ProductInfoListPDTO {
 	private String todayDeliveryStandardTime;
 	private String todayDeliveryYn;
 	private String slsDate;
+	private Character useYn;
 	
 	private ArrayList<TagInfoDTO> productTagList;
 	

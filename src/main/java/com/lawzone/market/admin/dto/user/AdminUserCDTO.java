@@ -15,6 +15,11 @@ public class AdminUserCDTO {
 	private String useYn;
 	private String pageCnt;
 	private String maxPage;
+	private String adminUserId;
+	private String beginDate;
+	private String endDate;
+	private String searchGb;
+	private String reviewYn;
 	
 	public AdminUserCDTO() {
 		

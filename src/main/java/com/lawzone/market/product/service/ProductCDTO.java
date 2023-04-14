@@ -25,6 +25,7 @@ public class ProductCDTO {
 	private String sellerId;
 	private String sellerIdYn;
 	private String favoriteYn;
+	private String useYn;
 	
 	public ProductCDTO() {
 		

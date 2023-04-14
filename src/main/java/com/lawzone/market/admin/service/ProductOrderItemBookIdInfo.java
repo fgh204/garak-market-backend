@@ -87,6 +87,14 @@ public class ProductOrderItemBookIdInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "text")
 	private String deliveryMessage;
 	
+	@Comment("출입방법내용")
+	@Column(columnDefinition = "text")
+	private String accessMethodText;
+	
+	@Comment("합배송여부")
+	@Column(columnDefinition = "varchar(1)")
+    private String combinedDeliveryYn;
+	
 	@Comment("상품가격")
 	@NotNull
 	@Column(columnDefinition = "DECIMAL (15,2)")

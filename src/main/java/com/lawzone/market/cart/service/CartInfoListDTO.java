@@ -28,6 +28,7 @@ public class CartInfoListDTO {
 	private String productCategoryCode;
 	private String productCategorySmallName;
 	private String sellerId;
+	private String slsDateText;
 	
 	public CartInfoListDTO() {
 		

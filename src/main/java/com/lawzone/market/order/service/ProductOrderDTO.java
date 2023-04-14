@@ -30,5 +30,8 @@ public class ProductOrderDTO {
 	private String subPhoneNumber;
 	private String orderName;
 	private String recipientName;
+	private String deliveryLocationCfcd;
+	private String accessMethodCfcd;
+	private String accessMethodText;
 	private ArrayList<CustOrderItemListDTO> orderItemList;
 }

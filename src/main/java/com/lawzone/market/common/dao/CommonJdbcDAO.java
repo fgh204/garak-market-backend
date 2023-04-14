@@ -67,7 +67,13 @@ public class CommonJdbcDAO {
 		.append("\n   LEFT OUTER JOIN lz_market.menu_info b ON a.UP_MENU_SEQ = b.MENU_SEQ ")
 		.append("\n   LEFT OUTER JOIN lz_market.menu_info c ON b.UP_MENU_SEQ = c.MENU_SEQ ")
 		.append("\n   WHERE a.USE_YN = 'Y' ")
-		.append("\n   AND a.DISP_YN = 'Y' ")
+		.append("\n   AND a.DISP_YN = 'Y' ")		
+		.append("\n   and a.menu_seq not in( select menu_seq ")
+		.append("\n   from lz_market.menu_info mi ")
+		.append("\n   where mi.rsrc_lvl > ( select ui.user_lvl ")
+		.append("\n   from lz_market.user_info ui ")
+		.append("\n   where ui.user_id = ?)  ")
+		.append("\n   and IFNULL(mi.rsrc_path_value, '') <> '') ")
 		.append("\n )M1 ")
 		.append("\n WHERE M1.MENU_CNT > 0 ")
 		.append("\n ORDER BY M1.ORDER_SEQ ");
@@ -114,6 +120,39 @@ public class CommonJdbcDAO {
 			.append("\n set eli.access_token = ? ")
 			.append("\n , eli.update_datetime = now() ")
 			.append("\n where eli.external_link_company_code = ? ");
+		
+		return _query.toString();
+	}
+	
+	public String insertCdDtlInfo() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n INSERT INTO lz_market.cd_dtl_info ")
+			.append("\n (code_no, dtl_code, create_datetime, create_user, update_datetime, update_user, dtl_code_name, dtl_code_text, use_yn) ")
+			.append("\n VALUES(?, ?, now(), '99999999', now(), '99999999', ?, ?, ?) ");
+		
+		return _query.toString();
+	}
+	
+	public String removeCdDtlInfo() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n DELETE FROM lz_market.cd_dtl_info ")
+			.append("\n WHERE code_no = ? ");
+		
+		return _query.toString();
+	}
+	
+	public String selectCdDtlInfo(String listCnt) {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n select ")
+			.append("\n	 dtl_code_name ")
+			.append("\n	 , dtl_code_text ")
+			.append("\n from lz_market.cd_dtl_info ")
+			.append("\n where code_no = ? ")
+			.append("\n order by dtl_code ")
+			.append("\n limit " + listCnt);
 		
 		return _query.toString();
 	}

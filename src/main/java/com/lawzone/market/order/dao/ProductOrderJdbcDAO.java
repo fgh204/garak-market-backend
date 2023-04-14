@@ -25,12 +25,16 @@ public class ProductOrderJdbcDAO {
 			  .append("\n	, b.product_id ")
 			  //.append("\n	, b.order_item_dlng_state_code  as order_item_dlng_state_code ")
 			  //.append("\n	, lz_market.FN_DTL_NM(3,b.order_item_dlng_state_code) as order_item_dlng_state_name ")
-			  .append("\n	, case when poibii.delivery_state_code = '400' then poibii.delivery_state_code else  b.order_item_dlng_state_code end as order_item_dlng_state_code")
-			  .append("\n	, case when poibii.delivery_state_code = '400' then lz_market.FN_DTL_NM(7,poibii.delivery_state_code) else lz_market.FN_DTL_NM(3,b.order_item_dlng_state_code) end as order_item_dlng_state_name")
+			  .append("\n	, case when b.delivery_state_code = '400' then b.delivery_state_code else  b.order_item_dlng_state_code end as order_item_dlng_state_code")
+			  .append("\n	, case when b.delivery_state_code = '400' then lz_market.FN_DTL_NM(7,b.delivery_state_code) else lz_market.FN_DTL_NM(3,b.order_item_dlng_state_code) end as order_item_dlng_state_name")
+			  .append("\n	, if(ifnull(pri.review_number,'N') = 'N', 'N', 'Y') as isReviewRegistered")
 			  .append("\n from lz_market.product_order_item_info b")
-			  .append("\n left outer join lz_market.product_order_item_book_id_info poibii")
-			  .append("\n on b.order_no = poibii.order_no ")
-			  .append("\n and b.product_id = poibii.product_id")
+			  //.append("\n left outer join lz_market.product_order_item_book_id_info poibii")
+			  //.append("\n on b.order_no = poibii.order_no ")
+			  //.append("\n and b.product_id = poibii.product_id")
+			  .append("\n left outer join lz_market.product_review_info pri")
+			  .append("\n on pri.order_no = b.order_no ")
+			  .append("\n and pri.product_id = b.product_id")
 			  .append("\n	, lz_market.product_image_info pii ")
 			  .append("\n	, lz_market.product_order_info poi ")
 			  .append("\n where b.product_id = pii.product_id")
@@ -117,6 +121,11 @@ public class ProductOrderJdbcDAO {
 				.append("\n	, poi.phone_number as phone_number ")
 				.append("\n	, poi.sub_phone_number as sub_phone_number ")
 				.append("\n	, poi.delivery_message as delivery_message ")
+				.append("\n	, poi.delivery_location_cfcd as deliveryLocationCfcd ")
+				.append("\n	, lz_market.FN_DTL_NM(10,poi.delivery_location_cfcd) as deliveryLocationCfcdNm ")
+				.append("\n	, poi.access_method_cfcd as accessMethodCfcd")
+				.append("\n	, lz_market.FN_DTL_NM(11,poi.access_method_cfcd) as accessMethodCfcdNm ")
+				.append("\n	, REGEXP_REPLACE(access_method_text , '[0-9]' ,'*') as accessMethodText ")
 				//.append("\n	, poi.order_dlng_state_code as order_dlng_state_code ")
 				//.append("\n	, lz_market.FN_DTL_NM(3,poi.order_dlng_state_code) as order_dlng_state_name ")
 				.append("\nfrom lz_market.product_order_info poi ") 
@@ -176,11 +185,13 @@ public class ProductOrderJdbcDAO {
 		return _query.toString();
 	}
 	
-	public String adminOrderList(String statCd, String dlngStatCd, String deliveryStateCode, String sellerIdYn, String searchGb, String page) {
+	public String adminOrderList(String statCd, String dlngStatCd, String deliveryStateCode, String sellerIdYn
+								, String searchGb, String page, String orderDateGb, String deliveryComplYn, String maxPage) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select ")
-				.append("\n 	DATE_FORMAT(poi.order_date,'%Y-%m-%d') as orderDate ")
+				//.append("\n 	DATE_FORMAT(poi.order_date,'%Y-%m-%d') as orderDate ")
+				.append("\n 	DATE_FORMAT(pi3.create_datetime ,'%Y-%m-%d %H:%i:%s') as orderDate ")
 				.append("\n 	, poi.order_no ") 
 				//.append("\n 	, concat(substr(poi.order_name,1,20), '...') as orderName ")
 				.append("\n 	, poii.product_id as productId ")
@@ -204,23 +215,33 @@ public class ProductOrderJdbcDAO {
 				.append("\n 	, lz_market.product_info pi2 ") 
 				.append("\n 	, lz_market.user_info ui ")
 				.append("\n 	, lz_market.seller_info si ")
+				.append("\n 	, lz_market.payment_info pi3 ")
 				.append("\n where poi.order_no = poii.order_no ") 
 				.append("\n and poii.product_id = pi2.product_id ")
 				.append("\n and poi.user_id = ui.user_id ")
 				.append("\n and pi2.seller_id =  si.seller_id ")
-				.append("\n and poi.order_date BETWEEN concat(?, ' 00:00:00') and concat(?, ' 23:59:59') ");
+				.append("\n and poi.order_no = pi3.order_no ");
+					
+				if("01".equals(orderDateGb)) {
+					_query.append("\n and poi.order_date BETWEEN concat(?, ' 00:00:00') and concat(?, ' 23:59:59') ");
+				}
+		
 				if("000".equals(statCd)) {
-					_query.append("\n and poii.order_item_state_code in('003','002') ");
+					//_query.append("\n and poii.order_item_state_code in('003','002') ");
 				}else {
 					_query.append("\n and poii.order_item_state_code = ? ");
 				}
 				
-				if(!"000".equals(dlngStatCd)) {
-					//if("300".equals(dlngStatCd) || "400".equals(dlngStatCd)) {
-					//	_query.append("\n and poibii.delivery_state_code = ? ");
-					//}else {
-						_query.append("\n and poii.order_item_dlng_state_code = ? ");
-					//}
+				if("Y".equals(deliveryComplYn)) {
+					_query.append("\n and poii.order_item_dlng_state_code <> '900' ");
+				} else {
+					if(!"000".equals(dlngStatCd)) {
+						//if("300".equals(dlngStatCd) || "400".equals(dlngStatCd)) {
+						//	_query.append("\n and poibii.delivery_state_code = ? ");
+						//}else {
+							_query.append("\n and poii.order_item_dlng_state_code = ? ");
+						//}
+					}
 				}
 				
 				if(!"000".equals(deliveryStateCode)) {
@@ -231,16 +252,27 @@ public class ProductOrderJdbcDAO {
 					_query.append("\n and pi2.seller_id = ?");
 				}
 				if("01".equals(searchGb)) {
-					_query.append("\n and ui.user_name = ?");
-				}
+					_query.append("\n and ui.user_name like concat('%',?,'%')");
+				} else if("02".equals(searchGb)) {
+					_query.append("\n and si.shop_name like concat('%',?,'%')");
+				} else if("03".equals(searchGb)) {//주문번호
+					_query.append("\n and poi.order_no = ?");
+				} else if("04".equals(searchGb)) {//구매자 연락처
+					_query.append("\n and ui.phone_number = ?");
+				} else if("05".equals(searchGb)) {//수취인명
+					_query.append("\n and poi.recipient_name like concat('%',?,'%')");
+				} else if("06".equals(searchGb)) {//수취자 연락처
+					_query.append("\n and poi.phone_number = ?");
+				} 
 				
 				_query.append("\n  group by poii.order_no , poii.product_id ")
 				.append("\n order by poi.order_no desc ")
-				.append("\n limit " + page + " , 10");
+				.append("\n limit " + page + " , " + maxPage);
 		return _query.toString();
 	}
 	
-	public String adminOrderItemPageInfo(String statCd, String dlngStatCd, String deliveryStateCode,  String sellerIdYn, String searchGb, String page) {
+	public String adminOrderItemPageInfo(String statCd, String dlngStatCd, String deliveryStateCode,  String sellerIdYn
+										, String searchGb, String page, String orderDateGb, String deliveryComplYn) {
 		StringBuffer _query = new StringBuffer();
 		_query.append("\n select ")
 				.append("\n page.cnt as total_count ")
@@ -260,26 +292,33 @@ public class ProductOrderJdbcDAO {
 				.append("\n 	, lz_market.product_info pi2 ") 
 				.append("\n 	, lz_market.user_info ui ")
 				.append("\n 	, lz_market.seller_info si ")
+				.append("\n 	, lz_market.payment_info pi3 ")
 				.append("\n where poi.order_no = poii.order_no ")
 				.append("\n and poii.product_id = pi2.product_id ")
 				.append("\n and poi.user_id = ui.user_id ")
 				.append("\n and pi2.seller_id =  si.seller_id ")
-				.append("\n and poi.order_date BETWEEN concat(?, ' 00:00:00') and concat(?, ' 23:59:59') ");
+				.append("\n and poi.order_no = pi3.order_no ");
+				if("01".equals(orderDateGb)) {
+					_query.append("\n and poi.order_date BETWEEN concat(?, ' 00:00:00') and concat(?, ' 23:59:59') ");
+				}
 				
 				if("000".equals(statCd)) {
-					_query.append("\n and poii.order_item_state_code in('003','002') ");
+					//_query.append("\n and poii.order_item_state_code in('003','002') ");
 				}else {
 					_query.append("\n and poii.order_item_state_code = ? ");
 				}
 				
-				if(!"000".equals(dlngStatCd)) {
-					//if("300".equals(dlngStatCd) || "400".equals(dlngStatCd)) {
-					//	_query.append("\n and poibii.delivery_state_code = ? ");
-					//}else {
-						_query.append("\n and poii.order_item_dlng_state_code = ? ");
-					//}
+				if("Y".equals(deliveryComplYn)) {
+					_query.append("\n and poii.order_item_dlng_state_code <> '900' ");
+				} else {
+					if(!"000".equals(dlngStatCd)) {
+						//if("300".equals(dlngStatCd) || "400".equals(dlngStatCd)) {
+						//	_query.append("\n and poibii.delivery_state_code = ? ");
+						//}else {
+							_query.append("\n and poii.order_item_dlng_state_code = ? ");
+						//}
+					}
 				}
-				
 				if(!"000".equals(deliveryStateCode)) {
 					_query.append("\n and poii.delivery_state_code = ? ");
 				}
@@ -287,9 +326,19 @@ public class ProductOrderJdbcDAO {
 				if("Y".equals(sellerIdYn)) {
 					_query.append("\n and pi2.seller_id = ?");
 				}
-				if("01".equals(searchGb)) {
-					_query.append("\n and ui.user_name = ?");
-				}
+				if("01".equals(searchGb)) {//구매자명
+					_query.append("\n and ui.user_name like concat('%',?,'%')");
+				} else if("02".equals(searchGb)) {//판매자명
+					_query.append("\n and si.shop_name like concat('%',?,'%')");
+				} else if("03".equals(searchGb)) {//주문번호
+					_query.append("\n and poi.order_no = ?");
+				} else if("04".equals(searchGb)) {//구매자 연락처
+					_query.append("\n and ui.phone_number = ?");
+				} else if("05".equals(searchGb)) {//수취인명
+					_query.append("\n and poi.recipient_name like concat('%',?,'%')");
+				} else if("06".equals(searchGb)) {//수취자 연락처
+					_query.append("\n and poi.phone_number = ?");
+				} 
 				_query.append("\n )page ");
 		return _query.toString();
 	}
@@ -326,14 +375,16 @@ public class ProductOrderJdbcDAO {
 		return _query.toString();
 	}
 	
-	public String adminOrderCountInfo(String sellerIdYn) {
+	public String adminOrderCountInfo(String sellerIdYn, String orderDateGb, String searchGb) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select ")
 			.append("\n 		SUM(IF(a.orderItemDlngStateCode = '000', a.product_count, 0)) AS orderStayCnt ")
-			.append("\n 		, SUM(IF(a.orderItemDlngStateCode = '100', a.product_count, 0)) AS orderReceivedCnt ")
-			.append("\n 		, SUM(IF(a.orderItemDlngStateCode = '200', a.product_count, 0)) AS orderConfirmCnt ")
-			.append("\n 		, SUM(IF(a.deliveryStateCode = '200' AND a.orderItemDlngStateCode <> '900' , a.product_count, 0)) AS deliveryRequestCnt ")
+			//.append("\n 		, SUM(IF(a.orderItemDlngStateCode = '100', a.product_count, 0)) AS orderReceivedCnt ")
+			//.append("\n 		, SUM(IF(a.orderItemDlngStateCode = '200', a.product_count, 0)) AS orderConfirmCnt ")
+			.append("\n 		, SUM(IF(a.orderItemDlngStateCode = '100' AND a.deliveryStateCode = '000', a.product_count, 0)) AS orderReceivedCnt ")
+			.append("\n 		, SUM(IF(a.orderItemDlngStateCode = '200' AND a.deliveryStateCode = '100', a.product_count, 0)) AS orderConfirmCnt ")
+			.append("\n 		, SUM(IF(a.deliveryStateCode = '300' AND a.orderItemDlngStateCode <> '900' , a.product_count, 0)) AS deliveryRequestCnt ")
 			.append("\n 		, SUM(IF(a.orderItemDlngStateCode = '800', a.product_count, 0)) AS orderCancellationRequestCnt ")
 			.append("\n 		, SUM(IF(a.orderItemDlngStateCode = '900', a.product_count, 0)) AS orderCancellationCnt ")
 			.append("\n 		, SUM(IF(a.deliveryStateCode = '400' AND a.orderItemDlngStateCode <> '900' ,a.product_count,0)) AS deliveryCompleteCnt ")
@@ -352,16 +403,27 @@ public class ProductOrderJdbcDAO {
 //			.append("\n         and poii.product_id = poibii.product_id , ")
 			.append("\n         lz_market.product_info pi2    , ")
 			.append("\n         lz_market.user_info ui ,")
-			.append("\n         lz_market.seller_info si ")
+			.append("\n         lz_market.seller_info si ,")
+			.append("\n         lz_market.payment_info pi3 ")
 			.append("\n     where ")
 			.append("\n         poi.order_no = poii.order_no    ")
 			.append("\n         and poii.product_id = pi2.product_id    ")
 			.append("\n         and poi.user_id = ui.user_id ")
 			.append("\n         and pi2.seller_id =  si.seller_id ")
-			.append("\n 		and poi.order_date BETWEEN concat(?, ' 00:00:00') and concat(?, ' 23:59:59') ");
+			.append("\n         and poi.order_no = pi3.order_no ");
+			if("01".equals(orderDateGb)) {
+				_query.append("\n 		and poi.order_date BETWEEN concat(?, ' 00:00:00') and concat(?, ' 23:59:59') ");
+			}
 			if("Y".equals(sellerIdYn)) {
 				_query.append("\n and pi2.seller_id = ?");
 			}
+			
+			if("01".equals(searchGb)) {
+				_query.append("\n and ui.user_name like concat('%',?,'%')");
+			} else if("02".equals(searchGb)) {
+				_query.append("\n and si.shop_name like concat('%',?,'%')");
+			} 
+			
 		_query.append("\n  group by poii.order_no , poii.product_id  ")	
 		.append("\n     )a ");
 		
@@ -459,7 +521,8 @@ public class ProductOrderJdbcDAO {
 		
 		_query.append("\n select")
 			  .append("\n	poii.order_no ")
-			  .append("\n 	, sum(poii.total_product_price) ")
+			  //.append("\n 	, sum(poii.total_product_price) ")
+			  .append("\n 	, sum(poii.product_price * poii.product_count) ")
 			  .append("\n 	, poii.seller_id ")
 			  .append("\n 	, si.delivery_amount ")
 			  .append("\n from lz_market.product_order_item_info poii ")

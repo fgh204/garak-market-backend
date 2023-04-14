@@ -11,4 +11,5 @@ import com.lawzone.market.common.service.BoilerplateInfo;
 public interface CdDtlInfoDAO extends JpaRepository<CdDtlInfo, String>{
 	Optional<CdDtlInfo> findByIdCodeNoAndIdDtlCode(String codeNo, String dtlCode);
 	List<CdDtlInfo> findByIdCodeNoAndIdDtlCodeAndUseYn(String codeNo, String dtlCode, String useYn);
+	List<CdDtlInfo> findByIdCodeNoAndDtlCodeNameAndUseYn(String codeNo, String dtlCodeName, String useYn);
 }

@@ -33,6 +33,7 @@ import com.lawzone.market.order.service.OrderPaymentInfo;
 import com.lawzone.market.order.service.ProductOrderInfo;
 import com.lawzone.market.order.service.ProductOrderItemInfo;
 import com.lawzone.market.order.service.ProductOrderService;
+import com.lawzone.market.order.service.ProductOrderUserInfoDTO;
 import com.lawzone.market.payment.service.PaymentCancleDTO;
 import com.lawzone.market.payment.service.PaymentDTO;
 import com.lawzone.market.payment.service.PaymentService;
@@ -97,6 +98,7 @@ public class PaymentController {
 		
 		paymentMap = (Map) map.get("dataset");
 		String userId = sessionBean.getUserId();
+		String userNmae = sessionBean.getUserNm();
 		String _event = (String) paymentMap.get("event");
 		String _receiptId = (String) paymentMap.get("receipt_id");
 		String _orderNo = (String) paymentMap.get("order_id");
@@ -247,7 +249,7 @@ public class PaymentController {
 					.append("\n결제금액 : ")
 					.append(_payment_amount)
 					.append("\n구매자 : ")
-					.append(sessionBean.getUserNm())
+					.append(userNmae)
 					.append("\n결제방법 : ")
 					.append(_payment_gb)
 					.append("\n결제수단 : ")
@@ -270,12 +272,16 @@ public class PaymentController {
 					for(int i = 0; i < pushIdList.size(); i++) {
 						push = new ArrayList<>();
 						sellerId = pushIdList.get(i).getUserId();
-						if("00000069".equals(sellerId)) {
+						if ("00000069".equals(sellerId)) {
 							push.add(0, "e01fc4e3-92bb-486c-aa8c-f7c88d4514b9");
-						}else if("00000070".equals(sellerId)) {
+						} else if ("00000070".equals(sellerId)) {
 							push.add(0, "ae63fb01-b52c-459a-b51b-509ecd93f22a");
-						}else if("00000072".equals(sellerId)) {
+						} else if ("00000072".equals(sellerId)) {
 							push.add(0, "ace1539a-3b58-4fe4-814a-3d1c76eeecb3");
+						} else if ("00000606".equals(sellerId)) {
+							push.add(0, "45d05a1f-7945-4d27-ad6e-a3c5987f9389");
+						} else if ("00000601".equals(sellerId)) {
+							push.add(0, "fef10bec-e5af-4c62-a9e8-d09e61a71cd3");
 						} 
 						appPushDTO.setContent("상품 : " + pushIdList.get(i).getProductName());
 						appPushDTO.setPushList(push);
@@ -372,6 +378,7 @@ public class PaymentController {
 					}
 					
 					_orderAmount = orderPaymentInfo.get().getOrderAmount();
+					//_orderAmount = _orderAmount.add(_pointAmt);
 					_cancelledOrderAmount = orderPaymentInfo.get().getCancelledOrderAmount();
 					_orderDeliveryAmount = orderPaymentInfo.get().getDeliveryAmount();
 					
@@ -391,10 +398,18 @@ public class PaymentController {
 							_allCancleYn = "Y";
 						} else {
 							if(_paymentAmt.compareTo(_amt) >= 0) {
-								_cancleAmt = _amt.doubleValue();
+								if(_pointAmt.compareTo(_amt) >= 0 ) {
+									_cancelledPointAmount = _cancelledPointAmount.add(_amt);
+									_cancleAmt = 0.0;
+								} else {
+									_cancleAmt = _amt.subtract(_pointAmt).doubleValue();
+									_cancelledPointAmount = _cancelledPointAmount.add(_pointAmt);
+								}
 							} else {
-								_cancleAmt = _paymentAmt.doubleValue();
-								_cancelledPointAmount = _cancelledPointAmount.add(_amt.subtract(_paymentAmt));
+								//_cancleAmt = _paymentAmt.doubleValue();
+								_cancleAmt = 0.0;
+								//_cancelledPointAmount = _cancelledPointAmount.add(_amt.subtract(_paymentAmt));
+								_cancelledPointAmount = _cancelledPointAmount.add(_amt);
 							}
 						}
 						_addPointAmt = _cancelledPointAmount.subtract(_cancelledPointAmt);
@@ -428,6 +443,18 @@ public class PaymentController {
 					|| "300".equals(_orderItemDlngStateCode)) {
 				//취소요청만 가능
 				this.productOrderService.modifyOrderItemStatInfo(_orderNo, _productId, "800");
+				
+				StringBuilder slackMsg = new StringBuilder();
+				slackMsg
+				.append("고객 취소요청 알림")
+				.append("주문번호 : ")
+				.append(_orderNo)
+				.append("\n취소요청 고객명 : ")
+				.append(userNm);
+				
+				//slackWebhook.
+				this.slackWebhook.postSlackMessage(slackMsg.toString(), "03");
+				
 				return JsonUtils.returnValue("0000", "취소요청 하였습니다.", rtnMap).toString();
 			}else {
 				//그 외 취소불가

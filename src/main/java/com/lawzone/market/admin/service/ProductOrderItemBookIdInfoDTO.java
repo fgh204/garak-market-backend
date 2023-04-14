@@ -53,6 +53,8 @@ public class ProductOrderItemBookIdInfoDTO {
 	private String sellerId;
 	private String productCategoryCode;
 	private String deliveryOrderId;
+	private String accessMethodText;
+	private String combinedDeliveryYn;
 	
 	public ProductOrderItemBookIdInfoDTO() {
 		

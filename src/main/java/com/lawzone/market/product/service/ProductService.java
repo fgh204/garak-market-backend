@@ -80,6 +80,7 @@ public class ProductService {
 			
 			if(sellerInfo.isPresent()) {
 				productDTO.setProductCategoryCode(sellerInfo.get().getProductCategoryCode());
+				productDTO.setTodayDeliveryStandardTime(sellerInfo.get().getTodayDeliveryStandardTime());
 			}
 			
 		}
@@ -127,9 +128,21 @@ public class ProductService {
 		
 		String _toDate = _dateArray[0];
 		String _toTime = _dateArray[1];
+		String slsDateList[];
+		String slsDateText = "";
 		int _time = Integer.parseInt(_toTime);
 		int _todayDeliveryTime = 0;
-		String slsDayYn = this.utilService.getSlsDayYn(_toDate);
+		String slsDayYn = "N";
+		
+		slsDateText = _productList.get(0).getSlsDateText();
+		
+		if(slsDateText.indexOf(_toDate) > -1) {
+			slsDayYn = "N";
+		} else {
+			slsDayYn = this.utilService.getSlsDayYn(_toDate);
+		}
+		
+		slsDateList = slsDateText.split(";");
 		
 		if(_productList.get(0).getTodayDeliveryStandardTime() == null) {
 			_productList.get(0).setTodayDeliveryStandardTime("1000");
@@ -144,7 +157,7 @@ public class ProductService {
 		}
 		
 		//if("N".equals(_productList.get(0).getTodayDeliveryYn())) {
-			_productList.get(0).setSlsDate(this.utilService.getSlsDate(_toDate , _productList.get(0).getTodayDeliveryYn()));
+			_productList.get(0).setSlsDate(this.utilService.getSlsDate(_toDate , _productList.get(0).getTodayDeliveryYn(), slsDateList));
 		//}else {
 		//	_productList.get(0).setSlsDate(this.utilService.getSlsDate(_toDate , "Y"));
 		//}
@@ -160,6 +173,15 @@ public class ProductService {
 		String sellerId = productCDTO.getSellerId();
 		String sellerYn = productCDTO.getSellerSearchYn();
 		String sellerIdYn = productCDTO.getSellerIdYn();
+		String useYn = productCDTO.getUseYn();
+		
+		if(
+			("Y".equals(sellerYn) && "Y".equals(sellerIdYn))
+			|| (sellerYn == null && sellerIdYn == null)
+			) {
+			useYn = "Y";
+		}
+		
 		if(!"".equals(productCDTO.getProductCategoryCode()) && productCDTO.getProductCategoryCode() != null){
 			categoryCodeYn = "Y";
 		}
@@ -171,13 +193,23 @@ public class ProductService {
 		if(!"".equals(productCDTO.getProductName()) && productCDTO.getProductName() != null){
 			productNameYn = "Y";
 		}
+		
+		if("".equals(useYn) || useYn == null){
+			useYn = "";
+		}
+		
 		String sql = this.productJdbcDAO.pageListQuery(productCDTO.getPageCount(), productCDTO.getMaxPageCount()
-														,categoryCodeYn, productIdYn, productNameYn, sellerYn, favoriteYn, sellerId);
+														,categoryCodeYn, productIdYn, productNameYn, sellerYn, favoriteYn, sellerId, useYn);
 		ProductInfoListDTO productInfoListDTO = new ProductInfoListDTO();
 		
 		ArrayList<String> _queryValue = new ArrayList<>();
 		
 		int paramCnt = 0;
+		
+		if(!"".equals(useYn)) {
+			_queryValue.add(paramCnt, useYn);
+			paramCnt++;
+		}
 		
 		if("Y".equals(categoryCodeYn)) {
 			_queryValue.add(paramCnt, productCDTO.getProductCategoryCode());
@@ -238,12 +270,23 @@ public class ProductService {
 		
 		String _toDate = _dateArray[0];
 		String _toTime = _dateArray[1];
+		String slsDateList[];
+		String slsDateText = "";
 		int _time = Integer.parseInt(_toTime);
 		int _todayDeliveryTime = 0;
-		String slsDayYn = this.utilService.getSlsDayYn(_toDate);
+		String slsDayYn = "N";
 
 		for(int i = 0; i < productListSize; i++) {
 			productInfoListInfo = new ProductInfoListPDTO();
+			slsDateText = productList.get(i).getSlsDateText();
+			
+			if(slsDateText.indexOf(_toDate) > -1) {
+				slsDayYn = "N";
+			} else {
+				slsDayYn = this.utilService.getSlsDayYn(_toDate);
+			}
+			
+			slsDateList = slsDateText.split(";");
 			
 			productInfoListInfo.setProductId(productList.get(i).getProductId());
 			productInfoListInfo.setProductName(productList.get(i).getProductName());
@@ -253,6 +296,7 @@ public class ProductService {
 			productInfoListInfo.setThumbnailImagePath(productList.get(i).getThumbnailImagePath());
 			productInfoListInfo.setCumulativeSalesCount(productList.get(i).getCumulativeSalesCount());
 			productInfoListInfo.setShopName(productList.get(i).getShopName());
+			productInfoListInfo.setUseYn(productList.get(i).getUseYn());
 			
 			if(productList.get(i).getTodayDeliveryStandardTime() == null) {
 				productInfoListInfo.setTodayDeliveryStandardTime("1000");
@@ -269,7 +313,7 @@ public class ProductService {
 			}
 			
 			//if("N".equals(productInfoListInfo.getTodayDeliveryYn())) {
-				productInfoListInfo.setSlsDate(this.utilService.getSlsDate(_toDate , productInfoListInfo.getTodayDeliveryYn()));
+				productInfoListInfo.setSlsDate(this.utilService.getSlsDate(_toDate , productInfoListInfo.getTodayDeliveryYn(), slsDateList));
 			//}else {
 			//	productInfoListInfo.setSlsDate(this.utilService.getSlsDate(_toDate , "Y"));
 			//}
@@ -297,6 +341,12 @@ public class ProductService {
 		String sellerId = productCDTO.getSellerId();
 		String sellerYn = productCDTO.getSellerSearchYn();
 		String sellerIdYn = productCDTO.getSellerIdYn();
+		String useYn = productCDTO.getUseYn();
+		
+		if(!"Y".equals(sellerYn)) {
+			useYn = "Y";
+		}
+		
 		if(!"".equals(productCDTO.getProductCategoryCode()) && productCDTO.getProductCategoryCode() != null){
 			categoryCodeYn = "Y";
 		}
@@ -309,13 +359,22 @@ public class ProductService {
 			productNameYn = "Y";
 		}
 		
+		if("".equals(useYn) || useYn == null){
+			useYn = "";
+		}
+		
 		String sql = this.productJdbcDAO.pageQuery(productCDTO.getMaxPageCount()
-				,categoryCodeYn, productIdYn, productNameYn, sellerYn, favoriteYn, sellerId);
+				,categoryCodeYn, productIdYn, productNameYn, sellerYn, favoriteYn, sellerId, useYn);
 		PageInfoDTO pageInfoDTO = new PageInfoDTO();
 		
 		ArrayList<String> _queryValue = new ArrayList<>();
 		
 		int paramCnt = 0;
+		
+		if(!"".equals(useYn)) {
+			_queryValue.add(paramCnt, useYn);
+			paramCnt++;
+		}
 		
 		if("Y".equals(categoryCodeYn)) {
 			_queryValue.add(paramCnt, productCDTO.getProductCategoryCode());
@@ -336,7 +395,7 @@ public class ProductService {
 			if("Y".equals(sellerIdYn)) {
 				_queryValue.add(paramCnt, productCDTO.getSellerId());
 				paramCnt++;
-			}else {
+			} else {
 				_queryValue.add(paramCnt, productCDTO.getUserId());
 				paramCnt++;
 			}

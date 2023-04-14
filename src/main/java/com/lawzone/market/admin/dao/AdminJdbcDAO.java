@@ -2,6 +2,7 @@ package com.lawzone.market.admin.dao;
 
 import org.springframework.stereotype.Component;
 
+import com.lawzone.market.admin.dto.order.AdminOrderCDTO;
 import com.lawzone.market.admin.dto.user.AdminUserCDTO;
 import com.lawzone.market.admin.service.AdminProductCDTO;
 
@@ -28,6 +29,12 @@ public class AdminJdbcDAO {
 				.append("\n 	, si.business_address ")
 				.append("\n 	, si.seller_phone_number ")
 				.append("\n 	, si.product_category_code ")
+				.append("\n 	, ifnull((select ")
+				.append("\n 		ceil(sum(point_value)) ")
+				.append("\n 	from lz_market.point_detail_info pi2 ")
+				.append("\n 	where pi2.user_id = ui.user_id ")
+				.append("\n 	and pi2.point_expiration_datetime > now() ),0) ")
+				.append("\n 	, ifnull(si.market_exposure_yn,'N') ")
 				.append("\n from lz_market.user_info ui ")
 				.append("\n 	left outer join lz_market.seller_info si ")
 				.append("\n 	on ui.user_id = si.seller_id ")
@@ -104,6 +111,7 @@ public class AdminJdbcDAO {
 				.append("\n 	, si.business_address = ? ")
 				.append("\n 	, si.seller_phone_number = ? ")			
 				.append("\n 	, si.product_category_code = ? ")
+				.append("\n 	, si.market_exposure_yn = ? ")
 				.append("\n 	, si.update_datetime = now() ")
 				.append("\n 	, si.update_user = ? ")
 				.append("\n where si.seller_id = ? ");
@@ -128,6 +136,8 @@ public class AdminJdbcDAO {
 			.append("\n     	, date_format(poi.order_date,'%Y-%m-%d') as order_date ")
 			.append("\n     	, pi2.seller_id as sellerId ")
 			.append("\n     	, pi2.product_category_code as productCategoryCode ")
+			.append("\n     	, poi.access_method_text ")
+			.append("\n     	, si.combined_delivery_yn ")
 			.append("\n     from lz_market.product_order_item_info poii ")
 			.append("\n     	, lz_market.product_info pi2 ")
 			.append("\n     	, lz_market.product_order_info poi ")
@@ -136,7 +146,7 @@ public class AdminJdbcDAO {
 			.append("\n     and poii.order_no  = poi.order_no ")
 			.append("\n     and pi2.seller_id = si.seller_id ")
 			.append("\n     and poii.order_item_dlng_state_code = ? ")
-			.append("\n     and si.delivery_amount = ? ")
+			.append("\n     and si.combined_delivery_yn = ? ")
 			.append("\n 	and poi.order_date BETWEEN concat(?, ' 00:00:00') and concat(?, ' 23:59:59') ");
 			if("Y".equals(sellerIdYn)) {
 				_query.append("\n and pi2.seller_id = ?");
@@ -156,6 +166,8 @@ public class AdminJdbcDAO {
 			.append("\n     	, date_format(poi.order_date,'%Y-%m-%d') as order_date ")
 			.append("\n     	, pi2.seller_id as sellerId ")
 			.append("\n     	, pi2.product_category_code as productCategoryCode ")
+			.append("\n     	, poi.access_method_text ")
+			.append("\n     	, si.combined_delivery_yn ")
 			.append("\n     from lz_market.product_order_item_info poii ")
 			.append("\n     	, lz_market.product_info pi2 ")
 			.append("\n     	, lz_market.product_order_info poi ")
@@ -164,7 +176,7 @@ public class AdminJdbcDAO {
 			.append("\n     and poii.order_no  = poi.order_no ")
 			.append("\n     and pi2.seller_id = si.seller_id ")
 			.append("\n     and poii.order_item_dlng_state_code = ? ")
-			.append("\n     and si.delivery_amount <> ? ")
+			.append("\n     and si.combined_delivery_yn = ? ")
 			.append("\n 	and poi.order_date BETWEEN concat(?, ' 00:00:00') and concat(?, ' 23:59:59') ");
 			if("Y".equals(sellerIdYn)) {
 				_query.append("\n and pi2.seller_id = ?");
@@ -193,7 +205,7 @@ public class AdminJdbcDAO {
 		return _query.toString();
 	}
 	
-	public String settlementList() {
+	public String settlementList(AdminOrderCDTO adminOrderCDTO) {
 		StringBuffer _query = new StringBuffer();
 		
 //		_query.append("\n select ")
@@ -286,7 +298,11 @@ public class AdminJdbcDAO {
 			  .append("\n          and pi3.seller_id = si.seller_id     ")
 			  .append("\n          and DATE_FORMAT(poii.create_datetime, '%Y-%m-%d') =  sdi.sls_date     ")
 			  .append("\n          and poii.order_item_state_code = '003'")
-			  .append("\n          group by poii.order_no, si.seller_id ")
+			  .append("\n          and poii.create_datetime BETWEEN concat(DATE_SUB(?, INTERVAL (if(DAYOFWEEK(?) = 1, 6, DAYOFWEEK(?) - 2)) DAY), ' 00:00:00') and concat(DATE_ADD(?, INTERVAL (if(DAYOFWEEK(?) = 1, 0, 8 - DAYOFWEEK(?))) DAY), ' 23:59:59') ");
+		if(!"00".equals(adminOrderCDTO.getSearchGb())) {
+			_query.append("\n          and si.shop_name like concat('%', ? ,'%')");
+		}
+		_query.append("\n          group by poii.order_no, si.seller_id ")
 			  .append("\n          )d   ")
 			  .append("\n  group by")
 			  .append("\n      d.shopName, d.minDate, d.maxDate ");
@@ -387,6 +403,53 @@ public class AdminJdbcDAO {
 				.append("\n update access_token = ? ")
 				.append("\n , refresh_token = ? ")
 				.append("\n , update_datetime = now() ");
+		return _query.toString();
+	}
+	
+	public String kakaoTargetPointList() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n select ")
+		.append("\n     ceil(sum(pi2.point_value)) as pointAmount ")
+		.append("\n     , pi2.user_id as userId ")
+		.append("\n     , DATE_FORMAT(pi2.point_expiration_datetime, '%Y.%m.%d') as pointExpirationDate ")
+		.append("\n     , DATE_FORMAT( DATE_SUB(pi2.point_expiration_datetime, INTERVAL 3 day) , '%Y.%m.%d') as stnDate ")
+		.append("\n     , ui.phone_number as phoneNumber ")
+		.append("\n     , ui.user_name as userName ")
+		.append("\n from lz_market.point_detail_info pi2 ")
+		.append("\n     , lz_market.user_info ui ")
+		.append("\n where pi2.user_id = ui.user_id ")
+		.append("\n and DATE_FORMAT(pi2.point_expiration_datetime, '%Y-%m-%d') between ? and ? ")
+		.append("\n group by pi2.user_id , DATE_FORMAT(pi2.point_expiration_datetime, '%Y.%m.%d') ");
+		return _query.toString();
+	}
+	
+	public String kakaoTargetReviewList(AdminUserCDTO adminUserCDTO) {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n select ")
+		.append("\n 	DATE_FORMAT(poi.order_date , '%Y.%m.%d') as orderDate ")
+		.append("\n 	, ui.user_name as userName ")
+		.append("\n 	, ui.phone_number as phoneNumber ")
+		.append("\n 	, case when pri.review_number is null then 'N' else 'Y' end as reviewYn ")
+		.append("\n 	, DATE_FORMAT( DATE_ADD(poii.update_datetime , INTERVAL 1 day) , '%Y.%m.%d') as stnDate ")
+		.append("\n from lz_market.product_order_info poi ")
+		.append("\n , lz_market.product_order_item_info poii ")
+		.append("\n left outer join lz_market.product_review_info pri ")
+		.append("\n on pri.product_id = poii.product_id ")
+		.append("\n and pri.order_no = poii.order_no ")
+		.append("\n , lz_market.user_info ui ")
+		.append("\n where poi.order_no = poii.order_no ")
+		.append("\n and poi.user_id = ui.user_id ")
+		.append("\n and poii.delivery_state_code = '400' ")
+		.append("\n and poii.order_item_state_code = '003' ")
+		.append("\n and poi.order_date between concat( ?, ' 00:00:00') and concat(?, ' 23:59:59') ");
+		
+		if(!"%".equals(adminUserCDTO.getReviewYn())) {
+			_query.append("\n and case when pri.review_number is null then 'N' else 'Y' end = ? ");
+		}
+		
+		_query.append("\n group by DATE_FORMAT(poi.order_date , '%Y.%m.%d') , ui.user_id ");
 		return _query.toString();
 	}
 }

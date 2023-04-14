@@ -182,7 +182,7 @@ public class ProductOrderService {
 	
 	public List getAdminOrderList(AdminOrderCDTO adminOrderCDTO) {
 		String _sellerIdYn = "Y";
-		String _userName = adminOrderCDTO.getSearchValue();
+		String _searchValue = adminOrderCDTO.getSearchValue();
 		String _beginDate = adminOrderCDTO.getOrderDateAf();
 		String _endDate = adminOrderCDTO.getOrderDateBf();
 		String _searchGb = adminOrderCDTO.getSearchGb();
@@ -191,33 +191,43 @@ public class ProductOrderService {
 		String _sellerId = adminOrderCDTO.getSellerId();
 		String _page = adminOrderCDTO.getPageCnt();
 		String _dlngStatCd = adminOrderCDTO.getOrderDlngStatCode();
+		String _orderDateGb = adminOrderCDTO.getOrderDateGb();
+		String _deliveryComplYn = adminOrderCDTO.getDeliveryComplYn();
+		String _maxPage = adminOrderCDTO.getMaxPage();
 		
 		if("".equals(_sellerId) || _sellerId == null) {
 			_sellerIdYn = "N";
 		}
 		
-		String sql = this.productOrderJdbcDAO.adminOrderList(_statCd, _dlngStatCd,_deliveryStateCode, _sellerIdYn, _searchGb, _page);
+		String sql = this.productOrderJdbcDAO.adminOrderList(_statCd, _dlngStatCd,_deliveryStateCode, _sellerIdYn, _searchGb, _page, _orderDateGb, _deliveryComplYn, _maxPage);
 		
 		AdminOrderListDTO adminOrderListDTO = new AdminOrderListDTO();
 		
 		int _queryValueIdx = 0;
 		ArrayList<String> _queryValue = new ArrayList<>();
-		_queryValue.add(_queryValueIdx, _beginDate);
-		_queryValueIdx++;
-		_queryValue.add(_queryValueIdx, _endDate);
-		_queryValueIdx++;
-		
+		if("01".equals(_orderDateGb)) {
+			_queryValue.add(_queryValueIdx, _beginDate);
+			_queryValueIdx++;
+			_queryValue.add(_queryValueIdx, _endDate);
+			_queryValueIdx++;
+		}
+	
 		if(!"000".equals(_statCd)) {
 			_queryValue.add(_queryValueIdx, _statCd);
 			_queryValueIdx++;
 		}
 		
-		if(!"000".equals(_dlngStatCd)) {
-			_queryValue.add(_queryValueIdx, _dlngStatCd);
-			_queryValueIdx++;
+		if("N".equals(_deliveryComplYn)) {
+			if(!"000".equals(_dlngStatCd)) {
+				_queryValue.add(_queryValueIdx, _dlngStatCd);
+				_queryValueIdx++;
+			}
 		}
 		
 		if(!"000".equals(_deliveryStateCode)) {
+			if("999".equals(_deliveryStateCode)) {
+				_deliveryStateCode = "000";
+			}
 			_queryValue.add(_queryValueIdx, _deliveryStateCode);
 			_queryValueIdx++;
 		}
@@ -227,8 +237,8 @@ public class ProductOrderService {
 			_queryValueIdx++;
 		}
 		
-		if("01".equals(_searchGb)) {
-			_queryValue.add(_queryValueIdx, _userName);
+		if(!"00".equals(_searchGb)) {
+			_queryValue.add(_queryValueIdx, _searchValue);
 			_queryValueIdx++;
 		}
 		
@@ -237,7 +247,7 @@ public class ProductOrderService {
 	
 	public List getAdminOrderListPageInfo(AdminOrderCDTO adminOrderCDTO) {
 		String _sellerIdYn = "Y";
-		String _userName = adminOrderCDTO.getSearchValue();
+		String _searchValue = adminOrderCDTO.getSearchValue();
 		String _beginDate = adminOrderCDTO.getOrderDateAf();
 		String _endDate = adminOrderCDTO.getOrderDateBf();
 		String _searchGb = adminOrderCDTO.getSearchGb();
@@ -246,33 +256,42 @@ public class ProductOrderService {
 		String _deliveryStateCode = adminOrderCDTO.getDeliveryStateCode();
 		String _sellerId = adminOrderCDTO.getSellerId();
 		String _page = adminOrderCDTO.getPageCnt();
-
+		String _maxPage = adminOrderCDTO.getMaxPage();
+		String _orderDateGb = adminOrderCDTO.getOrderDateGb();
+		String _deliveryComplYn = adminOrderCDTO.getDeliveryComplYn();
+		
 		if("".equals(_sellerId) || _sellerId == null) {
 			_sellerIdYn = "N";
 		}
 		
-		String sql = this.productOrderJdbcDAO.adminOrderItemPageInfo(_statCd, _dlngStatCd, _deliveryStateCode, _sellerIdYn, _searchGb, _page);
+		String sql = this.productOrderJdbcDAO.adminOrderItemPageInfo(_statCd, _dlngStatCd, _deliveryStateCode, _sellerIdYn, _searchGb, _page, _orderDateGb, _deliveryComplYn);
 		
 		AdminPageInfoDTO adminPageInfoDTO = new AdminPageInfoDTO();
 		
 		int _queryValueIdx = 0;
 		ArrayList<String> _queryValue = new ArrayList<>();
-		_queryValue.add(_queryValueIdx, _beginDate);
-		_queryValueIdx++;
-		_queryValue.add(_queryValueIdx, _endDate);
-		_queryValueIdx++;
-		
+		if("01".equals(_orderDateGb)) {
+			_queryValue.add(_queryValueIdx, _beginDate);
+			_queryValueIdx++;
+			_queryValue.add(_queryValueIdx, _endDate);
+			_queryValueIdx++;
+		}
 		if(!"000".equals(_statCd)) {
 			_queryValue.add(_queryValueIdx, _statCd);
 			_queryValueIdx++;
 		}
 		
-		if(!"000".equals(_dlngStatCd)) {
-			_queryValue.add(_queryValueIdx, _dlngStatCd);
-			_queryValueIdx++;
+		if("N".equals(_deliveryComplYn)) {
+			if(!"000".equals(_dlngStatCd)) {
+				_queryValue.add(_queryValueIdx, _dlngStatCd);
+				_queryValueIdx++;
+			}
 		}
 		
 		if(!"000".equals(_deliveryStateCode)) {
+			if("999".equals(_deliveryStateCode)) {
+				_deliveryStateCode = "000";
+			}
 			_queryValue.add(_queryValueIdx, _deliveryStateCode);
 			_queryValueIdx++;
 		}
@@ -282,8 +301,8 @@ public class ProductOrderService {
 			_queryValueIdx++;
 		}
 		
-		if("01".equals(_searchGb)) {
-			_queryValue.add(_queryValueIdx, _userName);
+		if(!"00".equals(_searchGb)) {
+			_queryValue.add(_queryValueIdx, _searchValue);
 			_queryValueIdx++;
 		}
 
@@ -295,23 +314,34 @@ public class ProductOrderService {
 		String _beginDate = adminOrderCDTO.getOrderDateAf();
 		String _endDate = adminOrderCDTO.getOrderDateBf();
 		String _sellerId = adminOrderCDTO.getSellerId();
-
+		String _orderDateGb = adminOrderCDTO.getOrderDateGb();
+		String _searchGb = adminOrderCDTO.getSearchGb();
+		String _searchValue = adminOrderCDTO.getSearchValue();
+		
 		if("".equals(_sellerId) || _sellerId == null) {
 			_sellerIdYn = "N";
 		}
 		
-		String sql = this.productOrderJdbcDAO.adminOrderCountInfo( _sellerIdYn);
+		String sql = this.productOrderJdbcDAO.adminOrderCountInfo( _sellerIdYn, _orderDateGb, _searchGb);
 		
 		AdminOrderStatCountInfoDTO adminOrderStatCountInfoDTO = new AdminOrderStatCountInfoDTO();
 		
 		int _queryValueIdx = 0;
 		ArrayList<String> _queryValue = new ArrayList<>();
-		_queryValue.add(_queryValueIdx, _beginDate);
-		_queryValueIdx++;
-		_queryValue.add(_queryValueIdx, _endDate);
-		_queryValueIdx++;		
+		if("01".equals(_orderDateGb)) {
+			_queryValue.add(_queryValueIdx, _beginDate);
+			_queryValueIdx++;
+			_queryValue.add(_queryValueIdx, _endDate);
+			_queryValueIdx++;
+		}
+				
 		if("Y".equals(_sellerIdYn)) {
 			_queryValue.add(_queryValueIdx, _sellerId);
+			_queryValueIdx++;
+		}
+		
+		if(!"00".equals(_searchGb)) {
+			_queryValue.add(_queryValueIdx, _searchValue);
 			_queryValueIdx++;
 		}
 		
@@ -355,7 +385,7 @@ public class ProductOrderService {
 		List<ProductOrderInfo> productOrderInfo = this.productOrderDAO.findByOrderNo(_orderNo);
 		String productOrderStatCode = productOrderInfo.get(0).getOrderStateCode();
 		_queryValue1.add(0, _orderItemDlngStateCode);
-		_queryValue1.add(1, _orderItemDlngStateCode);
+		_queryValue1.add(1, _deliveryStateCode);
 		_queryValue1.add(2, _orderNo);
 		_queryValue1.add(3, _sellerId);
 		
@@ -370,9 +400,9 @@ public class ProductOrderService {
 		List<ProductOrderInfo> productOrderInfo = this.productOrderDAO.findByOrderNo(_orderNo);
 		String productOrderStatCode = productOrderInfo.get(0).getOrderStateCode();
 		_queryValue1.add(0, _orderItemDlngStateCode);
-		_queryValue1.add(1, _orderItemDlngStateCode);
-		_queryValue1.add(1, _orderNo);
-		_queryValue1.add(2, _productId);
+		_queryValue1.add(1, _deliveryStateCode);
+		_queryValue1.add(2, _orderNo);
+		_queryValue1.add(3, _productId);
 		
 		this.utilService.getQueryStringUpdate(sqlModifyOrderInfoStat,_queryValue1);
 	}

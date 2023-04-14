@@ -12,10 +12,13 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lawzone.market.event.dao.EventInfoDAO;
+import com.lawzone.market.event.service.EventInfo;
 import com.lawzone.market.point.dao.PointDetailInfoDAO;
 import com.lawzone.market.point.dao.PointDetailInfoJdbcDAO;
 import com.lawzone.market.point.dao.PointInfoDAO;
 import com.lawzone.market.point.dao.PointInfoJdbcDAO;
+import com.lawzone.market.product.service.PageInfoDTO;
 import com.lawzone.market.user.dao.UserInfoDAO;
 import com.lawzone.market.user.service.SellerInfo;
 import com.lawzone.market.user.service.UserInfo;
@@ -37,6 +40,7 @@ public class PointService {
 	private final ModelMapper modelMapper;
 	private final UtilService utilService;
 	private final DateUtils dateUtils;
+	private final EventInfoDAO eventInfoDAO;
 	
 	@Transactional(rollbackFor = Exception.class)
 	public String addPoint(PointInfoCDTO pointInfoCDTO){
@@ -45,12 +49,62 @@ public class PointService {
 		List<UserInfo> _userInfo = this.userInfoDAO.findByUserId(pointInfoCDTO.getUserId());
 		
 		if(_userInfo.size() > 0) {
+			String userId = _userInfo.get(0).getUserId();
 			String socialId = _userInfo.get(0).getSocialId();
+			
+			if(!("002".equals(pointInfoCDTO.getEventCode()) || "003".equals(pointInfoCDTO.getEventCode()))){
+				_rtnMsg = "사용하지 않는 포인트 입니다";
+				return _rtnMsg;
+			}
+			
+			if("002".equals(pointInfoCDTO.getEventCode())){
+				if("".equals(pointInfoCDTO.getEventId()) || pointInfoCDTO.getEventId() == null) {
+					_rtnMsg = "이벤트를 확인해 주세요";
+					return _rtnMsg;
+				}
+				
+				String pointChkSql = this.pointInfoJdbcDAO.pointAccumulationYn();
+				
+				ArrayList<String> _pointChkQueryValue = new ArrayList<>();
+				_pointChkQueryValue.add(0, pointInfoCDTO.getEventId());
+				_pointChkQueryValue.add(1, socialId);
+				_pointChkQueryValue.add(2, pointInfoCDTO.getEventCode());
+				_pointChkQueryValue.add(3, pointInfoCDTO.getEventId());
+				
+				PointChkDTO pointChkDTO = new PointChkDTO();
+				
+				List<PointChkDTO> pointChkList 
+				= this.utilService.getQueryString(pointChkSql,pointChkDTO,_pointChkQueryValue);
+				
+				if("N".equals(pointChkList.get(0).getPointYn())) {
+					_rtnMsg = "이미 지급된 포인트 입니다";
+					return _rtnMsg;
+				} else {
+					List<EventInfo> eventInfo = this.eventInfoDAO.findByeventIdAndUseYn(pointInfoCDTO.getEventId(), "Y");
+					BigDecimal amountZero = new BigDecimal(0);
+					if(eventInfo.size() > 0) {
+						if(eventInfo.get(0).getPointAmount().compareTo(amountZero) > 0){
+							pointInfoCDTO.setPointValue(eventInfo.get(0).getPointAmount());
+						}
+						pointInfoCDTO.setExpirationDateGb(eventInfo.get(0).getExpirationDateGb());
+						pointInfoCDTO.setExpirationDateValue(eventInfo.get(0).getExpirationDateValue());
+						
+						if(pointInfoCDTO.getPointValue() == null || pointInfoCDTO.getPointValue().compareTo(amountZero) == 0){
+							_rtnMsg = "등록된 포인트 금액이 없습니다!";
+							return _rtnMsg;
+						}
+					} else {
+						_rtnMsg = "등록된 이벤트가 없습니다!";
+						return _rtnMsg;
+					}
+				}
+			}
+			
 			if("003".equals(pointInfoCDTO.getEventCode()) && !(pointInfoCDTO.getEventId() == null || "".equals(pointInfoCDTO.getEventId()))) {
 				String pointInfoSql = this.pointInfoJdbcDAO.pointDetailInfoByOrderNo();
 				
 				ArrayList<String> _queryValue = new ArrayList<>();
-				_queryValue.add(0, socialId);
+				_queryValue.add(0, userId);
 				_queryValue.add(1, pointInfoCDTO.getEventId());
 				
 				DifferencePointAmountDTO differencePointAmountDTO = new DifferencePointAmountDTO();
@@ -76,10 +130,10 @@ public class PointService {
 						pointInfoCDTO.setPointValue(differencePointAmount);
 						pointValue = pointValue.subtract(differencePointAmount);
 					}
-					this.savePoint(pointInfoCDTO, socialId);
+					this.savePoint(pointInfoCDTO, userId);
 				}
 			}else {
-				this.savePoint(pointInfoCDTO, socialId);
+				this.savePoint(pointInfoCDTO, userId);
 			}
 		}else {
 			_rtnMsg = "포인트를 등록할 고객정보가 없습니다.";
@@ -88,26 +142,37 @@ public class PointService {
 	}
 	
 	@Transactional(rollbackFor = Exception.class)
-	public void savePoint(PointInfoCDTO pointInfoCDTO, String socialId){
+	public void savePoint(PointInfoCDTO pointInfoCDTO, String userId){
 		if(pointInfoCDTO.getPointExpirationDatetime() == null || "".equals(pointInfoCDTO.getPointExpirationDatetime())) {
 			SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
 			Date date = new Date();
 			String _date = sf.format(date);
-			String _PointExpirationDatetime = dateUtils.addDate(_date, "yyyy-MM-dd", "Y", 1, "yyyy-MM-dd");
+			String dateGb = "M";
+			int dateValue = 6;
+			
+			if(pointInfoCDTO.getExpirationDateGb() != null) {
+				dateGb = pointInfoCDTO.getExpirationDateGb();
+			}
+			
+			if(pointInfoCDTO.getExpirationDateValue() != null) {
+				dateValue = pointInfoCDTO.getExpirationDateValue().intValue();
+			}
+			
+			String _PointExpirationDatetime = dateUtils.addDate(_date, "yyyy-MM-dd", dateGb, dateValue, "yyyy-MM-dd");
 			
 			_PointExpirationDatetime = _PointExpirationDatetime + " 23:59:59";
 			
 			pointInfoCDTO.setPointExpirationDatetime(_PointExpirationDatetime);
 		}
 		
-		pointInfoCDTO.setSocialId(socialId);
+		pointInfoCDTO.setUserId(userId);
 		pointInfoCDTO.setPointCode("001");
 		pointInfoCDTO.setPointStateCode("001");
 		pointInfoCDTO.setPointRegistDate("now()");
 		
 		PointInfo pointInfo = new PointInfo();
 		
-		pointInfo.setSocialId(socialId);
+		pointInfo.setUserId(userId);
 		pointInfo.setEventCode(pointInfoCDTO.getEventCode());
 		pointInfo.setEventId(pointInfoCDTO.getEventId());
 		pointInfo.setPointStateCode(pointInfoCDTO.getPointStateCode());
@@ -136,20 +201,45 @@ public class PointService {
 	public BigDecimal getPointAmount(PointInfoCDTO pointInfoCDTO){
 		BigDecimal _rtnValue = new BigDecimal("0");
 		
-		List<UserInfo> _userInfo = this.userInfoDAO.findByUserId(pointInfoCDTO.getUserId());
+		//List<UserInfo> _userInfo = this.userInfoDAO.findByUserId(pointInfoCDTO.getUserId());
 		
-		if(_userInfo.size() > 0) {
+		//if(_userInfo.size() > 0) {
 			String sql = this.pointInfoJdbcDAO.pointAmount();
 			
 			ArrayList<String> _queryValue = new ArrayList<>();
-			_queryValue.add(0, _userInfo.get(0).getSocialId());
+			_queryValue.add(0, pointInfoCDTO.getUserId());
 			
 			String point = this.utilService.getQueryStringChk(sql,_queryValue);
 			
 			if(!"".equals(point)) {
 				_rtnValue = new BigDecimal(point);
 			}
-		}
+		//}
+	return _rtnValue;
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	public BigDecimal getExpirationpointAmount(PointInfoCDTO pointInfoCDTO){
+		BigDecimal _rtnValue = new BigDecimal("0");
+		
+		//List<UserInfo> _userInfo = this.userInfoDAO.findByUserId(pointInfoCDTO.getUserId());
+		
+		//if(_userInfo.size() > 0) {
+			String sql = this.pointInfoJdbcDAO.expirationpointAmount();
+			
+			ArrayList<String> _queryValue = new ArrayList<>();
+			_queryValue.add(0, pointInfoCDTO.getUserId());
+			
+			String point = this.utilService.getQueryStringChk(sql,_queryValue);
+			
+			if(!"".equals(point)) {
+				_rtnValue = new BigDecimal(point);
+				
+				if(_rtnValue.compareTo(new BigDecimal(0)) < 0) {
+					_rtnValue = new BigDecimal(0);
+				}
+			}
+		//}
 	return _rtnValue;
 	}
 	
@@ -160,9 +250,10 @@ public class PointService {
 		List<UserInfo> _userInfo = this.userInfoDAO.findByUserId(pointInfoCDTO.getUserId());
 		
 		if(_userInfo.size() > 0) {
+			String userId = _userInfo.get(0).getUserId();
+			
 			BigDecimal usePoint = pointInfoCDTO.getPointValue();
 			BigDecimal userPoint = this.getPointAmount(pointInfoCDTO);
-			
 			if(userPoint.compareTo(usePoint) >= 0) {
 				//포인트금액
 				BigDecimal pointAmount = pointInfoCDTO.getPointValue();
@@ -174,13 +265,13 @@ public class PointService {
 				
 				ArrayList<String> _queryValue = new ArrayList<>();
 				_queryValue.add(0, "002");
-				_queryValue.add(1, _userInfo.get(0).getSocialId());
+				_queryValue.add(1, userId);
 				
 				List<DifferencePointAmountDTO> differencePointAmountList = this.utilService.getQueryString(sql,differencePointAmountDTO,_queryValue);
 				
 				PointInfo pointInfo = new PointInfo();
 				
-				pointInfo.setSocialId(_userInfo.get(0).getSocialId());
+				pointInfo.setUserId(userId);
 				pointInfo.setEventCode(pointInfoCDTO.getEventCode());
 				pointInfo.setEventId(pointInfoCDTO.getEventId());
 				pointInfo.setPointStateCode("002");
@@ -198,7 +289,7 @@ public class PointService {
 					
 					_queryValue = new ArrayList<>();
 					_queryValue.add(0, "001");
-					_queryValue.add(1, _userInfo.get(0).getSocialId());
+					_queryValue.add(1, userId);
 					
 					differencePointAmountList = this.utilService.getQueryString(sql,differencePointAmountDTO,_queryValue);
 					
@@ -229,7 +320,7 @@ public class PointService {
 						pointDetailInfo.setPointStateCode("002");
 						pointDetailInfo.setPointValue(pointDetailAmount);
 						pointDetailInfo.setPointSaveId(differencePointAmountList.get(i).getPointSaveId().longValue());
-						pointDetailInfo.setSocialId(_userInfo.get(0).getSocialId());
+						pointDetailInfo.setUserId(userId);
 						pointDetailInfo.setPointExpirationDatetime(differencePointAmountList.get(i).getPointExpirationDatetime());
 						
 						Long pointDetailId = this.pointDetailInfoDAO.save(pointDetailInfo).getPointDetailId();
@@ -241,14 +332,14 @@ public class PointService {
 //						}
 					}
 				}else {
-					sql = this.pointDetailInfoJdbcDAO.pointAmount2();
+					sql = this.pointDetailInfoJdbcDAO.pointAmount3();
 					
 					differencePointAmountDTO = new DifferencePointAmountDTO();
 					
 					_queryValue = new ArrayList<>();
-					_queryValue.add(0 , "001");
-					_queryValue.add(1 , _userInfo.get(0).getSocialId());
-					_queryValue.add(2 , differencePointAmountList.get(0).getPointSaveId().toString());
+					//_queryValue.add(0 , "001");
+					_queryValue.add(0 , userId);
+					//_queryValue.add(1 , differencePointAmountList.get(0).getPointSaveId().toString());
 					
 					List<DifferencePointAmountDTO> differencePointAmountList2 = this.utilService.getQueryString(sql,differencePointAmountDTO,_queryValue);
 					
@@ -262,12 +353,16 @@ public class PointService {
 						if(usePoint.compareTo(_zero) == 0) {
 							break;
 						}
-						if(differencePointAmountList2.get(i).getPointSaveId().equals(differencePointAmountList.get(0).getPointSaveId())) {
-							differencePointAmount = differencePointAmountList2.get(i).getPointValue().add(differencePointAmountList.get(0).getPointValue());
-						}else {
+						//if(differencePointAmountList2.get(i).getPointSaveId().equals(differencePointAmountList.get(0).getPointSaveId())) {
+						//	differencePointAmount = differencePointAmountList2.get(i).getPointValue().add(differencePointAmountList.get(0).getPointValue());
+						//}else {
 							differencePointAmount = differencePointAmountList2.get(i).getPointValue();
-						}
+						//}
 						
+						if(differencePointAmount.compareTo(_zero) <= 0) {
+							continue;
+						}
+							
 						if(usePoint.compareTo(differencePointAmount) >= 0) {
 							pointDetailAmount = new BigDecimal("-" + differencePointAmount.toString());
 							usePoint = usePoint.subtract(differencePointAmount);
@@ -286,7 +381,7 @@ public class PointService {
 						pointDetailInfo.setPointStateCode("002");
 						pointDetailInfo.setPointValue(pointDetailAmount);
 						pointDetailInfo.setPointSaveId(differencePointAmountList2.get(i).getPointSaveId().longValue());
-						pointDetailInfo.setSocialId(_userInfo.get(0).getSocialId());
+						pointDetailInfo.setUserId(userId);
 						pointDetailInfo.setPointExpirationDatetime(differencePointAmountList2.get(i).getPointExpirationDatetime());
 						
 						Long pointDetailId = this.pointDetailInfoDAO.save(pointDetailInfo).getPointDetailId();
@@ -301,5 +396,52 @@ public class PointService {
 			}
 		}
 	return _rtnValue;
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	public List getPointHistInfo(PointInfoCDTO pointInfoCDTO){
+		//List<UserInfo> _userInfo = this.userInfoDAO.findByUserId(pointInfoCDTO.getUserId());
+		String monthValue = pointInfoCDTO.getMonthValue();
+		String pointStateCode = pointInfoCDTO.getPointStateCode();
+		String pageCount = pointInfoCDTO.getPageCount();
+		String maxPageCount = pointInfoCDTO.getMaxPageCount();
+		
+		String _sql = this.pointDetailInfoJdbcDAO.pointHistInfo(monthValue, pointStateCode, pageCount, maxPageCount);
+		
+		PointInfoHistInfoDTO pointInfoHistInfoDTO = new PointInfoHistInfoDTO();
+		
+		ArrayList<String> _queryValue = new ArrayList<>();
+		_queryValue.add(0, pointInfoCDTO.getUserId());
+		
+		if(!("".equals(pointStateCode) || pointStateCode == null)) {
+			_queryValue.add(1, pointStateCode);
+		}
+		
+		List<PointInfoHistInfoDTO> pointInfoHistInfoList = this.utilService.getQueryString(_sql, pointInfoHistInfoDTO, _queryValue);
+		
+		return pointInfoHistInfoList;
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	public List getPointHistPageInfo(PointInfoCDTO pointInfoCDTO){
+		//List<UserInfo> _userInfo = this.userInfoDAO.findByUserId(pointInfoCDTO.getUserId());
+		String monthValue = pointInfoCDTO.getMonthValue();
+		String pointStateCode = pointInfoCDTO.getPointStateCode();
+		String maxPageCnt = pointInfoCDTO.getMaxPageCount();
+		
+		String _sql = this.pointDetailInfoJdbcDAO.pointHistPageInfo(monthValue, pointStateCode, maxPageCnt);
+		
+		PageInfoDTO pageInfoDTO = new PageInfoDTO();
+		
+		ArrayList<String> _queryValue = new ArrayList<>();
+		_queryValue.add(0, pointInfoCDTO.getUserId());
+		
+		if(!("".equals(pointStateCode) || pointStateCode == null)) {
+			_queryValue.add(1, pointStateCode);
+		}
+		
+		List<PageInfoDTO> pageInfo = this.utilService.getQueryString(_sql, pageInfoDTO, _queryValue);
+		
+		return pageInfo;
 	}
 }

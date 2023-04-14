@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -27,6 +28,7 @@ import com.lawzone.market.telmsgLog.service.TelmsgLogService;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 @Aspect
@@ -69,6 +71,10 @@ public class Aspects {
 		Object[] args = joinPoint.getArgs();
 		Map resultMap = new HashMap<>();
 		
+		String _svcUrl = request.getRequestURI();
+		String _controller = joinPoint.getSignature().getDeclaringType().getName();
+		String _method = joinPoint.getSignature().getName();
+		
 		for(Object obj : args) {
 			if(obj != null) {
 				if("LinkedHashMap".equals(obj.getClass().getSimpleName())) {
@@ -83,7 +89,7 @@ public class Aspects {
 		//log.error("userAgent ================== " + request.getRemoteHost());
 		//log.error("userAgent ================== " + request.getServerName());
 		
-		log.info("svcUrl============" + request.getRequestURI());
+		log.info("svcUrl============" + _svcUrl);
 		boolean isMobile = userAgent.matches(".*(iPhone|iPod|iPad|BlackBerry|Android|Windows CE|LG|MOT|SAMSUNG|SonyEricsson).*");
 		
 		if(userAgent.indexOf("iosapp") > -1){
@@ -143,12 +149,20 @@ public class Aspects {
 //			params.put("user_ip", userIp);
 //			params.put("session_id", sessionId);
 			sessionBean.setAgent(agent);
-			sessionBean.setSvcUrl(request.getRequestURI());
-			resultMap.put("svcUrl", request.getRequestURI());
-			sessionBean.setController(joinPoint.getSignature().getDeclaringType().getName());
-			resultMap.put("controller", joinPoint.getSignature().getDeclaringType().getName());
-			sessionBean.setMethod(joinPoint.getSignature().getName());
-			resultMap.put("method", joinPoint.getSignature().getName());
+//			sessionBean.setSvcUrl(request.getRequestURI());
+//			resultMap.put("svcUrl", request.getRequestURI());
+//			sessionBean.setController(joinPoint.getSignature().getDeclaringType().getName());
+//			resultMap.put("controller", joinPoint.getSignature().getDeclaringType().getName());
+//			sessionBean.setMethod(joinPoint.getSignature().getName());
+//			resultMap.put("method", joinPoint.getSignature().getName());
+			
+			sessionBean.setSvcUrl(_svcUrl);
+			resultMap.put("svcUrl", _svcUrl);
+			sessionBean.setController(_controller);
+			resultMap.put("controller", _controller);
+			sessionBean.setMethod(_method);
+			resultMap.put("method", _method);
+			
 			sessionBean.setSessionId(request.getSession().getId());
 			sessionBean.setUserIp(getClientIP(request));
 		}catch (Exception e) {
@@ -227,16 +241,20 @@ public class Aspects {
         
         if(obj != null) {
         	Object obj2 = parser.parse( obj.toString());
-            
-            Map resultMap = new HashMap<>();
-            resultMap = (Map) obj2;
-            
-            if("9999".equals(resultMap.get("msgCd"))){
-            	Map logMap = new HashMap<>();
-            	logMap.put("msgNm", resultMap.get("msgNm"));
-            	
-        		this.telmsgLogService.addTelmsgLog("99", "00", "2", logMap,"");
-            }
+        	
+        	if(obj2.getClass().getName().indexOf("JSONObject") > -1) {
+        		Map resultMap = new HashMap<>();
+                resultMap = (Map) obj2;
+                
+                if("9999".equals(resultMap.get("msgCd"))){
+                	Map logMap = new HashMap<>();
+                	logMap.put("msgNm", resultMap.get("msgNm"));
+                	
+            		this.telmsgLogService.addTelmsgLog("99", "00", "2", logMap,"");
+                }
+        	} else {
+        		log.error("Aspects error!! === " + obj2.toString());
+        	}
         }
     }
 }

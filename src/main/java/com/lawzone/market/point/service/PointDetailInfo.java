@@ -24,9 +24,9 @@ public class PointDetailInfo extends BaseTimeEntity{
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long pointDetailId;
 	
-	@Comment("socialId")
-	@Column(columnDefinition = "varchar(100)")
-	private String socialId;
+	@Comment("userId")
+	@Column(columnDefinition = "varchar(8)")
+	private String userId;
 	
 	@Comment("포인트상태코드")
 	@Column(columnDefinition = "varchar(3)")

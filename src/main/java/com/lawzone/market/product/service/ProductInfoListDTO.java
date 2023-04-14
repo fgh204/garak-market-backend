@@ -24,8 +24,10 @@ public class ProductInfoListDTO {
 	private String todayDeliveryStandardTime;
 	private String productCategoryCode;
 	private String productCategorySmallName;
+	private String slsDateText;
+	private Character useYn;
 	
 	public ProductInfoListDTO() {
-		// TODO Auto-generated constructor stub
+		
 	}
 }

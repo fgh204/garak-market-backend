@@ -78,4 +78,20 @@ public class DeliveryAddressInfo extends BaseTimeEntity{
 	@Comment("배송서브연락처")
 	@Column(columnDefinition = "varchar(11)")
 	private String subPhoneNumber;
+	
+	@Comment("배송장소구분코드")
+	@Column(columnDefinition = "varchar(3)")
+	private String deliveryLocationCfcd;
+	
+	@Comment("출입방법구분코드")
+	@Column(columnDefinition = "varchar(3)")
+	private String accessMethodCfcd;
+	
+	@Comment("출입방법내용")
+	@Column(columnDefinition = "text")
+	private String accessMethodText;
+	
+	@Comment("배송메세지")
+	@Column(columnDefinition = "text")
+	private String deliveryMessage;
 }

@@ -1,14 +1,9 @@
 package com.lawzone.market.admin.controller;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringReader;
 import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -23,13 +18,8 @@ import java.util.Optional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.client.ClientProtocolException;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.json.simple.JSONObject;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -73,7 +63,6 @@ import com.lawzone.market.externalLink.util.TodayUtils;
 import com.lawzone.market.image.service.ProductImageListDTO;
 import com.lawzone.market.image.service.ProductImageService;
 import com.lawzone.market.order.service.CustOrderInfoDTO;
-import com.lawzone.market.order.service.CustOrderItemListDTO;
 import com.lawzone.market.order.service.OrderPaymentDTO;
 import com.lawzone.market.order.service.OrderPaymentInfo;
 import com.lawzone.market.order.service.ProductOrderItemInfo;
@@ -81,6 +70,9 @@ import com.lawzone.market.order.service.ProductOrderService;
 import com.lawzone.market.payment.service.PaymentCancleDTO;
 import com.lawzone.market.payment.service.PaymentInfoDTO;
 import com.lawzone.market.payment.service.PaymentService;
+import com.lawzone.market.point.service.PointInfoCDTO;
+import com.lawzone.market.point.service.PointInfoHistInfoDTO;
+import com.lawzone.market.point.service.PointService;
 import com.lawzone.market.product.service.ProductDTO;
 import com.lawzone.market.product.service.ProductInfoDTO;
 import com.lawzone.market.product.service.ProductService;
@@ -94,8 +86,6 @@ import com.lawzone.market.util.JsonUtils;
 import com.lawzone.market.util.JwtTokenUtil;
 import com.lawzone.market.util.ParameterUtils;
 import com.lawzone.market.util.UtilService;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.crypto.ECDSASigner;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -122,6 +112,7 @@ public class GarakAdminController {
 	private final ProductService productService;
 	private final ProductReviewInfoService productReviewInfoService;
 	private final ProductImageService productImageService;
+	private final PointService pointService;
 
 	@ResponseBody
 	@PostMapping("/login")
@@ -154,58 +145,28 @@ public class GarakAdminController {
 	@ResponseBody
 	@PostMapping("/orderList")
 	public String getOrderList(HttpServletRequest request, @RequestBody(required = true) Map map)
-			throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException {
+			throws IOException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException, ParseException {
 		// this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
 
 		AdminOrderCDTO adminOrderCDTO = new AdminOrderCDTO();
 		adminOrderCDTO = (AdminOrderCDTO) ParameterUtils.setDto(map, adminOrderCDTO, "insert", sessionBean);
 
-//		AppPushDTO appPushDTO = new AppPushDTO();
-//		
-//		appPushDTO.setAllYn("N");
-//		appPushDTO.setContent("테스트 입니다.");
-//		appPushDTO.setTitle("테스트");
-//		appPushDTO.setUrl("");
-//		
-//		ArrayList<String> push = new ArrayList<>();
-//		
-//		push.add(0,"72f4861b-e66d-4e67-9aac-a1cc29a40ede");
-//		
-//		appPushDTO.setPushList(push);
-//		
-//		this.appPush.getAppPush(appPushDTO);
-		// KeyPairGenerator a = KeyPairGenerator.getInstance("ECDSA", "BC");
-
-//    	ClassPathResource resource = new ClassPathResource("65S86F3A58.p8");
-//    	log.error("resource===============" + resource);
-//    	InputStream is = new BufferedInputStream(resource.getInputStream());
-//    	String privateKey = IOUtils.toString(is);
-//    	is.close();
-//    	log.info("privateKey===============" + privateKey);
-//    	Reader pemReader = new StringReader(privateKey);
-//    	log.info("pemReader===============" + pemReader);
-//    	PEMParser pemParser = new PEMParser(pemReader);
-//    	log.info("pemParser===============" + pemParser);
-//    	JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-//    	PrivateKeyInfo object = (PrivateKeyInfo) pemParser.readObject();
-//    	PrivateKey pKey = converter.getPrivateKey(object);
-
-//    	String privateKeyHexStr = privateKey;
-//    	KeyFactory keyFact = KeyFactory.getInstance("ECDSA");
-//    	PKCS8EncodedKeySpec psks8KeySpec = new PKCS8EncodedKeySpec(new BigInteger(privateKeyHexStr,16).toByteArray());
-//    	PrivateKey privateKey2 = keyFact.generatePrivate(psks8KeySpec);
 		if (Integer.parseInt(sessionBean.getUserLvl()) < 5) {
 			adminOrderCDTO.setSellerId(sessionBean.getUserId());
 		}
-		List<AdminPageInfoDTO> paging = this.productOrderService.getAdminOrderListPageInfo(adminOrderCDTO);
-		List<AdminOrderListDTO> adminOrder = this.productOrderService.getAdminOrderList(adminOrderCDTO);
-		List<AdminOrderStatCountInfoDTO> adminOrderStatCountInfoDTO = this.productOrderService
-				.getAdminOrderStatCountInfo(adminOrderCDTO);
-
 		Map rtnMap = new HashMap<>();
+		
+		if("10".equals(adminOrderCDTO.getMaxPage())) {
+			List<AdminPageInfoDTO> paging = this.productOrderService.getAdminOrderListPageInfo(adminOrderCDTO);
+			List<AdminOrderStatCountInfoDTO> adminOrderStatCountInfoDTO = this.productOrderService.getAdminOrderStatCountInfo(adminOrderCDTO);
+			
+			rtnMap.put("paging", paging.get(0));
+			rtnMap.put("orderStatCount", adminOrderStatCountInfoDTO.get(0));
+		}
+		List<AdminOrderListDTO> adminOrder = this.productOrderService.getAdminOrderList(adminOrderCDTO);
+		
 		rtnMap.put("orderList", adminOrder);
-		rtnMap.put("paging", paging.get(0));
-		rtnMap.put("orderStatCount", adminOrderStatCountInfoDTO.get(0));
+		
 		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
 	}
 
@@ -221,19 +182,16 @@ public class GarakAdminController {
 		String _productId = adminOrderCDTO.getProductId();
 
 		// 주문정보
-		List<CustOrderInfoDTO> custOrderInfoDTO = this.productOrderService.getCustOrderInfoByOrderNo(_orderNo, "", "",
-				"N");
+		List<CustOrderInfoDTO> custOrderInfoDTO = this.productOrderService.getCustOrderInfoByOrderNo(_orderNo, "", "","N");
 
 		// 주문항목정보
-		List<AdminCustOrderItemListDTO> adminCustOrderItemListDTO = this.productOrderService
-				.getAdminOrderItemList(_orderNo, _productId, "");
+		List<AdminCustOrderItemListDTO> adminCustOrderItemListDTO = this.productOrderService.getAdminOrderItemList(_orderNo, _productId, "");
 
 		// 결제정보
 		List<PaymentInfoDTO> paymentInfo = this.paymentService.getOrderPaymentInfo(_orderNo, "");
 
 		// 운송장내역
-		List<ProductOrderItemBookIdInfo> productOrderItemBookIdInfo = this.garakAdminService
-				.getBookIdList(adminOrderCDTO);
+		List<ProductOrderItemBookIdInfo> productOrderItemBookIdInfo = this.garakAdminService.getBookIdList(adminOrderCDTO);
 		Map rtnMap = new HashMap<>();
 		rtnMap.put("orderInfo", custOrderInfoDTO.get(0));
 		rtnMap.put("orderItemList", adminCustOrderItemListDTO);
@@ -294,8 +252,7 @@ public class GarakAdminController {
 			List<PaymentCancleDTO> _paymentCancleList = this.paymentService.getPaymentCancleInfo(paymentCancleDTO);
 
 			if (_paymentCancleList.size() > 0) {
-				Optional<OrderPaymentInfo> orderPaymentInfo = this.productOrderService.getOrderPaymentInfo(_orderNo,
-						_sellerId);
+				Optional<OrderPaymentInfo> orderPaymentInfo = this.productOrderService.getOrderPaymentInfo(_orderNo,_sellerId);
 				_productTotalAmt = _paymentCancleList.get(0).getProductTotalAmt();
 				_orderTotalAmt = _paymentCancleList.get(0).getOrderTotalAmt();
 				_receiptId = _paymentCancleList.get(0).getReceiptId();
@@ -308,7 +265,11 @@ public class GarakAdminController {
 				_paymentAmt = _paymentAmount.subtract(_cancelledPaymentAmount);
 				_pointAmt = _pointAmount.subtract(_cancelledPointAmount);
 				paymentCancleDTO.setReceiptId(_receiptId);
-
+				userId = _paymentCancleList.get(0).getUserId();
+				_orderAmount = new BigDecimal("0");
+				_cancelledOrderAmount = new BigDecimal("0");
+				_orderDeliveryAmount = new BigDecimal("0");
+				
 				_totalPaymentAmt = _paymentAmt.add(_pointAmt);
 				// 취소처리
 				_amt = _productTotalAmt;
@@ -335,12 +296,19 @@ public class GarakAdminController {
 
 						_allCancleYn = "Y";
 					} else {
-						if (_paymentAmt.compareTo(_amt) >= 0) {
-							_cancleAmt = _amt.doubleValue();
+						if(_paymentAmt.compareTo(_amt) >= 0) {
+							if(_pointAmt.compareTo(_amt) >= 0 ) {
+								_cancelledPointAmount = _cancelledPointAmount.add(_amt);
+								_cancleAmt = 0.0;
+							} else {
+								_cancleAmt = _amt.subtract(_pointAmt).doubleValue();
+								_cancelledPointAmount = _cancelledPointAmount.add(_pointAmt);
+							}
 						} else {
-							_cancleAmt = _paymentAmt.doubleValue();
-							_cancelledPointAmount = _cancelledPointAmount
-									.add(_pointAmt.subtract(_amt.subtract(_paymentAmt)));
+							//_cancleAmt = _paymentAmt.doubleValue();
+							_cancleAmt = 0.0;
+							//_cancelledPointAmount = _cancelledPointAmount.add(_amt.subtract(_paymentAmt));
+							_cancelledPointAmount = _cancelledPointAmount.add(_amt);
 						}
 					}
 					_addPointAmt = _cancelledPointAmount.subtract(_cancelledPointAmt);
@@ -586,7 +554,10 @@ public class GarakAdminController {
 			// }
 			return JsonUtils.returnValue("0000", "저장되었습니다", rtnMap).toString();
 		} else {
-			String nextDay = this.utilService.getSlsDate(_dateArray[0], "Y");
+			String slsDateList[];
+			String slsDateText = "";
+			slsDateList = slsDateText.split(";");
+			String nextDay = this.utilService.getSlsDate(_dateArray[0], "Y", slsDateList);
 			return JsonUtils.returnValue("9999", "영업일이 아닙니다 다음영업일은 " + nextDay + "일 입니다.", rtnMap).toString();
 		}
 	}
@@ -981,5 +952,70 @@ public class GarakAdminController {
 		this.commonService.deliveryCancel(adminProductDTO.getDeliveryOrderId());
 
 		return JsonUtils.returnValue("0000", "수정되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/pointHistInfo")
+	public String getPointHistInfo(HttpServletRequest request, @RequestBody(required = true) Map map)
+			throws ClientProtocolException, IOException, ParseException {
+		Map rtnMap = new HashMap<>();
+
+		AdminUserCDTO adminUserCDTO = new AdminUserCDTO();
+		adminUserCDTO = (AdminUserCDTO) ParameterUtils.setDto(map, adminUserCDTO, "insert", sessionBean);
+		
+		PointInfoCDTO pointInfoCDTO = new PointInfoCDTO();
+		pointInfoCDTO = (PointInfoCDTO) ParameterUtils.setDto(map, pointInfoCDTO, "insert", sessionBean);
+		
+		pointInfoCDTO.setPageCount("0");
+		pointInfoCDTO.setMaxPageCount("100");
+		pointInfoCDTO.setUserId(adminUserCDTO.getAdminUserId());
+		
+		List<PointInfoHistInfoDTO> pointInfoHistInfoList = this.pointService.getPointHistInfo(pointInfoCDTO);
+		
+		BigDecimal point = this.pointService.getPointAmount(pointInfoCDTO);
+		
+		BigDecimal expirationPoint = this.pointService.getExpirationpointAmount(pointInfoCDTO);
+		
+		rtnMap.put("pointAmount", point);
+		rtnMap.put("expirationPointAmount", expirationPoint);
+		rtnMap.put("pointHistInfoList", pointInfoHistInfoList);
+		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/addPoint")
+	public String addPoint(HttpServletRequest request, @RequestBody(required = true) Map map)
+			throws ClientProtocolException, IOException, ParseException {
+		Map rtnMap = new HashMap<>();
+
+		AdminUserCDTO adminUserCDTO = new AdminUserCDTO();
+		adminUserCDTO = (AdminUserCDTO) ParameterUtils.setDto(map, adminUserCDTO, "insert", sessionBean);
+		
+		PointInfoCDTO pointInfoCDTO = new PointInfoCDTO();
+		pointInfoCDTO = (PointInfoCDTO) ParameterUtils.setDto(map, pointInfoCDTO, "insert", sessionBean);
+		
+		pointInfoCDTO.setUserId(adminUserCDTO.getAdminUserId());
+		
+		String _rtnMsg = this.pointService.addPoint(pointInfoCDTO);
+
+		return JsonUtils.returnValue("0000", _rtnMsg, rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/kakaoTargetList")
+	public String getKakaoTargetList(HttpServletRequest request, @RequestBody(required = true) Map map) {
+		// this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		Map rtnMap = new HashMap<>();
+		if (Integer.parseInt(sessionBean.getUserLvl()) < 5) {
+			return JsonUtils.returnValue("9999", "조회권한이없습니다", rtnMap).toString();
+		}
+
+		AdminUserCDTO adminUserCDTO = new AdminUserCDTO();
+		adminUserCDTO = (AdminUserCDTO) ParameterUtils.setDto(map, adminUserCDTO, "insert", sessionBean);
+
+		List kakaoTargetList = this.garakAdminService.getKakaoTargetList(adminUserCDTO);
+
+		rtnMap.put("kakaoTargetList", kakaoTargetList);
+		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
 	}
 }

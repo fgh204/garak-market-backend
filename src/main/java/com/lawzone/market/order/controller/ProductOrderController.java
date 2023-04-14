@@ -112,6 +112,7 @@ public class ProductOrderController {
 			_deliveryAmount = new BigDecimal(mapOrderInfo.get("deliveryAmount").toString());
 		}
 		
+		_paymentPointAmount = _pointAmount;
 		_paymentAmount = _totalPrice.add(_deliveryAmount).subtract(_pointAmount);
 		//_totalPrice = _totalPrice.subtract(_deliveryAmount);
 		mapOrderInfo.put("pointAmount", _pointAmount);
@@ -162,7 +163,6 @@ public class ProductOrderController {
 			if(_totalProductPrice.compareTo(_pointAmount) >= 0) {
 				_totalProductPrice = _totalProductPrice.subtract(_pointAmount);
 				mapOrderItemInfo.put("pointAmount",_pointAmount);
-				_paymentPointAmount = _pointAmount;
 				_pointAmount = new BigDecimal("0");
 			}else {
 				mapOrderItemInfo.put("pointAmount",_totalProductPrice);
@@ -233,9 +233,11 @@ public class ProductOrderController {
 			}
 		}
 		
+		String orderStateCode = "001";
+		
 		if(_paymentAmount.compareTo(new BigDecimal("0")) == 0) {
 			PaymentDTO paymentDTO = new PaymentDTO();
-			paymentDTO.setReceiptId("");
+			paymentDTO.setReceiptId(_orderNo);
 			paymentDTO.setOrderNo(_orderNo);
 			paymentDTO.setOrderName(orderName);
 			paymentDTO.setPaymentGb("도매도 포인트");
@@ -263,6 +265,8 @@ public class ProductOrderController {
 			//this.productOrderService.modifyProductOrderInfoStat("003",_orderNo);
 			//this.productOrderService.modifyProductOrderItemInfoStat("003",_orderNo);
 			//this.productService.modifyProductStock(_orderNo);
+			
+			orderStateCode = "003";
 			
 			StringBuilder slackMsg = new StringBuilder();
 			slackMsg.append("주문번호 : ")
@@ -305,12 +309,14 @@ public class ProductOrderController {
 		//주문금액정보 등록
 		this.productOrderService.addOrderPaymentInfo(_orderNo);
 		//주문정보
-		List<CustOrderInfoDTO> custOrderInfoDTO = this.productOrderService.getCustOrderInfoByOrderNo(_orderNo, "001", "", "Y");
+		List<CustOrderInfoDTO> custOrderInfoDTO = this.productOrderService.getCustOrderInfoByOrderNo(_orderNo, orderStateCode, "", "Y");
 		
 		//주문항목정보
-		List<CustOrderItemListDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(_orderNo, "001", "", "Y");
+		List<CustOrderItemListDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(_orderNo, orderStateCode, "", "Y");
 		
 		int itemCnt = custOrderItemList.size();
+		
+		_deliveryAmount = _deliveryAmount.subtract(_pointAmount);
 		
 		if(_deliveryAmount.compareTo(_amountZero)> 0) {
 			if(itemCnt > 0) {
@@ -451,7 +457,6 @@ public class ProductOrderController {
 		productOrderDTO = (ProductOrderDTO) ParameterUtils.setDto(map, productOrderDTO, "insert", sessionBean);
 		
 		String orderNo = productOrderDTO.getOrderNo();
-		
 		//주문정보
 		List<CustOrderInfoDTO> custOrderInfoDTO = this.productOrderService.getCustOrderInfoByOrderNo(orderNo, "", productOrderDTO.getUserId(),"N");
 		

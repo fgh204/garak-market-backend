@@ -14,6 +14,7 @@ import lombok.Setter;
 @Setter
 public class BookIdListInfoDTO {
 	private String orderDate;
+	private String orderDttm;
 	private String productId;
 	private String bookId;
 	private String dongGroup;
@@ -41,6 +42,8 @@ public class BookIdListInfoDTO {
 	private String sellerId;
 	private String productCategoryCode;
 	private String deliveryOrderId;
+	private String accessMethodText;
+	private String combinedDeliveryYn;
 	private String imgBase64;
 	
 	public BookIdListInfoDTO() {

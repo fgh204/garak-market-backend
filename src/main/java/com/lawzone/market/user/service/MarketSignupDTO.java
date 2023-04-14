@@ -19,6 +19,9 @@ public class MarketSignupDTO {
 	private String userId;
 	private String password;
 	private String loginId;
+	private String previousUrl;
+	private String withdrawalReasonCode;
+	private String withdrawalReasonText;
 	
 	public MarketSignupDTO() {
 		

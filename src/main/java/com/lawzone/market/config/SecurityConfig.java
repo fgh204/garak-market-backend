@@ -79,6 +79,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
                 .antMatchers("/apple/login").permitAll()
                 .antMatchers("/market/domaadoVersion").permitAll()
                 .antMatchers("/market/getStore").permitAll()
+                .antMatchers("/market/searchWord").permitAll()
                 .antMatchers("/css/**").permitAll()
                 //.antMatchers("/market/domaado/loginIdDuplicated").permitAll()
                 //.antMatchers("/market/domaado/phoneNumberDuplicated").permitAll()

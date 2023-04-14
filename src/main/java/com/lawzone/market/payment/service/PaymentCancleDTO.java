@@ -26,6 +26,7 @@ public class PaymentCancleDTO {
 	private BigDecimal pointAmount;
 	private BigDecimal cancelledPointAmount;
 	private BigDecimal deliveryAmount;
+	private String userId;
 	private String message;
 	
 	public PaymentCancleDTO() {

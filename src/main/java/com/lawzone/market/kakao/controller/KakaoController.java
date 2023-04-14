@@ -58,17 +58,18 @@ public class KakaoController {
 	
 	private final UserInfoService userInfoService;
 	
-	 @GetMapping(value = "/oauth")
-	    public String kakaoConnect() {
-	        StringBuffer url = new StringBuffer();
-	        url.append("https://kauth.kakao.com/oauth/authorize?");
-	        url.append("client_id=" + this.clientId);
-	        url.append("&redirect_uri=http://localhost:8080/login/oauth2/code/kakao");
-	        url.append("&response_type=code");
-	        url.append("&scope=name,account_email,phone_number,friends");
+	@GetMapping(value = "/oauth")
+    public String kakaoConnect() {
+        StringBuffer url = new StringBuffer();
+        url.append("https://kauth.kakao.com/oauth/authorize?");
+        url.append("client_id=" + this.clientId);
+        url.append("&redirect_uri=http://localhost:8080/login/oauth2/code/kakao");
+        url.append("&response_type=code");
+        url.append("&scope=name,account_email,phone_number,friends");
 
-	        return "redirect:" + url;
-	    }
+        return "redirect:" + url;
+    }
+	 
 	@ResponseBody
 	@GetMapping("/login/oauth")
 	public String getOauth(HttpServletRequest request, @RequestParam(required = true)String  code) throws JsonMappingException, JsonProcessingException {
@@ -87,23 +88,29 @@ public class KakaoController {
 		loginDTO = (LoginDTO) ParameterUtils.setDto(map, loginDTO, "insert", sessionBean);
 		
 		String oauthCode = loginDTO.getOauthCode();
+		String previousUrl = loginDTO.getPreviousUrl();
 		
 		WebClient webClient = WebClient.builder()
             .baseUrl("https://kauth.kakao.com")
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
-        
         // 카카오 서버에 요청 보내기 & 응답 받기
-        JSONObject response = webClient.post()
-            .uri(uriBuilder -> uriBuilder
-                .path("/oauth/token")
-                .queryParam("grant_type", "authorization_code")
-                .queryParam("client_id", this.clientId)
-                .queryParam("redirect_uri", baseurl + "/intro")
-                .queryParam("code", oauthCode)
-                .build())
-            .retrieve().bodyToMono(JSONObject.class).block();
-            
+		JSONObject response = new JSONObject();
+		
+		try {
+			response = webClient.post()
+		            .uri(uriBuilder -> uriBuilder
+		                .path("/oauth/token")
+		                .queryParam("grant_type", "authorization_code")
+		                .queryParam("client_id", this.clientId)
+		                .queryParam("redirect_uri", baseurl + "/intro")
+		                .queryParam("code", oauthCode)
+		                .build())
+		            .retrieve().bodyToMono(JSONObject.class).block();
+		}catch (Exception e) {
+			return "";
+		}
+        
         Map kakaoMap = getKakaoUserInfo((String) response.get("access_token"));
         
         String token = (String) kakaoMap.get("token");
@@ -139,10 +146,12 @@ public class KakaoController {
     		httpResponse.setHeader("Set-Cookie", accessTokenCookie.toString());
         }
         Map rtnMap = new HashMap<>();
+        rtnMap.put("isPointConfirmed", kakaoMap.get("isPointConfirmed"));
         rtnMap.put("isPushIdExist", kakaoMap.get("isRegistered"));
         rtnMap.put("token", kakaoMap.get("socialAccessToken"));
         rtnMap.put("loginId", kakaoMap.get("loginId"));
         rtnMap.put("password", kakaoMap.get("password"));
+        rtnMap.put("previousUrl", previousUrl);
         return JsonUtils.returnValue("0000", "로그인되었습니다.", rtnMap).toString();
     }
 	

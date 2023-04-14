@@ -236,11 +236,11 @@ public class PaymentService {
 			this.productOrdeService.modifyOrderPaymentInfo(orderPaymentDTO);
 			
 			try {
-				String _order_no = (String) receiptCancleData.get("order_id");
-				String _order_name = (String) receiptCancleData.get("order_name");
-				String _payment_name = (String) receiptCancleData.get("method");
-				String _payment_gb = (String) receiptCancleData.get("method_origin");
-				BigDecimal _cancelled_payment_amount = new BigDecimal((Double) receiptCancleData.get("cancelled_price"));
+				String _order_no = _paymentInfo.get(0).getOrderNo();
+				String _order_name = _paymentInfo.get(0).getOrderName();
+				String _payment_name = _paymentInfo.get(0).getPaymentName();
+				String _payment_gb = _paymentInfo.get(0).getPaymentGb();
+				//BigDecimal _cancelled_payment_amount = new BigDecimal((Double) receiptCancleData.get("cancelled_price"));
 				
 				StringBuilder slackMsg = new StringBuilder();
 				
@@ -252,7 +252,9 @@ public class PaymentService {
 				.append("\n상품명 : ")
 				.append(_order_name)
 				.append("\n취소금액 : ")
-				.append(_cancelled_payment_amount)
+				.append(_cancleAmt)
+				.append("\n취소 포인트 : ")
+				.append(_cancelledPointAmount.doubleValue())
 				.append("\n구매자 : ")
 				.append(productOrderUserInfo.get(0).getUserName())
 				.append("\n결제방법 : ")
@@ -279,9 +281,11 @@ public class PaymentService {
 		
 		ArrayList<String> _queryValue1 = new ArrayList<>();
 		_queryValue1.add(0, orderNo);
+		_queryValue1.add(1, orderNo);
+		_queryValue1.add(2, orderNo);
 		
 		if(!"".equals(userId)) {
-			_queryValue1.add(1, userId);
+			_queryValue1.add(3, userId);
 		}
 		
 		PaymentInfoDTO paymentInfo = new PaymentInfoDTO();

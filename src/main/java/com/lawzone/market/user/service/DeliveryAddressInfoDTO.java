@@ -23,6 +23,10 @@ public class DeliveryAddressInfoDTO {
 	private String phoneNumber;
 	private String subPhoneNumber;
 	private String bcode;
+	private String deliveryLocationCfcd;
+	private String accessMethodCfcd;
+	private String accessMethodText;
+	private String deliveryMessage;
 	
 	public DeliveryAddressInfoDTO() {
 		

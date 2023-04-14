@@ -71,8 +71,6 @@ public class ProductInfo extends BaseTimeEntity{
 	private String sellerId;
 	
 	@Comment("오늘배송기준시간")
-    //@Column(name="today_delivery_standard_time", length=20)
-    //@Convert(converter=BaseDateToStringConverter.class)
 	@Column(columnDefinition = "varchar(4)")
     private String todayDeliveryStandardTime;
 }

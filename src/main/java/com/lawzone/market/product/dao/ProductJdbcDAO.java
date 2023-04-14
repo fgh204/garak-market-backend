@@ -5,7 +5,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProductJdbcDAO {
 	public String pageListQuery(String pageCnt, String maxPageCnt
-			, String cateCodeYn , String productIdYn , String productNameYn, String sellerYn, String favoriteYn, String sellerId) {
+			, String cateCodeYn, String productIdYn, String productNameYn, String sellerYn
+			, String favoriteYn, String sellerId, String useYn) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select")
@@ -23,6 +24,8 @@ public class ProductJdbcDAO {
 			  .append("\n , pi2.today_delivery_standard_time as today_delivery_standard_time ")
 			  .append("\n , pi2.product_category_code as productCategoryCode ")
 			  .append("\n , pci.product_category_small_name as productCategorySmallName ")
+			  .append("\n , ifnull((select cdi.dtl_code_text  from lz_market.cd_dtl_info cdi where cdi.code_no = 8 and cdi.dtl_code = pi2.seller_id),'') as slsDateText ")
+			  .append("\n , pi2.use_yn as useYn ")
 			  .append("\n from lz_market.product_info pi2")
 			  .append("\n , lz_market.product_image_info pii")
 			  .append("\n , lz_market.seller_info si")
@@ -37,9 +40,12 @@ public class ProductJdbcDAO {
 					_query.append("\n and si.seller_id = sfi.seller_id ");
 				}
 			  _query.append("\n and pii.delegate_thumbnail_yn = 'Y' ")
-			  .append("\n and pii.image_cfcd = '01' ")
-			  .append("\n and pi2.use_yn = 'Y'");
-		
+			  .append("\n and pii.image_cfcd = '01' ");
+			  
+		if(!"".equals(useYn)) {
+			_query.append("\n and pi2.use_yn = ?");
+		}
+			  
 		if("Y".equals(cateCodeYn)) {
 			_query.append("\n and pi2.product_category_code like concat('%',?,'%')");
 		}
@@ -70,7 +76,8 @@ public class ProductJdbcDAO {
 	}
 	
 	public String pageQuery(String maxPageCnt
-			, String cateCodeYn , String productIdYn , String productNameYn, String sellerYn, String favoriteYn, String sellerId) {
+			, String cateCodeYn, String productIdYn, String productNameYn, String sellerYn
+			, String favoriteYn, String sellerId, String useYn ) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select")
@@ -93,8 +100,12 @@ public class ProductJdbcDAO {
 		  }
 		
 		_query.append("\n and pii.delegate_thumbnail_yn = 'Y'")
-			  .append("\n and pii.image_cfcd = '01'")
-			  .append("\n and pi2.use_yn = 'Y'");
+			  .append("\n and pii.image_cfcd = '01'");
+		
+		if(!"".equals(useYn)) {
+			_query.append("\n and pi2.use_yn = ?");
+		}
+		
 		if("Y".equals(cateCodeYn)) {
 			_query.append("\n and pi2.product_category_code = ?");
 		}
@@ -165,6 +176,7 @@ public class ProductJdbcDAO {
 				.append("\n 	, '' as todayDeliveryYn ")
 				.append("\n 	, '' as slsDate ")
 				.append("\n 	, pi2.product_weight ")
+				.append("\n , ifnull((select cdi.dtl_code_text  from lz_market.cd_dtl_info cdi where cdi.code_no = 8 and cdi.dtl_code = pi2.seller_id),'') as slsDateText ")
 				.append("\n FROM lz_market.product_info pi2 ")
 				.append("\n 	, lz_market.seller_info si ")
 				.append("\n 	, lz_market.user_info ui ")
@@ -188,7 +200,7 @@ public class ProductJdbcDAO {
 				.append("\n 	, b.product_price ")
 				.append("\n 	, b.product_stock ")
 				.append("\n 	, b.product_desc ")
-				.append("\n 	, b.use_yn ")
+				.append("\n 	, 'Y' ")
 				.append("\n 	, b.product_category_code ")
 				.append("\n 	, b.seller_id ")
 				.append("\n 	, b.today_delivery_standard_time ")

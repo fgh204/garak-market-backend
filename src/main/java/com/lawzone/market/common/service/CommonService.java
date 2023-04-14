@@ -98,6 +98,7 @@ public class CommonService {
 		_queryValue.add(0, userId);
 		_queryValue.add(1, userId);
 		_queryValue.add(2, userId);
+		_queryValue.add(3, userId);
 		
 		MenuDTO menuDTO = new MenuDTO();
 		

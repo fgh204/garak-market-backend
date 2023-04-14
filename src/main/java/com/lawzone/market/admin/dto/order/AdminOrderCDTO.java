@@ -12,6 +12,8 @@ import lombok.Setter;
 public class AdminOrderCDTO {
 	private String orderDateAf;
 	private String orderDateBf;
+	private String orderDateGb;
+	private String deliveryComplYn;
 	private String orderStatCode;
 	private String orderDlngStatCode;
 	private String searchGb;

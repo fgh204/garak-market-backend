@@ -22,7 +22,7 @@ public class SellerInfo extends BaseTimeEntity{
 	private String sellerId;
 	
 	@Comment("상호")
-	@NotNull
+	//@NotNull
 	@Column(columnDefinition = "varchar(300)")
 	private String shopName; 
 	
@@ -37,7 +37,7 @@ public class SellerInfo extends BaseTimeEntity{
 	private String businessNumber;
 
 	@Comment("로그인ID")
-	@Column(unique = true, columnDefinition = "varchar(100)")
+	@Column(columnDefinition = "varchar(100)")
 	private String loginId;
 
 	@Comment("비밀번호")
@@ -45,7 +45,7 @@ public class SellerInfo extends BaseTimeEntity{
 	private String password;
 
 	@Comment("SPOTID")
-	@Column(unique = true, columnDefinition = "varchar(50)")
+	@Column(columnDefinition = "varchar(50)")
 	private String spotId;
 	
 	@Comment("SPOTNAME")
@@ -69,12 +69,24 @@ public class SellerInfo extends BaseTimeEntity{
 	private BigDecimal deliveryAmount;
 	
 	@Comment("지역코드")
-	@NotNull
+	//@NotNull
 	@Column(columnDefinition = "varchar(5)")
 	private String zonecode;
 	
 	@Comment("판매자지역코드")
-	@NotNull
+	//@NotNull
 	@Column(columnDefinition = "varchar(5)")
 	private String sellerZonecode;
+	
+	@Comment("오늘배송기준시간")
+	@Column(columnDefinition = "varchar(4)")
+    private String todayDeliveryStandardTime;
+	
+	@Comment("합배송여부")
+	@Column(columnDefinition = "varchar(1)")
+    private String combinedDeliveryYn;
+	
+	@Comment("마켓노출여부")
+	@Column(columnDefinition = "varchar(1)")
+    private String MarketExposureYn;
 }

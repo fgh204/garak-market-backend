@@ -9,6 +9,7 @@ public class ProductOrderItemBookIdInfoJdbcDAO {
 		
 		_query.append("\n select ")
 		.append("\n 	DATE_FORMAT(a.order_date,'%Y-%m-%d') as order_date ")
+		.append("\n 	, DATE_FORMAT(pi2.create_datetime, '%Y-%m-%d %H:%i:%s') as order_dttm ")
 		.append("\n 	, a.product_id ")
 		.append("\n 	, a.book_id ")
 		.append("\n 	, a.dong_group ")
@@ -37,13 +38,17 @@ public class ProductOrderItemBookIdInfoJdbcDAO {
 		.append("\n 	, a.seller_id as sellerId ")
 		.append("\n 	, a.product_category_code as productCategoryCode ")
 		.append("\n 	, a.delivery_order_id as deliveryOrderId ")
+		.append("\n 	, a.access_method_text as accessMethodText ")
+		.append("\n 	, a.combined_delivery_yn as combinedDeliveryYn ")
 		.append("\n 	, '' as imgBase64 ")
 		.append("\n from lz_market.product_order_item_book_id_info a ")
 		.append("\n 	, lz_market.product_info b ")
 		.append("\n 	, lz_market.product_order_item_info c ")
+		.append("\n 	, lz_market.payment_info pi2 ")
 		.append("\n where a.product_id = b.product_id ")
 		.append("\n and a.order_no = c.order_no ")
 		.append("\n and a.product_id = c.product_id ")
+		.append("\n and a.order_no  = pi2.order_no ")
 		.append("\n and c.order_item_state_code  <> '002' ");
 		if("N".equals(deliverYn)) {
 			_query.append("\n and a.delivery_state_code <> '400' ");
@@ -116,6 +121,10 @@ public class ProductOrderItemBookIdInfoJdbcDAO {
 				.append("\n from lz_market.product_category_info pci  ")
 				.append("\n where pci.product_category_code = si.product_category_code) ")
 				.append("\n , DATE_FORMAT(poi.create_datetime ,'%Y-%m-%dT%H:%i:%s+09:00') ")
+				.append("\n , pi2.product_name ")
+				.append("\n , poii.product_id ")
+				.append("\n , poii.product_price ")
+				.append("\n , poii.product_count ")
 				.append("\n from lz_market.product_order_item_info poii ")
 				.append("\n 	, lz_market.product_info pi2 ") 
 				.append("\n 	, lz_market.seller_info si ")
@@ -125,6 +134,40 @@ public class ProductOrderItemBookIdInfoJdbcDAO {
 				.append("\n and poii.order_no = poi.order_no ")
 				.append("\n and poii.order_no = ? ")
 				.append("\n and poii.product_id = ? ");
+
+		return _query.toString();
+	}
+	
+	public String adminBookIdSellerInfo2() {
+		StringBuffer _query = new StringBuffer();
+		_query.append("\n select ")
+				.append("\n si.spot_id ")
+				.append("\n , si.shop_name ")
+				.append("\n , si.seller_phone_number ")
+				.append("\n , si.business_address ")
+				.append("\n , si.spot_name ")
+				.append("\n , DATE_FORMAT(poii.create_datetime, '%H%i') ")
+				.append("\n , poi.phone_number ")
+				.append("\n , poi.recipient_name ")
+				.append("\n , si.zonecode ")
+				.append("\n , si.delivery_amount ")
+				.append("\n , (select pci.product_category_small_name ")
+				.append("\n from lz_market.product_category_info pci  ")
+				.append("\n where pci.product_category_code = si.product_category_code) ")
+				.append("\n , DATE_FORMAT(poi.create_datetime ,'%Y-%m-%dT%H:%i:%s+09:00') ")
+				.append("\n , pi2.product_name ")
+				.append("\n , poii.product_id ")
+				.append("\n , poii.product_price ")
+				.append("\n , poii.product_count ")
+				.append("\n from lz_market.product_order_item_info poii ")
+				.append("\n 	, lz_market.product_info pi2 ") 
+				.append("\n 	, lz_market.seller_info si ")
+				.append("\n 	, lz_market.product_order_info poi ")
+				.append("\n where poii.product_id = pi2.product_id ") 
+				.append("\n and pi2.seller_id = si.seller_id ")
+				.append("\n and poii.order_no = poi.order_no ")
+				.append("\n and poii.order_no = ? ")
+				.append("\n and poii.seller_id = ? ");
 
 		return _query.toString();
 	}

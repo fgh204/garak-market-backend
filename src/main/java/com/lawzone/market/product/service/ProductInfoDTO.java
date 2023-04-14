@@ -35,6 +35,7 @@ public class ProductInfoDTO {
 	private String todayDeliveryYn;
 	private String slsDate;
 	private BigDecimal productWeight;
+	private String slsDateText;
 	
 	public ProductInfoDTO() {
 		

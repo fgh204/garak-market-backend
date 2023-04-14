@@ -13,6 +13,7 @@ public class LoginDTO {
 	private String portalId;
 	private String portalPw;
 	private String oauthCode;
+	private String previousUrl;
 	
 	public LoginDTO() {
 		

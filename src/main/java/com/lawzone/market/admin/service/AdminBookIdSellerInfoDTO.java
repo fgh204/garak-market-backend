@@ -39,6 +39,10 @@ public class AdminBookIdSellerInfoDTO {
 	private BigDecimal deliveryAmount;
 	private String categoryName;
 	private String orderDttm;
+	private String productName;
+	private String productId;
+	private BigDecimal productPrice;
+	private BigDecimal productCount;
 	
 	public AdminBookIdSellerInfoDTO() {
 		

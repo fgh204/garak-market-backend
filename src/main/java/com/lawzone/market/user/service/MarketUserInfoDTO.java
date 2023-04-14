@@ -20,6 +20,7 @@ public class MarketUserInfoDTO {
 	private String backgroundImagePath;
 	private String introductionText;
 	private String socialName;
+	private String productCategoryCode;
 	
 	public MarketUserInfoDTO() {
 		

@@ -30,7 +30,7 @@ public class UserInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "varchar (100)")
 	private String socialId;
 	
-	@Column(columnDefinition = "varchar (11)")
+	@Column(columnDefinition = "varchar (20)")
 	private String phoneNumber;
 	
 	@Column(columnDefinition = "char (1)")
@@ -76,4 +76,12 @@ public class UserInfo extends BaseTimeEntity{
 	
 	@Column(columnDefinition = "varchar (10)")
 	private String socialName;
+	
+	@Comment("탈퇴사유코드")
+	@Column(columnDefinition = "varchar(3)")
+	private String withdrawalReasonCode;
+	
+	@Comment("탈퇴사유내용")
+	@Column(columnDefinition = "text")
+	private String withdrawalReasonText;
 }

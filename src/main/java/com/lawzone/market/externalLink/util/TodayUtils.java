@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lawzone.market.admin.service.OrderBookIdInfoDTO;
+import com.lawzone.market.admin.service.TodayProductDTO;
 
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -144,7 +145,7 @@ public class TodayUtils {
     	JSONObject jsonProducts = new JSONObject();
     	JSONObject jsonReturn = new JSONObject();
     	
-    	jsonSender.put("name", aMap.get("sendName"));
+    	jsonSender.put("name", "도매도_" + aMap.get("sendName"));
     	jsonSender.put("phone", aMap.get("sendPhone"));
     	jsonSender.put("address", aMap.get("sendAddress"));
     	jsonSender.put("postal_code", aMap.get("sendPostalCode"));
@@ -153,28 +154,39 @@ public class TodayUtils {
     	jsonReceiver.put("phone", aMap.get("receiverPhone"));
     	jsonReceiver.put("address", aMap.get("receiverAddress"));
     	jsonReceiver.put("postal_code", aMap.get("receiverPostalCode"));
-    	//jsonReceiver.put("access_method", aMap.get("sendName"));
+    	jsonReceiver.put("access_method", aMap.get("accessMethod"));
     	jsonReceiver.put("preference", aMap.get("receiverMemo"));
     	
-    	jsonProducts.put("name", aMap.get("productName"));
-    	jsonProducts.put("category", aMap.get("productCategory"));
-    	jsonProducts.put("fragile", true);
-    	jsonProducts.put("price", aMap.get("productPrice"));
-    	jsonProducts.put("seller_name", aMap.get("productSellerName"));
-    	jsonProducts.put("client_product_id", aMap.get("orderNo"));
-    	jsonProducts.put("customer_request_time", aMap.get("orderDttm"));
+    	List<TodayProductDTO> productList = (List<TodayProductDTO>) aMap.get("productList");
+    	int _productCnt = productList.size();
+    	
+    	for(int i = 0; i < _productCnt; i++) {
+    		jsonProducts = new JSONObject();
+    		
+    		jsonProducts.put("name", productList.get(i).getProductName());
+        	jsonProducts.put("category", productList.get(i).getProductCategory());
+        	jsonProducts.put("fragile", false);
+        	jsonProducts.put("price", productList.get(i).getProductPrice());
+        	jsonProducts.put("seller_name", productList.get(i).getProductSellerName());
+        	jsonProducts.put("client_product_id", productList.get(i).getProductId());
+        	jsonProducts.put("count", productList.get(i).getProductCount());
+        	jsonProducts.put("customer_request_time", productList.get(i).getOrderDttm());
+        	
+        	jsonArray.add(jsonProducts);
+    	}
+    	
     	//jsonProducts.put("picking_location", "B구역 3번");
     	//jsonProducts.put("count", 4);
     	//jsonProducts.put("customer_request_time", "2021-04-14T12:56:00+09:00");
     	
-    	jsonArray.add(jsonProducts);
+    	
     	
     	jsonReturn.put("invoice_number", "899034025615");
     	
 		json.put("broker_client_id", "");
 		json.put("skip_take_out", true);
 		json.put("shipping_place_id", aMap.get("shippingPlaceId"));
-		json.put("client_order_id", aMap.get("sendName"));
+		json.put("client_order_id", aMap.get("orderNo"));
 		//json.put("client_shipping_id", "970611JY");
 		//json.put("developer_payload", "");
 		//json.put("note", "비고");
@@ -273,6 +285,33 @@ public class TodayUtils {
     	CloseableHttpClient httpClient = HttpClientBuilder.create().build();
 		
 		HttpPost request = new HttpPost(this.endpoint + "/order/" + this.version + "/clients/" + this.clientid + "/orders/" + aMap.get("invoice_number") + "/cancel");
+	    StringEntity params = new StringEntity(json.toString(), "UTF-8");
+	    request.addHeader("content-type", "application/json");
+	    request.addHeader("Authorization", "Bearer " + aMap.get("access_token"));
+	    request.setEntity(params);
+	    
+	    CloseableHttpResponse httpResponse = httpClient.execute(request);
+
+	    String response = EntityUtils.toString(httpResponse.getEntity());
+    	
+	    ObjectMapper mapper = new ObjectMapper();
+	    
+	    res = mapper.readValue(response, Map.class);
+	    
+    	return res;
+    }
+    
+    public Map getvalidateAddress(Map aMap) throws ClientProtocolException, IOException{
+    	Map res = new HashMap<>();
+    	
+    	JSONObject json = new JSONObject();
+    	
+		json.put("address", aMap.get("address"));
+		json.put("postal_code", aMap.get("postal_code"));
+
+    	CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+		
+		HttpPost request = new HttpPost(this.endpoint + "/order/" + this.version + "/clients/" + this.clientid + "/validate-address");
 	    StringEntity params = new StringEntity(json.toString(), "UTF-8");
 	    request.addHeader("content-type", "application/json");
 	    request.addHeader("Authorization", "Bearer " + aMap.get("access_token"));

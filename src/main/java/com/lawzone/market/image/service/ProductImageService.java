@@ -115,7 +115,7 @@ public class ProductImageService {
 			if("".equals(delegateYn) || delegateYn == null) {
 				delegateYn = "N";
 			}
-
+			
 			if(!file.isEmpty()) {
 				String orgFileName = file.getOriginalFilename();
 				String _ext = orgFileName.substring(orgFileName.lastIndexOf(".") + 1);
@@ -153,6 +153,7 @@ public class ProductImageService {
 				productImageDTO.setThumbnailImagePath("");
 				
 				if(file.getSize() > _size) {
+					log.error("이미지 작업시작");
 					File outputfile = null;
 					File imageFile = null;
 					Metadata metadata; // 이미지 메타 데이터 객체
@@ -168,8 +169,23 @@ public class ProductImageService {
 					metadata = ImageMetadataReader.readMetadata(imageFile);
 					directory = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
 					jpegDirectory = metadata.getFirstDirectoryOfType(JpegDirectory.class);
-					if(directory != null){
-						orientation = directory.getInt(ExifIFD0Directory.TAG_ORIENTATION); // 회전정보
+					if(directory == null){
+						try {
+							orientation = jpegDirectory.getInt(ExifIFD0Directory.TAG_ORIENTATION); // 회전정보
+						}catch (Exception e) {
+							// TODO: handle exception
+							//orientation = 1;
+						}finally{
+						}
+					} else {
+						try {
+							orientation = directory.getInt(ExifIFD0Directory.TAG_ORIENTATION); // 회전정보
+						}catch (Exception e) {
+							// TODO: handle exception
+							//orientation = 1;
+						}finally{
+							
+						}
 					}
 					
 					BufferedImage inputImage = ImageIO.read(file.getInputStream());
@@ -225,15 +241,16 @@ public class ProductImageService {
 					 InputStream input = new FileInputStream(imgFile);
 					 
 					 productImageDTO.setFileSize(Files.size(outputfile.toPath()));
-					 
+					 log.error("이미지 업로드 시작");
 					 imeageUrl = s3Upload.uploadInputStream(input, _fileName, imgCfcd);
-					 
+					 log.error("이미지 업로드 종료");
 					 if(imageFile.exists()) {
 						 imageFile.delete();
 					 }
 					 if(outputfile.exists()) {
 						 outputfile.delete();
 					 }
+					 log.error("이미지 작업종료");
 				}else {
 					productImageDTO.setFileSize(file.getSize());
 					list.add(productImageDTO);
@@ -260,6 +277,7 @@ public class ProductImageService {
 				imgCnt++;
 			}
 		}
+		
 		return productImageMap;
 	}
 	

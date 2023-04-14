@@ -116,4 +116,16 @@ public class ProductOrderInfo extends BaseTimeEntity{
 	@Comment("수령인명")
 	@Column(columnDefinition = "varchar(100)")
 	private String recipientName;
+	
+	@Comment("배송장소구분코드")
+	@Column(columnDefinition = "varchar(3)")
+	private String deliveryLocationCfcd;
+	
+	@Comment("출입방법구분코드")
+	@Column(columnDefinition = "varchar(3)")
+	private String accessMethodCfcd;
+	
+	@Comment("출입방법내용")
+	@Column(columnDefinition = "text")
+	private String accessMethodText;
 }
