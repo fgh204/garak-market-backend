@@ -607,7 +607,7 @@ public class UserInfoService {
 		pointInfoCDTO.setEventId("00001");
 		this.pointService.addPoint(pointInfoCDTO);
 		
-		List<PointConfirmDTO> pointConfirmInfo = getPointConfirmInfo(userId);
+		List<PointConfirmDTO> pointConfirmInfo = getPointConfirmInfo(userInfo.get(0).getUserId());
 		
 		Boolean isConfirmed = false;
 		

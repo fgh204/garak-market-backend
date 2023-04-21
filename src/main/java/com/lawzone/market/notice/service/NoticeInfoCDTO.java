@@ -10,13 +10,19 @@ import lombok.Setter;
 @Getter
 @Setter
 public class NoticeInfoCDTO {
-	private String noticeId;
+	private Long noticeNumber;
 	private String noticeCfcd;
-	private String noticeTitle;
-	private String noticeDesc;
+	private String searchGb;
+	private String searchValue;
 	private String postYn;
 	private String noticeBeginDate;
 	private String noticeEndDate;
+	private String cdNo;
+	private String pageCnt;
+	private String maxPage;
+	private String maxPageCount;
+	private String pageCount;
+	private String dateGb;
 	
 	public NoticeInfoCDTO() {
 		

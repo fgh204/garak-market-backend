@@ -19,12 +19,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.lawzone.market.admin.dao.AdminJdbcDAO;
 import com.lawzone.market.admin.dao.SlsDateInfoDAO;
 import com.lawzone.market.admin.dto.order.AdminOrderCDTO;
+import com.lawzone.market.admin.dto.user.AdminUserCDTO;
 import com.lawzone.market.admin.service.SlsDateInfo;
 import com.lawzone.market.admin.service.SlsDateInfoDTO;
 import com.lawzone.market.cart.service.CartInfo;
 import com.lawzone.market.common.CdDtlInfo;
 import com.lawzone.market.common.dao.BoilerplateInfoDAO;
 import com.lawzone.market.common.dao.CdDtlInfoDAO;
+import com.lawzone.market.common.dao.CdDtlInfoJdbcDAO;
 import com.lawzone.market.common.dao.CommonJdbcDAO;
 import com.lawzone.market.externalLink.util.TodayUtils;
 import com.lawzone.market.product.service.TagInfo;
@@ -45,7 +47,7 @@ public class CommonService {
 	private final CdDtlInfoDAO cdDtlInfoDAO;
 	private final TodayUtils todayUtils;
 	private final AdminJdbcDAO adminJdbcDAO;
-	
+	private final CdDtlInfoJdbcDAO cdDtlInfoJdbcDAO;
 	@Transactional(rollbackFor = Exception.class)
 	public String addBoilerplateInfo(BoilerplateInfoDTO boilerplateInfoDTO) {
 		//기존 상용구 검색
@@ -261,5 +263,27 @@ public class CommonService {
 		req.put("invoice_number",bookId);
 		
 		Map todayTokenMap = this.todayUtils.getDeliveryCancel(req);	
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	public List getDtlCodeAll(){
+		List<CdDtlInfo> cdDtlInfoList = this.cdDtlInfoDAO.findAll();
+		
+		return cdDtlInfoList;
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	public List getDtlCodeInfo(String cdNo, String useYn){
+		String _sql = this.cdDtlInfoJdbcDAO.selectCdDtlInfo();
+		
+		ArrayList<String> _queryValue = new ArrayList<>();
+		_queryValue.add(0, cdNo);
+		_queryValue.add(1, useYn);
+		
+		DtlCodeDTO dtlCodeDTO = new DtlCodeDTO();
+		
+		List<DtlCodeDTO> dtlCodeInfoList = this.utilService.getQueryString(_sql ,dtlCodeDTO, _queryValue);
+		
+		return dtlCodeInfoList;
 	}
 }

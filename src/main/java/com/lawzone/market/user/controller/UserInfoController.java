@@ -212,8 +212,7 @@ public class UserInfoController {
 		DeliveryAddressInfoDTO deliveryAddressInfoDTO = new DeliveryAddressInfoDTO();
 		deliveryAddressInfoDTO = (DeliveryAddressInfoDTO) ParameterUtils.setDto(map, deliveryAddressInfoDTO, "insert",
 				sessionBean);
-		List<DeliveryAddressInfoDTO> _deliveryAddressInfoDTO = this.userInfoService
-				.getDeliveryAddressInfo(deliveryAddressInfoDTO);
+		List<DeliveryAddressInfoDTO> _deliveryAddressInfoDTO = this.userInfoService.getDeliveryAddressInfo(deliveryAddressInfoDTO);
 
 		Map rtnMap = new HashMap<>();
 		rtnMap.put("deliveryAddressList", _deliveryAddressInfoDTO);
@@ -235,9 +234,12 @@ public class UserInfoController {
 		Map rtnMap = new HashMap<>();
 		Map pointMap = new HashMap<>();
 		pointMap.put("amount", point);
-		rtnMap.put("userInfo", marketUserInfo.get(0));
 		rtnMap.put("pointInfo", pointMap);
-		
+		if(marketUserInfo.size() > 0) {
+			rtnMap.put("userInfo", marketUserInfo.get(0));
+		}else {
+			rtnMap.put("userInfo", marketUserInfo);
+		}
 		Boolean isConfirmed = false;
 		
 		if(pointConfirmInfo.size() > 0) {

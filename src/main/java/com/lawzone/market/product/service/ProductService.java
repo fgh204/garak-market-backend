@@ -677,4 +677,5 @@ public class ProductService {
 		
 		productInfo.get(0).setProductPrice(new BigDecimal(adminProductDTO.getChangProductPrice()));
 	}
+	
 }

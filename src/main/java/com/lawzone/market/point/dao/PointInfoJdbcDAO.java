@@ -62,7 +62,7 @@ public class PointInfoJdbcDAO {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select ")
-			  .append("\n 	case when ei.duplicate_limit_yn = 'Y' and ei.duplicate_limit_count < count(pi2.user_id) then 'N' else 'Y' end as pointYn ")
+			  .append("\n 	case when ei.duplicate_limit_yn = 'Y' and ei.duplicate_limit_count <= count(pi2.user_id) then 'N' else 'Y' end as pointYn ")
 			  .append("\n , (select ei2.point_amount  from lz_market.event_info ei2 ")
 			  .append("\n where event_id = ?) as pointAmount ")
 			  .append("\n from lz_market.point_info pi2 , ")

@@ -593,6 +593,7 @@ public class ProductController {
     	if("Y".equals(productCDTO.getSellerSearchYn())) {
     		//productCDTO.setSellerSearchYn(this.sellerInfoService.getSellerYn(productCDTO.getUserId()));
     	}
+    	//검색어 조회
     	
     	List<PageInfoDTO> pageInfo = this.productService.getPageInfo(productCDTO);
     	

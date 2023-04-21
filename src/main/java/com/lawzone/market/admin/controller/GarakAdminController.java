@@ -53,6 +53,7 @@ import com.lawzone.market.admin.service.GarakAdminService;
 import com.lawzone.market.admin.service.ProductOrderItemBookIdInfo;
 import com.lawzone.market.admin.service.SettlementListDTO;
 import com.lawzone.market.admin.service.SlsDateInfoDTO;
+import com.lawzone.market.common.CdDtlInfo;
 import com.lawzone.market.common.service.BoilerplateInfoDTO;
 import com.lawzone.market.common.service.CommonService;
 import com.lawzone.market.common.service.MenuDTO;
@@ -62,6 +63,9 @@ import com.lawzone.market.externalLink.util.DoobalHeroUtils;
 import com.lawzone.market.externalLink.util.TodayUtils;
 import com.lawzone.market.image.service.ProductImageListDTO;
 import com.lawzone.market.image.service.ProductImageService;
+import com.lawzone.market.notice.service.NoticeInfoCDTO;
+import com.lawzone.market.notice.service.NoticeInfoDTO;
+import com.lawzone.market.notice.service.NoticeService;
 import com.lawzone.market.order.service.CustOrderInfoDTO;
 import com.lawzone.market.order.service.OrderPaymentDTO;
 import com.lawzone.market.order.service.OrderPaymentInfo;
@@ -112,6 +116,7 @@ public class GarakAdminController {
 	private final ProductService productService;
 	private final ProductReviewInfoService productReviewInfoService;
 	private final ProductImageService productImageService;
+	private final NoticeService noticeService;
 	private final PointService pointService;
 
 	@ResponseBody
@@ -131,10 +136,12 @@ public class GarakAdminController {
 		if (!userInfo.isEmpty()) {
 			menuList = this.commonService.getMenuInfo(userInfo.get(0).getUserId());
 			List<AdminUserInfoDTO> adminUserInfo = this.garakAdminService.getAdminUserInfo(loginDTO.getPortalId());
-
+			//공통코드 조회
+			List<CdDtlInfo> cdDtlInfoList = this.commonService.getDtlCodeAll();
 			// this.garakAdminService.getDeliveryStaus();
 			rtnMap.put("adminToken", jwtTokenUtil.generateToken(userInfo.get(0), null));
 			rtnMap.put("menuTreeInfoList", menuList);
+			rtnMap.put("cdDtlInfoList", cdDtlInfoList);
 			rtnMap.put("adminUserInfo", adminUserInfo.get(0));
 		} else {
 			return JsonUtils.returnValue("9999", "로그인정보를 확인하세요", rtnMap).toString();
@@ -1017,5 +1024,47 @@ public class GarakAdminController {
 
 		rtnMap.put("kakaoTargetList", kakaoTargetList);
 		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/dtlCodeInfoList")
+	public String getDtlCodeInfo(HttpServletRequest request, @RequestBody(required = true) Map map) {
+		NoticeInfoCDTO noticeInfoCDTO = new NoticeInfoCDTO();
+		noticeInfoCDTO = (NoticeInfoCDTO) ParameterUtils.setDto(map, noticeInfoCDTO, "insert", sessionBean);
+		
+		String cdNo = noticeInfoCDTO.getCdNo(); 
+		
+		List<CdDtlInfo> cdDtlInfoList = this.commonService.getDtlCodeInfo(cdNo, "Y");
+		
+		Map rtnMap = new HashMap<>();
+		rtnMap.put("cdDtlInfoList", cdDtlInfoList);
+		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/noticeList")
+	public String getNoticeList(HttpServletRequest request, @RequestBody(required = true) Map map) {
+		NoticeInfoCDTO noticeInfoCDTO = new NoticeInfoCDTO();
+		noticeInfoCDTO = (NoticeInfoCDTO) ParameterUtils.setDto(map, noticeInfoCDTO, "insert", sessionBean);
+		
+		List<AdminPageInfoDTO> paging = this.noticeService.getNoticeListPageInfo(noticeInfoCDTO);
+		List<NoticeInfoDTO> noticeInfoList = this.noticeService.getNoticeList(noticeInfoCDTO);
+		
+		Map rtnMap = new HashMap<>();
+		rtnMap.put("noticeInfoList", noticeInfoList);
+		rtnMap.put("paging", paging.get(0));
+		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/addNoticeInfo")
+	public String addNoticeInfo(HttpServletRequest request, @RequestBody(required = true) Map map) {
+		NoticeInfoDTO noticeInfoDTO = new NoticeInfoDTO();
+		noticeInfoDTO = (NoticeInfoDTO) ParameterUtils.setDto(map, noticeInfoDTO, "insert", sessionBean);
+		
+		this.noticeService.addNoticeInfo(noticeInfoDTO);
+		
+		Map rtnMap = new HashMap<>();
+		return JsonUtils.returnValue("0000", "등록되었습니다", rtnMap).toString();
 	}
 }

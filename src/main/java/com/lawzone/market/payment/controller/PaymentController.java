@@ -13,6 +13,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -168,6 +169,22 @@ public class PaymentController {
 				try {
 					PaymentDTO paymentDTO = new PaymentDTO();
 					
+					BigDecimal _cancelled_payment_amount = new BigDecimal(0);
+					BigDecimal _payment_amount = new BigDecimal(0);
+					
+					try {
+						_payment_amount = new BigDecimal((Integer) paymentData.get("price"));
+					}catch (Exception e) {
+						_payment_amount = new BigDecimal((Double) paymentData.get("price"));
+					}
+
+					try {
+						_cancelled_payment_amount = new BigDecimal((Integer) paymentData.get("cancelled_price"));
+					}catch (Exception e) {
+						_cancelled_payment_amount = new BigDecimal((Double) paymentData.get("cancelled_price"));
+					}
+					
+					
 					String _receipt_id = (String) paymentData.get("receipt_id");
 					String _order_no = (String) paymentData.get("order_id");
 					String _order_name = (String) paymentData.get("order_name");
@@ -176,10 +193,10 @@ public class PaymentController {
 					String _method_symbol = (String) paymentData.get("method_symbol");
 					String _payment_dttm = (String) paymentData.get("purchased_at");
 					String _payment_req_dttm = (String) paymentData.get("requested_at");
-					BigDecimal _cancelled_payment_amount = new BigDecimal((Double) paymentData.get("cancelled_price"));
+					//_cancelled_payment_amount = new BigDecimal((Double) paymentData.get("cancelled_price"));
 					String _cancelled_payment_dttm = (String) paymentData.get("cancelled_at");
 					String _order_date = (String) paymentData.get("requested_at");
-					BigDecimal _payment_amount = new BigDecimal((Double) paymentData.get("price"));
+					//_payment_amount = new BigDecimal((Double) paymentData.get("price"));
 					String _pg_name = (String) paymentData.get("pg");
 					String _receipt_url = (String) paymentData.get("receipt_url");
 
@@ -248,6 +265,8 @@ public class PaymentController {
 					.append(_order_name)
 					.append("\n결제금액 : ")
 					.append(_payment_amount)
+					.append("\n사용포인트 : ")
+					.append(pointAmount)
 					.append("\n구매자 : ")
 					.append(userNmae)
 					.append("\n결제방법 : ")
@@ -290,6 +309,10 @@ public class PaymentController {
 					}
 				}catch (Exception e) {
 					receiptCancleData = this.bootpayUtils.getBootpayReceiptCancel(_receiptId, "관리자", "승인오류", null);
+					
+					Map exceptionMap = new HashMap<>();
+					exceptionMap.put("exception", ExceptionUtils.getStackTrace(e));
+					this.telmsgLogService.addTelmsgLog("99", "00", "1", exceptionMap, e.toString());
 					//log.info("receiptCancleData========= " + receiptCancleData);
 					return JsonUtils.returnValue("9999", "결제시 오류가 발생하였습니다.", rtnMap).toString();
 				}
