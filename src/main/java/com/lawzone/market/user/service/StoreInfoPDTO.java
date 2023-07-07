@@ -18,8 +18,12 @@ public class StoreInfoPDTO {
 	private String shopName;
 	private String sellerId;
 	private Boolean isFavoriteSeller;
+	private String todayDeliveryStandardTime;
+	private String todayDeliveryYn;
+	private String slsDate;
 	
-	private ArrayList<StorethumbnailImagePathInfoDTO> storeThumbnailImagePathList;
+	private ArrayList<StorethumbnailImagePathInfoDTO> productList;
+	//private ArrayList<StorethumbnailImagePathInfoDTO> storeThumbnailImagePathList;
 	
 	public StoreInfoPDTO() {
 		

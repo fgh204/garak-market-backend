@@ -80,9 +80,13 @@ public class PaymentJdbcDAO {
 				.append("\n SUM(if(opi.order_amount = opi.cancelled_order_amount, 0 , opi.delivery_amount )) ")
 				.append("\n from lz_market.order_payment_info opi ")
 				.append("\n where opi.order_no = ?)) as cancelledDeliveryAmount ")
+				.append("\n , pi2.receipt_url ")
+				.append("\n , ui.corp_yn ")
 				.append("\n from lz_market.payment_info pi2 ")
 				.append("\n , lz_market.product_order_info poi ")
+				.append("\n , lz_market.user_info ui ")
 				.append("\n where pi2.order_no = poi.order_no ")
+				.append("\n and poi.user_id = ui.user_id  ")
 				.append("\n and  pi2.order_no = ? ");
 		if(!"".equals(userId)) {
 			_query.append("\n and poi.user_id = ? ");

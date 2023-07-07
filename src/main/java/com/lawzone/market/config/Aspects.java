@@ -74,8 +74,9 @@ public class Aspects {
 		String _svcUrl = request.getRequestURI();
 		String _controller = joinPoint.getSignature().getDeclaringType().getName();
 		String _method = joinPoint.getSignature().getName();
-		
+		log.info("svcUrl============" + _svcUrl);
 		for(Object obj : args) {
+			//log.error("obj ================== " + obj);
 			if(obj != null) {
 				if("LinkedHashMap".equals(obj.getClass().getSimpleName())) {
 					resultMap.put("data", obj);
@@ -89,7 +90,6 @@ public class Aspects {
 		//log.error("userAgent ================== " + request.getRemoteHost());
 		//log.error("userAgent ================== " + request.getServerName());
 		
-		log.info("svcUrl============" + _svcUrl);
 		boolean isMobile = userAgent.matches(".*(iPhone|iPod|iPad|BlackBerry|Android|Windows CE|LG|MOT|SAMSUNG|SonyEricsson).*");
 		
 		if(userAgent.indexOf("iosapp") > -1){

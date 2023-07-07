@@ -2,9 +2,11 @@ package com.lawzone.market.user.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -501,6 +503,7 @@ public class UserInfoService {
 			userInfo.get(0).setUseYn("N");
 			userInfo.get(0).setWithdrawalReasonCode(marketSignupDTO.getWithdrawalReasonCode());
 			userInfo.get(0).setWithdrawalReasonText(marketSignupDTO.getWithdrawalReasonText());
+			userInfo.get(0).setWithdrawalDateTime(marketSignupDTO.getWithdrawalDateTime());
 			_rtn = true;
 			
 			return userInfo;
@@ -531,7 +534,17 @@ public class UserInfoService {
 		String sellerYn = "N";
 		String nickname = (String) profile.get("nickname");
 		String email = (String) accountMap.get("email");
-		String phoneNumber = "0" + accountMap.get("phone_number").toString().substring(4).replaceAll("-", "");
+		
+		String phoneNumber = "";
+		
+		if(accountMap.get("phone_number") != null) {
+			phoneNumber = accountMap.get("phone_number").toString();
+			
+			if(phoneNumber.length() > 4) {
+				phoneNumber = "0" + accountMap.get("phone_number").toString().substring(4).replaceAll("-", "");
+			}
+		}
+		
 		String oauthId = map.get("id").toString();
 		String socialAccessToken = (String) map.get("socialAccessToken");
 		String loginId = "";
@@ -609,20 +622,26 @@ public class UserInfoService {
 		
 		List<PointConfirmDTO> pointConfirmInfo = getPointConfirmInfo(userInfo.get(0).getUserId());
 		
-		Boolean isConfirmed = false;
+//		Boolean isConfirmed = false;
+//		
+//		if(pointConfirmInfo.size() > 0) {
+//			if("Y".equals(pointConfirmInfo.get(0).getIsConfirmed())) {
+//				isConfirmed = true;
+//			}
+//		}
+//		rtnMap.put("isPointConfirmed", isConfirmed);
 		
-		if(pointConfirmInfo.size() > 0) {
-			if("Y".equals(pointConfirmInfo.get(0).getIsConfirmed())) {
-				isConfirmed = true;
-			}
+		int pointConfirmSize = pointConfirmInfo.size();
+		
+		for(int i = 0; i < pointConfirmSize; i++) {
+			rtnMap.put(pointConfirmInfo.get(i).getDtlCodeEngName(), pointConfirmInfo.get(i).getIsConfirmed());
 		}
-		rtnMap.put("isPointConfirmed", isConfirmed);
 		
 		rtnMap.put("token" , token);
 		rtnMap.put("socialAccessToken" , socialAccessToken);
 		rtnMap.put("loginId" , userInfo.get(0).getLoginId());
 		rtnMap.put("password" , userInfo.get(0).getPassword());
-		rtnMap.put("isRegistered" , isRegistered);
+		rtnMap.put("isPushIdExist" , isRegistered);
 		
 	return rtnMap;
     }
@@ -747,17 +766,57 @@ public class UserInfoService {
 		Boolean isFavorite = true;
 		
 		ArrayList<String> _queryValue2 = new ArrayList<>();
+		String slsDateText = "";
 		
+		SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HHmm");
+		Date date = new Date();
+		String _date = sf.format(date);
+		String _dateArray[] =  _date.split(" ");
+		
+		String _toDate = _dateArray[0];
+		String _toTime = _dateArray[1];
+		String slsDateList[];
+		String slsDayYn = "N";
+		int _todayDeliveryTime = 0;
+		int _time = Integer.parseInt(_toTime);
 		for(int i = 0; i < _cnt; i++) {
+			
 			storeInfoDTO = new StoreInfoDTO();
 			storeInfoPDTO = new StoreInfoPDTO();
 			storeInfoDTO = storeInfoList.get(i);
+			
+			slsDateText = storeInfoDTO.getSlsDateText();
+			
+			if(slsDateText.indexOf(_toDate) > -1) {
+				slsDayYn = "N";
+			} else {
+				slsDayYn = this.utilService.getSlsDayYn(_toDate);
+			}
+			
+			slsDateList = slsDateText.split(";");
 			
 			_sellerFavorite = storeInfoDTO.getIsFavoriteSeller();
 			
 			storeInfoPDTO.setProductCategoryCode(storeInfoDTO.getProductCategoryCode());
 			storeInfoPDTO.setShopName(storeInfoDTO.getShopName());
 			storeInfoPDTO.setSellerId(storeInfoDTO.getSellerId());
+			storeInfoPDTO.setTodayDeliveryStandardTime(storeInfoDTO.getTodayDeliveryStandardTime());
+			
+			if(storeInfoDTO.getTodayDeliveryStandardTime() == null) {
+				storeInfoPDTO.setTodayDeliveryStandardTime("1000");
+			}else {
+				storeInfoPDTO.setTodayDeliveryStandardTime(storeInfoDTO.getTodayDeliveryStandardTime());
+			}
+			
+			_todayDeliveryTime = Integer.parseInt(storeInfoPDTO.getTodayDeliveryStandardTime());
+			
+			if(_todayDeliveryTime >= _time && "Y".equals(slsDayYn)) {
+				storeInfoPDTO.setTodayDeliveryYn("Y");
+			}else {
+				storeInfoPDTO.setTodayDeliveryYn("N");
+			}
+			
+			storeInfoPDTO.setSlsDate(this.utilService.getSlsDate(_toDate , storeInfoPDTO.getTodayDeliveryYn(), slsDateList));
 			
 			if("Y".equals(_sellerFavorite)) {
 				isFavorite = true;
@@ -778,7 +837,8 @@ public class UserInfoService {
 			
 			List<StorethumbnailImagePathInfoDTO> storethumbnailImagePathInfoList = this.utilService.getQueryString(storeImgListSql,storethumbnailImagePathInfoDTO,_queryValue2);
 
-			productInfoList.get(i).setStoreThumbnailImagePathList((ArrayList<StorethumbnailImagePathInfoDTO>) storethumbnailImagePathInfoList);
+			productInfoList.get(i).setProductList((ArrayList<StorethumbnailImagePathInfoDTO>) storethumbnailImagePathInfoList);
+			//productInfoList.get(i).setStoreThumbnailImagePathList((ArrayList<StorethumbnailImagePathInfoDTO>) storethumbnailImagePathInfoList);
 			
 		}
 		

@@ -17,6 +17,8 @@ public class StoreInfoDTO {
 	private String productCategoryCode;
 	private String sellerId;
 	private String shopName;
+	private String todayDeliveryStandardTime;
+	private String slsDateText;
 	private String isFavoriteSeller;
 	
 	public StoreInfoDTO() {

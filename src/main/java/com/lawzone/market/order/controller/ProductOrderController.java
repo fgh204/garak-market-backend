@@ -22,11 +22,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.util.ArrayBuilders;
 import com.lawzone.market.config.SessionBean;
+import com.lawzone.market.event.service.EventInfoCDTO;
+import com.lawzone.market.event.service.EventInfoDTO;
+import com.lawzone.market.event.service.EventMstService;
+import com.lawzone.market.event.service.EventProductInfoDTO;
 import com.lawzone.market.externalLink.util.AppPush;
 import com.lawzone.market.externalLink.util.AppPushDTO;
 import com.lawzone.market.order.service.CustOrderInfoDTO;
 import com.lawzone.market.order.service.CustOrderInfoListDTO;
 import com.lawzone.market.order.service.CustOrderItemListDTO;
+import com.lawzone.market.order.service.CustOrderItemListPDTO;
 import com.lawzone.market.order.service.CustOrderListDTO;
 import com.lawzone.market.order.service.OrderPaymentInfo;
 import com.lawzone.market.order.service.ProductOrderDTO;
@@ -71,6 +76,7 @@ public class ProductOrderController {
 	private final PointService pointService;
 	private final SlackWebhook slackWebhook;
 	private final AppPush appPush;
+	private final EventMstService eventMstService;
 	
 	@Resource
 	private SessionBean sessionBean;
@@ -99,6 +105,14 @@ public class ProductOrderController {
 		BigDecimal _paymentPointAmount = new BigDecimal("0");
 		BigDecimal _paymentAmount = new BigDecimal("0");
 		BigDecimal _amountZero = new BigDecimal("0");
+		
+		BigDecimal personBuyCount = new BigDecimal("0");
+		BigDecimal _personBuyCount = new BigDecimal("0");
+		BigDecimal eventCount = new BigDecimal("0");
+		BigDecimal _eventCount = new BigDecimal("0");
+		BigDecimal personPaymentCount = new BigDecimal("0");
+		BigDecimal eventPaymentCount = new BigDecimal("0");
+		BigDecimal _zero = new BigDecimal("0");
 		
 		if(mapOrderInfo.get("pointAmount") == null || "".equals(mapOrderInfo.get("pointAmount"))) {
 			_pointAmount = new BigDecimal("0");
@@ -135,24 +149,93 @@ public class ProductOrderController {
 		String rtnProductId = "";
 		String rtnProductName = "";
 		String _orderNo = "";
+		String _eventId = "";
 		BigDecimal _orderCount = new BigDecimal("0");
 		
 		int orderCount = 0;
 		int orderItemCount = listOrderItemInfo.size();
 		
 		String orderName = "";
-
+		int eventCnt = 0;
 	    //상품금액검증
 		for(int i = 0; i < orderItemCount; i++) {
 			mapOrderItemInfo = (Map) listOrderItemInfo.get(i);
 			_productPrice = new BigDecimal("0");
 			_productStock = new BigDecimal("0");
+			
+			personBuyCount = new BigDecimal("0");
+			_personBuyCount = new BigDecimal("0");
+			eventCount = new BigDecimal("0");
+			_eventCount = new BigDecimal("0");
+			personPaymentCount = new BigDecimal("0");
+			eventPaymentCount = new BigDecimal("0");
+			
 			_productId = mapOrderItemInfo.get("productId").toString();
 			_orderCount = new BigDecimal(Integer.parseInt(mapOrderItemInfo.get("productCount").toString()));
 			
 			List<ProductInfo> productInfo = this.productService.getProductPriceByProductId(mapOrderItemInfo.get("productId").toString());
 			_productPrice = productInfo.get(0).getProductPrice();
 			_productStock = productInfo.get(0).getProductStock();
+			_eventId = productInfo.get(0).getEventId();
+			
+			if(!("".equals(_eventId) || _eventId == null)) {
+				//이벤트정보
+				eventCnt++;
+				EventInfoCDTO eventInfoCDTO = new EventInfoCDTO();
+				eventInfoCDTO.setSearchGb("000");
+				eventInfoCDTO.setEventCfcd("000");
+				eventInfoCDTO.setPageCnt("0");
+				eventInfoCDTO.setMaxPage("5");
+				eventInfoCDTO.setEventId(_eventId);
+				//이벤트정보
+				List<EventInfoDTO> eventInfoList = this.eventMstService.getEventListInfo(eventInfoCDTO);
+				
+				if("001".equals(eventInfoList.get(0).getEventStateCode())) {
+					//이벤트상품정보
+					_productPrice = eventInfoList.get(0).getProductPrice();
+					List<EventProductInfoDTO> eventProductInfo = this.eventMstService.getEventProductInfo(mapOrderItemInfo.get("productId").toString(), _eventId);
+					
+					personBuyCount = eventProductInfo.get(0).getPersonBuyCount();
+					eventCount = eventProductInfo.get(0).getEventCount();
+					personPaymentCount = new BigDecimal(eventProductInfo.get(0).getPersonPaymentCount().toString());
+					eventPaymentCount = new BigDecimal(eventProductInfo.get(0).getEventPaymentCount().toString());
+					
+					if(personBuyCount.compareTo(_zero) == 0) {
+						personBuyCount = _productStock;
+					} else {
+						personBuyCount = personBuyCount.subtract(personPaymentCount);
+						
+						if(personBuyCount.compareTo(_zero) < 0) {
+							personBuyCount = _zero;
+						}
+					}
+					
+					if(eventCount.compareTo(_zero) == 0) {
+						eventCount = _productStock;
+					} else {
+						eventCount = eventCount.subtract(eventPaymentCount);
+						
+						if(eventCount.compareTo(_zero) < 0) {
+							eventCount = _zero;
+						}
+					}
+					
+					if(personBuyCount.compareTo(_zero) == 0 || eventCount.compareTo(_zero) == 0) {
+						return JsonUtils.returnValue("9999", "재고 수량이 없습니다.", rtnMap).toString();
+					} else if(personBuyCount.compareTo(_orderCount) < 0) {
+						return JsonUtils.returnValue("9999", "재고 수량이 없습니다.", rtnMap).toString();
+					}
+				} else {
+					return JsonUtils.returnValue("9999", "현재 판매중인 상품이 아닙니다.", rtnMap).toString();
+				}
+			}
+			
+			if(orderItemCount == eventCnt) {
+				if(_pointAmount.compareTo(_zero) > 0) {
+					return JsonUtils.returnValue("9999", "특가 상품은 포인트 사용이 불가합니다.", rtnMap).toString();
+				}
+			}
+			
 			_sellerId = productInfo.get(0).getSellerId();
 			if(i == 0) {
 				orderName = productInfo.get(0).getProductName();
@@ -186,6 +269,7 @@ public class ProductOrderController {
 			_price = _price.add(_productPrice.multiply(_orderCount));
 			orderCount++;
 		}
+		
 		if(orderItemCount > 1) {
 			orderName = orderName + " 외 " + Integer.toString(orderItemCount - 1);
 		}
@@ -223,7 +307,7 @@ public class ProductOrderController {
 					this.productOrderService.addProductOrderItemInfo(productOrderItemDTO);
 				}
 			}
-		}else {
+		} else {
 			if(!"".equals(rtnProductId)) {
 				return JsonUtils.returnValue("9999", "재고 수량이 없습니다.", rtnMap).toString();
 			}else {
@@ -232,9 +316,37 @@ public class ProductOrderController {
 				return JsonUtils.returnValue("9999", "금액이 잘못되었습니다.", rtnMap).toString();
 			}
 		}
-		
 		String orderStateCode = "001";
+		//else {
+		//주문금액정보 등록
+		BigDecimal deliveryAmount = this.productOrderService.addOrderPaymentInfo(_orderNo);
 		
+		if(deliveryAmount.compareTo(_deliveryAmount) != 0) {
+			return JsonUtils.returnValue("9999", "배송비를 확인하세요.", rtnMap).toString();
+		}
+		
+		//주문정보
+		List<CustOrderInfoDTO> custOrderInfoDTO = this.productOrderService.getCustOrderInfoByOrderNo(_orderNo, orderStateCode, "", "Y");
+		
+		//주문항목정보
+		List<CustOrderItemListPDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(_orderNo, orderStateCode, "", "Y");
+		
+		int itemCnt = custOrderItemList.size();
+		
+		_deliveryAmount = _deliveryAmount.subtract(_pointAmount);
+		
+		if(_deliveryAmount.compareTo(_amountZero)> 0) {
+			if(itemCnt > 0) {
+				BigDecimal _itemProductPrice = custOrderItemList.get(0).getProductPrice();
+				
+				_itemProductPrice = _itemProductPrice.add(_deliveryAmount);
+				
+				custOrderItemList.get(0).setProductPrice(_itemProductPrice);
+			}
+		}
+		//고객정보
+		List<UserInfo> userInfo = this.userInfoService.getUserInfoByUserId(userId);
+
 		if(_paymentAmount.compareTo(new BigDecimal("0")) == 0) {
 			PaymentDTO paymentDTO = new PaymentDTO();
 			paymentDTO.setReceiptId(_orderNo);
@@ -305,30 +417,6 @@ public class ProductOrderController {
 			//Map mapUserInfo = new HashMap<>();
 			//return JsonUtils.returnValue("0000", "저장되었습니다.", rtnMap).toString();
 		}
-		//else {
-		//주문금액정보 등록
-		this.productOrderService.addOrderPaymentInfo(_orderNo);
-		//주문정보
-		List<CustOrderInfoDTO> custOrderInfoDTO = this.productOrderService.getCustOrderInfoByOrderNo(_orderNo, orderStateCode, "", "Y");
-		
-		//주문항목정보
-		List<CustOrderItemListDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(_orderNo, orderStateCode, "", "Y");
-		
-		int itemCnt = custOrderItemList.size();
-		
-		_deliveryAmount = _deliveryAmount.subtract(_pointAmount);
-		
-		if(_deliveryAmount.compareTo(_amountZero)> 0) {
-			if(itemCnt > 0) {
-				BigDecimal _itemProductPrice = custOrderItemList.get(0).getProductPrice();
-				
-				_itemProductPrice = _itemProductPrice.add(_deliveryAmount);
-				
-				custOrderItemList.get(0).setProductPrice(_itemProductPrice);
-			}
-		}
-		//고객정보
-		List<UserInfo> userInfo = this.userInfoService.getUserInfoByUserId(userId);
 		
 		Map mapUserInfo = new HashMap<>();
 		
@@ -379,15 +467,15 @@ public class ProductOrderController {
 		List<UserOrderInfoDTO> userOrderInfo = this.productOrderService.getCustOrderList(orderMap);
 		
 		List<CustOrderListDTO> _custOrderList = new ArrayList<>();
-		List<CustOrderItemListDTO> _custOrderItemList = new ArrayList<>();
+		List<CustOrderItemListPDTO> _custOrderItemList = new ArrayList<>();
 		
 		int orderCnt = userOrderInfo.size();
 		int orderItemCnt = 0;
 		ProductOrderInfo _productOrderInfo;
 		CustOrderListDTO _custOrderListDTO;
 		
-		CustOrderItemListDTO custOrderItemListDTO;
-		CustOrderItemListDTO _custOrderItemListDTO;
+		CustOrderItemListPDTO custOrderItemListDTO;
+		CustOrderItemListPDTO _custOrderItemListDTO;
 		
 		UserOrderInfoDTO _orderInfo;
 		
@@ -420,15 +508,15 @@ public class ProductOrderController {
 			//	itemStatCode = "002";
 			//}
 			
-			List<CustOrderItemListDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(orderNo,"", "", "N");
+			List<CustOrderItemListPDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(orderNo,"", "", "N");
 			
 			orderItemCnt = custOrderItemList.size();
 			
 			_custOrderItemList = new ArrayList<>();
 			
 			for(int j = 0; j < orderItemCnt; j++) {
-				custOrderItemListDTO = new CustOrderItemListDTO();
-				_custOrderItemListDTO = new CustOrderItemListDTO();
+				custOrderItemListDTO = new CustOrderItemListPDTO();
+				_custOrderItemListDTO = new CustOrderItemListPDTO();
 				
 				custOrderItemListDTO = custOrderItemList.get(j);
 				//_custOrderItemListDTO.setOrderNo(custOrderItemListDTO.getOrderNo());
@@ -436,7 +524,7 @@ public class ProductOrderController {
 				
 				_custOrderItemList.add(j, _custOrderItemListDTO);
 			}
-			_custOrderListDTO.setOrderItemList((ArrayList<CustOrderItemListDTO>) _custOrderItemList);
+			_custOrderListDTO.setOrderItemList((ArrayList<CustOrderItemListPDTO>) _custOrderItemList);
 			
 			_custOrderList.add(i, _custOrderListDTO);
 		}
@@ -461,7 +549,7 @@ public class ProductOrderController {
 		List<CustOrderInfoDTO> custOrderInfoDTO = this.productOrderService.getCustOrderInfoByOrderNo(orderNo, "", productOrderDTO.getUserId(),"N");
 		
 		//주문항목정보
-		List<CustOrderItemListDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(orderNo, "", productOrderDTO.getUserId(), "N");
+		List<CustOrderItemListPDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(orderNo, "", productOrderDTO.getUserId(), "N");
 		
 		//결제정보
 		List<PaymentInfoDTO> paymentInfo = this.paymentService.getOrderPaymentInfo(orderNo, productOrderDTO.getUserId());

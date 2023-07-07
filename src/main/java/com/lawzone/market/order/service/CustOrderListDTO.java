@@ -8,5 +8,5 @@ import lombok.Data;
 public class CustOrderListDTO {
 	private UserOrderInfoDTO orderInfo;
 	
-	private ArrayList<CustOrderItemListDTO> orderItemList;
+	private ArrayList<CustOrderItemListPDTO> orderItemList;
 }

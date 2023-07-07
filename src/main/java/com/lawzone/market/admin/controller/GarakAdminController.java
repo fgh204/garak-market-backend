@@ -58,6 +58,12 @@ import com.lawzone.market.common.service.BoilerplateInfoDTO;
 import com.lawzone.market.common.service.CommonService;
 import com.lawzone.market.common.service.MenuDTO;
 import com.lawzone.market.config.SessionBean;
+import com.lawzone.market.event.service.EventIdInfoDTO;
+import com.lawzone.market.event.service.EventInfoCDTO;
+import com.lawzone.market.event.service.EventInfoDTO;
+import com.lawzone.market.event.service.EventMst;
+import com.lawzone.market.event.service.EventMstDTO;
+import com.lawzone.market.event.service.EventMstService;
 import com.lawzone.market.externalLink.util.AppPush;
 import com.lawzone.market.externalLink.util.DoobalHeroUtils;
 import com.lawzone.market.externalLink.util.TodayUtils;
@@ -118,6 +124,7 @@ public class GarakAdminController {
 	private final ProductImageService productImageService;
 	private final NoticeService noticeService;
 	private final PointService pointService;
+	private final EventMstService eventMstService;
 
 	@ResponseBody
 	@PostMapping("/login")
@@ -1066,5 +1073,71 @@ public class GarakAdminController {
 		
 		Map rtnMap = new HashMap<>();
 		return JsonUtils.returnValue("0000", "등록되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/eventList")
+	public String getEventList(HttpServletRequest request, @RequestBody(required = true) Map map) {
+		EventInfoCDTO eventInfoCDTO = new EventInfoCDTO();
+		eventInfoCDTO = (EventInfoCDTO) ParameterUtils.setDto(map, eventInfoCDTO, "insert", sessionBean);
+		
+		List<AdminPageInfoDTO> paging = this.eventMstService.getEventListPageInfo(eventInfoCDTO);
+		List<EventInfoDTO> eventInfoList = this.eventMstService.getEventListInfo(eventInfoCDTO);
+		
+		Map rtnMap = new HashMap<>();
+		rtnMap.put("eventInfoList", eventInfoList);
+		rtnMap.put("paging", paging.get(0));
+		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/addEventInfo")
+	public String addEventInfo(HttpServletRequest request, @RequestBody(required = true) Map map) {
+		EventMstDTO eventMstDTO = new EventMstDTO();
+		eventMstDTO = (EventMstDTO) ParameterUtils.setDto(map, eventMstDTO, "insert", sessionBean);
+		
+		this.eventMstService.addEventInfo(eventMstDTO);
+		
+		Map rtnMap = new HashMap<>();
+		
+		return JsonUtils.returnValue("0000", "저장되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/getEventInfo")
+	public String getEventInfo(HttpServletRequest request, @RequestBody(required = true) Map map) {
+		EventMstDTO eventMstDTO = new EventMstDTO();
+		eventMstDTO = (EventMstDTO) ParameterUtils.setDto(map, eventMstDTO, "insert", sessionBean);
+		
+		List<EventMst> eventMstList = this.eventMstService.getEventInfo(eventMstDTO);
+		
+		Map rtnMap = new HashMap<>();
+		rtnMap.put("eventMstInfo", eventMstList.get(0));
+		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/modifyEventClosed")
+	public String modifyEventClosed(HttpServletRequest request, @RequestBody(required = true) Map map) {
+		EventMstDTO eventMstDTO = new EventMstDTO();
+		eventMstDTO = (EventMstDTO) ParameterUtils.setDto(map, eventMstDTO, "insert", sessionBean);
+		
+		this.eventMstService.modifyEventClosed(eventMstDTO);
+		
+		Map rtnMap = new HashMap<>();
+		return JsonUtils.returnValue("0000", "수정되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/eventIdInfoList")
+	public String getEventIdInfoList (HttpServletRequest request, @RequestBody(required = true) Map map) {
+		EventMstDTO eventMstDTO = new EventMstDTO();
+		eventMstDTO = (EventMstDTO) ParameterUtils.setDto(map, eventMstDTO, "insert", sessionBean);
+		
+		List<EventIdInfoDTO> eventIdInfoList = this.eventMstService.getEventIdInfoList();
+		
+		Map rtnMap = new HashMap<>();
+		rtnMap.put("eventIdInfoList", eventIdInfoList);
+		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
 	}
 }

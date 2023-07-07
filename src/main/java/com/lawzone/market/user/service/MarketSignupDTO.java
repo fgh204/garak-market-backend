@@ -22,6 +22,7 @@ public class MarketSignupDTO {
 	private String previousUrl;
 	private String withdrawalReasonCode;
 	private String withdrawalReasonText;
+	private String withdrawalDateTime;
 	
 	public MarketSignupDTO() {
 		

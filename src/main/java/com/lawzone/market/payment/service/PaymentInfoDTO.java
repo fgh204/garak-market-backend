@@ -25,6 +25,8 @@ public class PaymentInfoDTO {
 	private BigInteger finalPointAmount;
 	private BigDecimal finalDeliveryAmount;
 	private BigDecimal cancelledDeliveryAmount;
+	private String receiptUrl;
+	private String corpYn;
 	
 	public PaymentInfoDTO() {
 		

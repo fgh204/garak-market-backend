@@ -20,7 +20,7 @@ public class NoticeInfoJdbcDAO {
 				.append("\n 	    , CEIL (COUNT(1) / " + _maxPage + ") as p_cnt ")
 				.append("\n 	from lz_market.notice_info ni ");
 				if("01".equals( _dateGb) ) {
-					_query.append("\n 	where ni.begin_date >= DATE_FORMAT(now(), '%Y-%m-%d') ");
+					_query.append("\n 	where ni.begin_date <= DATE_FORMAT(now(), '%Y-%m-%d') ");
 				} else {
 					_query.append("\n 	where ni.begin_date between ? and ? ");
 				}
@@ -59,7 +59,7 @@ public class NoticeInfoJdbcDAO {
 		.append("\n 	    , CEIL (COUNT(1) / " + _maxPage + ") as p_cnt ")
 		.append("\n 	from lz_market.notice_info ni ");
 		if("01".equals( _dateGb) ) {
-			_query.append("\n 	where ni.begin_date >= DATE_FORMAT(now(), '%Y-%m-%d') ");
+			_query.append("\n 	where ni.begin_date <= DATE_FORMAT(now(), '%Y-%m-%d') ");
 		} else {
 			_query.append("\n 	where ni.begin_date between ? and ? ");
 		}
@@ -102,7 +102,7 @@ public class NoticeInfoJdbcDAO {
 			.append("\n 	, ni.post_yn ")
 			.append("\n from lz_market.notice_info ni ");
 			if("01".equals( _dateGb) ) {
-				_query.append("\n 	where ni.begin_date >= DATE_FORMAT(now(), '%Y-%m-%d') ");
+				_query.append("\n 	where ni.begin_date <= DATE_FORMAT(now(), '%Y-%m-%d') ");
 			} else {
 				_query.append("\n 	where ni.begin_date between ? and ? ");
 			}

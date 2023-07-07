@@ -15,10 +15,21 @@ public class PointConfirmDTO {
 	private String dtlCodeName;
 	private String dtlCodeText;
 	private String userId;
+	private String dtlCodeEngName;
 	//private String updateDatetime;
-	private String isConfirmed;
+	private Boolean isConfirmed;
 	
 	public PointConfirmDTO() {
 		
+	}
+	
+	public PointConfirmDTO(String dtlCodeName, String dtlCodeText, String userId
+							, String dtlCodeEngName, String isConfirmed) 
+	{
+		this.dtlCodeName = dtlCodeName;
+		this.dtlCodeText = dtlCodeText;
+		this.userId = userId;
+		this.dtlCodeEngName = dtlCodeEngName;
+		this.isConfirmed = ("Y".equals(isConfirmed))?true:false;
 	}
 }

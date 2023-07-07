@@ -146,13 +146,17 @@ public class KakaoController {
     		httpResponse.setHeader("Set-Cookie", accessTokenCookie.toString());
         }
         Map rtnMap = new HashMap<>();
-        rtnMap.put("isPointConfirmed", kakaoMap.get("isPointConfirmed"));
-        rtnMap.put("isPushIdExist", kakaoMap.get("isRegistered"));
-        rtnMap.put("token", kakaoMap.get("socialAccessToken"));
-        rtnMap.put("loginId", kakaoMap.get("loginId"));
-        rtnMap.put("password", kakaoMap.get("password"));
-        rtnMap.put("previousUrl", previousUrl);
-        return JsonUtils.returnValue("0000", "로그인되었습니다.", rtnMap).toString();
+        //rtnMap.put("isPointConfirmed", kakaoMap.get("isPointConfirmed"));
+        //rtnMap.put("isPushIdExist", kakaoMap.get("isRegistered"));
+        //rtnMap.put("token", kakaoMap.get("socialAccessToken"));
+        //rtnMap.put("loginId", kakaoMap.get("loginId"));
+        //rtnMap.put("password", kakaoMap.get("password"));
+        //rtnMap.put("previousUrl", previousUrl);
+        
+        kakaoMap.remove("socialAccessToken");
+        kakaoMap.remove("token");
+        
+        return JsonUtils.returnValue("0000", "로그인되었습니다.", kakaoMap).toString();
     }
 	
     private Map getKakaoUserInfo(String accessToken) {

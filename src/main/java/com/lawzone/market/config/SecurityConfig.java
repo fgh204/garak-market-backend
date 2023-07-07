@@ -80,6 +80,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
                 .antMatchers("/market/domaadoVersion").permitAll()
                 .antMatchers("/market/getStore").permitAll()
                 .antMatchers("/market/searchWord").permitAll()
+                //이벤트목록조회
+                .antMatchers("/event/eventInfoList").permitAll()
+                //이벤트목록조회
+                .antMatchers("/event/mainEventInfoList").permitAll()
+                //이벤트상세조회 
+                .antMatchers("/event/eventDetailInfo").permitAll()
+                .antMatchers("/check_update").permitAll()
                 .antMatchers("/css/**").permitAll()
                 //.antMatchers("/market/domaado/loginIdDuplicated").permitAll()
                 //.antMatchers("/market/domaado/phoneNumberDuplicated").permitAll()

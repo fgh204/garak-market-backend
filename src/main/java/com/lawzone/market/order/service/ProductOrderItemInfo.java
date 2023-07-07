@@ -73,4 +73,8 @@ public class ProductOrderItemInfo extends BaseTimeEntity{
 	@Comment("판매자ID")
 	@Column(columnDefinition = "varchar(8)")
 	private String sellerId;
+	
+	@Comment("deliveryOrderKey")
+	@Column(columnDefinition = "varchar (100)")
+	private String deliveryOrderKey;
 }

@@ -29,6 +29,10 @@ public class CdDtlInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "varchar (500)")
 	private String dtlCodeName;
 	
+	@Comment("상세코드영문명")
+	@Column(columnDefinition = "varchar (500)")
+	private String dtlCodeEngName;
+	
 	@Comment("코드설명")
 	@Column(columnDefinition = "TEXT")
 	private String dtlCodeText;

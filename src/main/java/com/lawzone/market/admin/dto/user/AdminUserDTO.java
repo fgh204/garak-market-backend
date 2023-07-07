@@ -31,6 +31,8 @@ public class AdminUserDTO {
 	private String productCategoryCode;
 	private BigDecimal pointAmount;
 	private String marketExposureYn;
+	private String createDatetime;
+	private String withdrawalDatetime;
 	
 	public AdminUserDTO() {
 		

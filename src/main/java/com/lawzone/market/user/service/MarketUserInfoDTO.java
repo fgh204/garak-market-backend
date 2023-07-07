@@ -1,5 +1,7 @@
 package com.lawzone.market.user.service;
 
+import java.math.BigInteger;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -21,6 +23,9 @@ public class MarketUserInfoDTO {
 	private String introductionText;
 	private String socialName;
 	private String productCategoryCode;
+	private String combinedDeliveryYn;
+	private BigInteger deliveryAmount;
+	private BigInteger combinedDeliveryStandardAmount;
 	
 	public MarketUserInfoDTO() {
 		

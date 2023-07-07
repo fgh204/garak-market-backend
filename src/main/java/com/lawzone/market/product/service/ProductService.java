@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -32,6 +33,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.lawzone.market.admin.service.AdminProductDTO;
+import com.lawzone.market.config.SessionBean;
+import com.lawzone.market.event.dao.EventMstJdbcDAO;
+import com.lawzone.market.event.service.EventInfoCDTO;
+import com.lawzone.market.event.service.EventInfoDTO;
+import com.lawzone.market.event.service.EventMstService;
+import com.lawzone.market.event.service.EventProductInfoDTO;
+import com.lawzone.market.event.service.EventProductInfoListDTO;
+import com.lawzone.market.event.service.EventProductInfoListPDTO;
 import com.lawzone.market.image.dao.ProductImageDAO;
 import com.lawzone.market.image.dao.ProductImageJdbcDAO;
 import com.lawzone.market.image.service.ProductImageInfo;
@@ -48,6 +57,7 @@ import com.lawzone.market.user.service.SellerInfo;
 import com.lawzone.market.util.ParameterUtils;
 import com.lawzone.market.util.UtilService;
 
+import lombok.Builder.Default;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,7 +76,12 @@ public class ProductService {
 	private final ProductImageService productImageService;
 	private final ProductImageJdbcDAO productImageJdbcDAO;
 	private final ProductImageDAO productImageDAO;
+	private final EventMstJdbcDAO eventMstJdbcDAO;
 	private final EntityManager em;
+	private final EventMstService eventMstService;
+	
+	@Resource
+	private SessionBean sessionBean;
 	
 	@Transactional
 	public String addProductInfo(ProductDTO productDTO) {
@@ -113,6 +128,7 @@ public class ProductService {
 	
 	public List getProductDetailInfo(String productId) {
 		String sql = this.productJdbcDAO.productInfo();
+		String userId = sessionBean.getUserId();
 		ArrayList<String> _queryValue = new ArrayList<>();
 		_queryValue.add(0, productId);
 		
@@ -134,7 +150,21 @@ public class ProductService {
 		int _todayDeliveryTime = 0;
 		String slsDayYn = "N";
 		
+		String _eventId = "";
+		
+		String eventInfoSql = this.eventMstJdbcDAO.eventProductInfo();
+		ArrayList<String> _eventInfoQueryValue = new ArrayList<>();
+		EventProductInfoDTO eventProductInfoDTO = new EventProductInfoDTO();
+		
+		BigDecimal productStock = new BigDecimal(0);
+		BigDecimal _zero = new BigDecimal(0);
+		BigDecimal personBuyCount = new BigDecimal(0);
+		BigDecimal eventCount = new BigDecimal(0);
+		BigDecimal personPaymentCount = new BigDecimal(0);
+		BigDecimal eventPaymentCount = new BigDecimal(0);
+		
 		slsDateText = _productList.get(0).getSlsDateText();
+		_eventId = _productList.get(0).getEventId();
 		
 		if(slsDateText.indexOf(_toDate) > -1) {
 			slsDayYn = "N";
@@ -162,6 +192,56 @@ public class ProductService {
 		//	_productList.get(0).setSlsDate(this.utilService.getSlsDate(_toDate , "Y"));
 		//}
 		
+		if(!("".equals(_eventId) || _eventId == null)) {
+			if("".equals(userId) || userId == null) {
+				userId = "99999999";
+			}
+			
+			_eventInfoQueryValue = new ArrayList<>();
+			_eventInfoQueryValue.add(0, userId);
+			_eventInfoQueryValue.add(1, "003");
+			_eventInfoQueryValue.add(2, productId);
+			_eventInfoQueryValue.add(3, productId);
+			_eventInfoQueryValue.add(4, "003");
+			_eventInfoQueryValue.add(5, _eventId);
+		
+			List<EventProductInfoDTO> eventProductInfo = this.utilService.getQueryString(eventInfoSql,eventProductInfoDTO,_eventInfoQueryValue);
+			
+			productStock = new BigDecimal(_productList.get(0).getProductStock().toString());
+			personBuyCount = eventProductInfo.get(0).getPersonBuyCount();
+			eventCount = eventProductInfo.get(0).getEventCount();
+			personPaymentCount = new BigDecimal(eventProductInfo.get(0).getPersonPaymentCount().toString());
+			eventPaymentCount = new BigDecimal(eventProductInfo.get(0).getEventPaymentCount().toString());
+			
+			if(personBuyCount.compareTo(_zero) == 0) {
+				personBuyCount = productStock;
+			} else {
+				personBuyCount = personBuyCount.subtract(personPaymentCount);
+				
+				if(personBuyCount.compareTo(_zero) < 0) {
+					personBuyCount = _zero;
+				}
+			}
+			
+			if(eventCount.compareTo(_zero) == 0) {
+				eventCount = productStock;
+			} else {
+				eventCount = eventCount.subtract(eventPaymentCount);
+				
+				if(eventCount.compareTo(_zero) < 0) {
+					eventCount = _zero;
+				}
+			}
+		
+			_productList.get(0).setEventBeginTime(eventProductInfo.get(0).getEventBeginTime());
+			_productList.get(0).setEventEndTime(eventProductInfo.get(0).getEventEndTime());
+			_productList.get(0).setPersonBuyCount(new BigInteger(personBuyCount.toString()));
+			_productList.get(0).setEventCount(new BigInteger(eventCount.toString()));
+			_productList.get(0).setEventId(_eventId);
+			_productList.get(0).setEventBeginDate(eventProductInfo.get(0).getEventBeginDate());
+			_productList.get(0).setEventEndDate(eventProductInfo.get(0).getEventEndDate());
+		}
+			
 		return _productList;
 	}
 	
@@ -174,6 +254,9 @@ public class ProductService {
 		String sellerYn = productCDTO.getSellerSearchYn();
 		String sellerIdYn = productCDTO.getSellerIdYn();
 		String useYn = productCDTO.getUseYn();
+		String eventId = productCDTO.getEventId();
+		Boolean isSoldOutHidden = productCDTO.getIsSoldOutHidden();
+		String productSortCode = productCDTO.getProductSortCode();
 		
 		if(
 			("Y".equals(sellerYn) && "Y".equals(sellerIdYn))
@@ -199,7 +282,8 @@ public class ProductService {
 		}
 		
 		String sql = this.productJdbcDAO.pageListQuery(productCDTO.getPageCount(), productCDTO.getMaxPageCount()
-														,categoryCodeYn, productIdYn, productNameYn, sellerYn, favoriteYn, sellerId, useYn);
+														,categoryCodeYn, productIdYn, productNameYn, sellerYn
+														, favoriteYn, sellerId, useYn, eventId, isSoldOutHidden, productSortCode);
 		ProductInfoListDTO productInfoListDTO = new ProductInfoListDTO();
 		
 		ArrayList<String> _queryValue = new ArrayList<>();
@@ -246,6 +330,11 @@ public class ProductService {
 			paramCnt++;
 		}
 		
+		if(!("".equals(eventId) || eventId == null)) {
+			_queryValue.add(paramCnt, eventId);
+			paramCnt++;
+		}
+		
 		List<ProductInfoListDTO> productList = this.utilService.getQueryString(sql,productInfoListDTO,_queryValue);
 		
 		int productListSize =  productList.size();
@@ -255,11 +344,13 @@ public class ProductService {
 		ProductInfoListPDTO productInfoListInfo = new ProductInfoListPDTO();
 		
 		String productTagSql = this.produstTagJdbcDAO.productTgaList();
+		String eventInfoSql = this.eventMstJdbcDAO.eventProductInfo();
 		
 		ArrayList<String> _productTagQueryValue = new ArrayList<>();
+		ArrayList<String> _eventInfoQueryValue = new ArrayList<>();
 		
 		TagInfoDTO tagInfoDTO = new TagInfoDTO();
-		
+		EventProductInfoDTO eventProductInfoDTO = new EventProductInfoDTO();
 		ParameterUtils ParameterUtils = new ParameterUtils();
 		
 		//영업일여부
@@ -275,9 +366,18 @@ public class ProductService {
 		int _time = Integer.parseInt(_toTime);
 		int _todayDeliveryTime = 0;
 		String slsDayYn = "N";
-
+		String _eventId = "";
+		BigDecimal productStock = new BigDecimal(0);
+		BigDecimal _zero = new BigDecimal(0);
+		BigDecimal personBuyCount = new BigDecimal(0);
+		BigDecimal eventCount = new BigDecimal(0);
+		BigDecimal personPaymentCount = new BigDecimal(0);
+		BigDecimal eventPaymentCount = new BigDecimal(0);
+		
 		for(int i = 0; i < productListSize; i++) {
+			_eventId = "";
 			productInfoListInfo = new ProductInfoListPDTO();
+			_eventId = productList.get(i).getEventId();
 			slsDateText = productList.get(i).getSlsDateText();
 			
 			if(slsDateText.indexOf(_toDate) > -1) {
@@ -297,6 +397,9 @@ public class ProductService {
 			productInfoListInfo.setCumulativeSalesCount(productList.get(i).getCumulativeSalesCount());
 			productInfoListInfo.setShopName(productList.get(i).getShopName());
 			productInfoListInfo.setUseYn(productList.get(i).getUseYn());
+			productInfoListInfo.setCombinedDeliveryStandardAmount(productList.get(i).getCombinedDeliveryStandardAmount());
+			productInfoListInfo.setDeliveryAmount(productList.get(i).getDeliveryAmount());
+			productInfoListInfo.setCombinedDeliveryYn(productList.get(i).getCombinedDeliveryYn());
 			
 			if(productList.get(i).getTodayDeliveryStandardTime() == null) {
 				productInfoListInfo.setTodayDeliveryStandardTime("1000");
@@ -326,6 +429,67 @@ public class ProductService {
 			
 			List<TagInfoDTO> tagInfoList = this.utilService.getQueryString(productTagSql,tagInfoDTO,_productTagQueryValue);
 			
+			if(!("".equals(_eventId) || _eventId == null)) {
+				EventInfoCDTO eventInfoCDTO = new EventInfoCDTO();
+				eventInfoCDTO.setSearchGb("000");
+				eventInfoCDTO.setEventCfcd("000");
+				eventInfoCDTO.setPageCnt("0");
+				eventInfoCDTO.setMaxPage("5");
+				eventInfoCDTO.setEventId(_eventId);
+				//이벤트정보
+				List<EventInfoDTO> eventInfoList = this.eventMstService.getEventListInfo(eventInfoCDTO);
+				
+				_eventInfoQueryValue = new ArrayList<>();
+				_eventInfoQueryValue.add(0, productCDTO.getUserId());
+				_eventInfoQueryValue.add(1, "003");
+				_eventInfoQueryValue.add(2, productList.get(i).getProductId());
+				_eventInfoQueryValue.add(3, productList.get(i).getProductId());
+				_eventInfoQueryValue.add(4, "003");
+				_eventInfoQueryValue.add(5, _eventId);
+			
+				List<EventProductInfoDTO> eventProductInfo = this.utilService.getQueryString(eventInfoSql,eventProductInfoDTO,_eventInfoQueryValue);
+				
+				productStock = productInfoListInfo.getProductStock();
+				personBuyCount = eventProductInfo.get(0).getPersonBuyCount();
+				eventCount = eventProductInfo.get(0).getEventCount();
+				personPaymentCount = new BigDecimal(eventProductInfo.get(0).getPersonPaymentCount().toString());
+				eventPaymentCount = new BigDecimal(eventProductInfo.get(0).getEventPaymentCount().toString());
+				
+				if(personBuyCount.compareTo(_zero) == 0) {
+					personBuyCount = productStock;
+				} else {
+					personBuyCount = personBuyCount.subtract(personPaymentCount);
+					
+					if(personBuyCount.compareTo(_zero) < 0) {
+						personBuyCount = _zero;
+					}
+				}
+				
+				if(eventCount.compareTo(_zero) == 0) {
+					eventCount = productStock;
+				} else {
+					eventCount = eventCount.subtract(eventPaymentCount);
+					
+					if(eventCount.compareTo(_zero) < 0) {
+						eventCount = _zero;
+					}
+				}
+			
+				productInfoListInfo.setEventBeginTime(eventProductInfo.get(0).getEventBeginTime());
+				productInfoListInfo.setEventEndTime(eventProductInfo.get(0).getEventEndTime());
+				productInfoListInfo.setPersonBuyCount(personBuyCount);
+				productInfoListInfo.setEventCount(eventCount);
+				productInfoListInfo.setEventId(_eventId);
+				productInfoListInfo.setEventBeginDate(eventProductInfo.get(0).getEventBeginDate());
+				productInfoListInfo.setEventEndDate(eventProductInfo.get(0).getEventEndDate());
+				
+				if("001".equals(eventInfoList.get(0).getEventStateCode())) {
+					productInfoListInfo.setProductStock(eventCount);
+				} else {
+					productInfoListInfo.setProductStock(_zero);
+				}
+				
+			}
 			productInfoListPDTO.get(i).setProductTagList((ArrayList<TagInfoDTO>) tagInfoList);
 		}
 		//List<TagInfo> tagInfo = this.tagDAO.findByTagIdAndUseYn(_productTagQueryValue, "Y");
@@ -342,6 +506,8 @@ public class ProductService {
 		String sellerYn = productCDTO.getSellerSearchYn();
 		String sellerIdYn = productCDTO.getSellerIdYn();
 		String useYn = productCDTO.getUseYn();
+		String eventId = productCDTO.getEventId();
+		Boolean isSoldOutHidden = productCDTO.getIsSoldOutHidden();
 		
 		if(!"Y".equals(sellerYn)) {
 			useYn = "Y";
@@ -364,7 +530,7 @@ public class ProductService {
 		}
 		
 		String sql = this.productJdbcDAO.pageQuery(productCDTO.getMaxPageCount()
-				,categoryCodeYn, productIdYn, productNameYn, sellerYn, favoriteYn, sellerId, useYn);
+				,categoryCodeYn, productIdYn, productNameYn, sellerYn, favoriteYn, sellerId, useYn, eventId, isSoldOutHidden);
 		PageInfoDTO pageInfoDTO = new PageInfoDTO();
 		
 		ArrayList<String> _queryValue = new ArrayList<>();
@@ -408,6 +574,11 @@ public class ProductService {
 		
 		if("Y".equals(favoriteYn)) {
 			_queryValue.add(paramCnt, productCDTO.getUserId());
+			paramCnt++;
+		}
+		
+		if(!("".equals(eventId) || eventId == null)) {
+			_queryValue.add(paramCnt, eventId);
 			paramCnt++;
 		}
 		
@@ -678,4 +849,199 @@ public class ProductService {
 		productInfo.get(0).setProductPrice(new BigDecimal(adminProductDTO.getChangProductPrice()));
 	}
 	
+	public List getEventProductList(ProductCDTO productCDTO) throws IllegalAccessException, InvocationTargetException {
+		String categoryCodeYn = "N";
+		String productIdYn = "N";
+		String productNameYn = "N";
+		String favoriteYn = productCDTO.getFavoriteYn();
+		String sellerId = productCDTO.getSellerId();
+		String sellerYn = productCDTO.getSellerSearchYn();
+		String sellerIdYn = productCDTO.getSellerIdYn();
+		String useYn = productCDTO.getUseYn();
+		String eventId = productCDTO.getEventId();
+		Boolean isSoldOutHidden = productCDTO.getIsSoldOutHidden();
+		String productSortCode = productCDTO.getProductSortCode();
+		
+		String sql = this.productJdbcDAO.eventProductInfo();
+		EventProductInfoListDTO eventProductInfoListDTO = new EventProductInfoListDTO();
+		
+		ArrayList<String> _queryValue = new ArrayList<>();
+		
+		int paramCnt = 0;
+	
+		if(!("".equals(eventId) || eventId == null)) {
+			_queryValue.add(paramCnt, eventId);
+			paramCnt++;
+		}
+		
+		List<EventProductInfoListDTO> eventProductList = this.utilService.getQueryString(sql,eventProductInfoListDTO,_queryValue);
+		
+		int productListSize =  eventProductList.size();
+		
+		ArrayList<EventProductInfoListPDTO> productInfoListPDTO = new ArrayList<EventProductInfoListPDTO>();
+		EventProductInfoListPDTO productInfoListInfo = new EventProductInfoListPDTO();
+		
+		String productTagSql = this.produstTagJdbcDAO.productTgaList();
+		String eventInfoSql = this.eventMstJdbcDAO.eventProductInfo();
+		
+		ArrayList<String> _productTagQueryValue = new ArrayList<>();
+		ArrayList<String> _eventInfoQueryValue = new ArrayList<>();
+		
+		TagInfoDTO tagInfoDTO = new TagInfoDTO();
+		EventProductInfoDTO eventProductInfoDTO = new EventProductInfoDTO();
+		ParameterUtils ParameterUtils = new ParameterUtils();
+		
+		//영업일여부
+		SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HHmm");
+		Date date = new Date();
+		String _date = sf.format(date);
+		String _dateArray[] =  _date.split(" ");
+		
+		String _toDate = _dateArray[0];
+		String _toTime = _dateArray[1];
+		String slsDateList[];
+		String slsDateText = "";
+		int _time = Integer.parseInt(_toTime);
+		int _todayDeliveryTime = 0;
+		String slsDayYn = "N";
+		String _eventId = "";
+		String userId = productCDTO.getUserId();
+		BigDecimal productStock = new BigDecimal(0);
+		BigDecimal _zero = new BigDecimal(0);
+		BigDecimal personBuyCount = new BigDecimal(0);
+		BigDecimal eventCount = new BigDecimal(0);
+		BigDecimal personPaymentCount = new BigDecimal(0);
+		BigDecimal eventPaymentCount = new BigDecimal(0);
+		
+		for(int i = 0; i < productListSize; i++) {
+			_eventId = "";
+			productInfoListInfo = new EventProductInfoListPDTO();
+			_eventId = eventProductList.get(i).getEventId();
+			slsDateText = eventProductList.get(i).getSlsDateText();
+			
+			if(slsDateText.indexOf(_toDate) > -1) {
+				slsDayYn = "N";
+			} else {
+				slsDayYn = this.utilService.getSlsDayYn(_toDate);
+			}
+			
+			slsDateList = slsDateText.split(";");
+			
+			productInfoListInfo.setProductId(eventProductList.get(i).getProductId());
+			productInfoListInfo.setProductName(eventProductList.get(i).getProductName());
+			productInfoListInfo.setProductPrice(eventProductList.get(i).getProductPrice());
+			productInfoListInfo.setOriginalProductPrice(eventProductList.get(i).getOriginalProductPrice());
+			productInfoListInfo.setProductStock(eventProductList.get(i).getProductStock());
+			productInfoListInfo.setProductDesc(eventProductList.get(i).getProductDesc());
+			productInfoListInfo.setThumbnailImagePath(eventProductList.get(i).getThumbnailImagePath());
+			productInfoListInfo.setCumulativeSalesCount(eventProductList.get(i).getCumulativeSalesCount());
+			productInfoListInfo.setShopName(eventProductList.get(i).getShopName());
+			productInfoListInfo.setUseYn(eventProductList.get(i).getUseYn());
+			productInfoListInfo.setCombinedDeliveryStandardAmount(eventProductList.get(i).getCombinedDeliveryStandardAmount());
+			productInfoListInfo.setDeliveryAmount(eventProductList.get(i).getDeliveryAmount());
+			productInfoListInfo.setCombinedDeliveryYn(eventProductList.get(i).getCombinedDeliveryYn());
+			productInfoListInfo.setDiscountRate(eventProductList.get(i).getDiscountRate());
+			productInfoListInfo.setEventBeginTime(eventProductList.get(i).getEventBeginTime());
+			productInfoListInfo.setEventEndTime(eventProductList.get(i).getEventEndTime());
+			productInfoListInfo.setEventBeginDate(eventProductList.get(i).getEventBeginDate());
+			productInfoListInfo.setEventEndDate(eventProductList.get(i).getEventEndDate());
+			
+			if(eventProductList.get(i).getTodayDeliveryStandardTime() == null) {
+				productInfoListInfo.setTodayDeliveryStandardTime("1000");
+			}else {
+				productInfoListInfo.setTodayDeliveryStandardTime(eventProductList.get(i).getTodayDeliveryStandardTime());
+			}
+			
+			_todayDeliveryTime = Integer.parseInt(eventProductList.get(i).getTodayDeliveryStandardTime());
+			
+			if(_todayDeliveryTime >= _time && "Y".equals(slsDayYn)) {
+				productInfoListInfo.setTodayDeliveryYn("Y");
+			}else {
+				productInfoListInfo.setTodayDeliveryYn("N");
+			}
+			
+			//if("N".equals(productInfoListInfo.getTodayDeliveryYn())) {
+				productInfoListInfo.setSlsDate(this.utilService.getSlsDate(_toDate , productInfoListInfo.getTodayDeliveryYn(), slsDateList));
+			//}else {
+			//	productInfoListInfo.setSlsDate(this.utilService.getSlsDate(_toDate , "Y"));
+			//}
+			
+			productInfoListPDTO.add(i, productInfoListInfo);
+			
+			_productTagQueryValue = new ArrayList<>();
+			_productTagQueryValue.add(0, eventProductList.get(i).getProductId());
+			_productTagQueryValue.add(1, "Y");
+			
+			List<TagInfoDTO> tagInfoList = this.utilService.getQueryString(productTagSql,tagInfoDTO,_productTagQueryValue);
+			
+			if(!("".equals(_eventId) || _eventId == null)) {
+				EventInfoCDTO eventInfoCDTO = new EventInfoCDTO();
+				eventInfoCDTO.setSearchGb("000");
+				eventInfoCDTO.setEventCfcd("000");
+				eventInfoCDTO.setPageCnt("0");
+				eventInfoCDTO.setMaxPage("5");
+				eventInfoCDTO.setEventId(_eventId);
+				//이벤트정보
+				List<EventInfoDTO> eventInfoList = this.eventMstService.getEventListInfo(eventInfoCDTO);
+				
+				if(!("".equals(userId) || userId == null)) {
+					_eventInfoQueryValue = new ArrayList<>();
+					_eventInfoQueryValue.add(0, userId);
+					_eventInfoQueryValue.add(1, "003");
+					_eventInfoQueryValue.add(2, eventProductList.get(i).getProductId());
+					_eventInfoQueryValue.add(3, eventProductList.get(i).getProductId());
+					_eventInfoQueryValue.add(4, "003");
+					_eventInfoQueryValue.add(5, _eventId);
+				
+					List<EventProductInfoDTO> eventProductInfo = this.utilService.getQueryString(eventInfoSql,eventProductInfoDTO,_eventInfoQueryValue);
+					
+					personBuyCount = eventProductInfo.get(0).getPersonBuyCount();
+					eventCount = eventProductInfo.get(0).getEventCount();
+					personPaymentCount = new BigDecimal(eventProductInfo.get(0).getPersonPaymentCount().toString());
+					eventPaymentCount = new BigDecimal(eventProductInfo.get(0).getEventPaymentCount().toString());
+				}
+				
+				productStock = productInfoListInfo.getProductStock();
+				
+				if(personBuyCount.compareTo(_zero) == 0) {
+					personBuyCount = productStock;
+				} else {
+					personBuyCount = personBuyCount.subtract(personPaymentCount);
+					
+					if(personBuyCount.compareTo(_zero) < 0) {
+						personBuyCount = _zero;
+					}
+				}
+				
+				if(eventCount.compareTo(_zero) == 0) {
+					eventCount = productStock;
+				} else {
+					eventCount = eventCount.subtract(eventPaymentCount);
+					
+					if(eventCount.compareTo(_zero) < 0) {
+						eventCount = _zero;
+					}
+				}
+			
+				//productInfoListInfo.setEventBeginTime(eventProductInfo.get(0).getEventBeginTime());
+				//productInfoListInfo.setEventEndTime(eventProductInfo.get(0).getEventEndTime());
+				productInfoListInfo.setPersonBuyCount(personBuyCount);
+				productInfoListInfo.setEventCount(eventCount);
+				productInfoListInfo.setEventId(_eventId);
+				//productInfoListInfo.setEventBeginDate(eventProductInfo.get(0).getEventBeginDate());
+				//productInfoListInfo.setEventEndDate(eventProductInfo.get(0).getEventEndDate());
+				
+				if("001".equals(eventInfoList.get(0).getEventStateCode())) {
+					productInfoListInfo.setProductStock(eventCount);
+				} else {
+					productInfoListInfo.setProductStock(_zero);
+				}
+				
+			}
+			productInfoListPDTO.get(i).setProductTagList((ArrayList<TagInfoDTO>) tagInfoList);
+		}
+		//List<TagInfo> tagInfo = this.tagDAO.findByTagIdAndUseYn(_productTagQueryValue, "Y");
+		
+		return productInfoListPDTO;
+	}
 }

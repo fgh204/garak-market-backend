@@ -1,6 +1,7 @@
 package com.lawzone.market.user.service;
 
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
@@ -8,6 +9,7 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.Comment;
 
 import com.lawzone.market.config.BaseTimeEntity;
+import com.lawzone.market.util.DateToStringConverter;
 
 import lombok.Data;
 
@@ -84,4 +86,13 @@ public class UserInfo extends BaseTimeEntity{
 	@Comment("탈퇴사유내용")
 	@Column(columnDefinition = "text")
 	private String withdrawalReasonText;
+	
+	@Comment("탈퇴일시")
+	@Column(name="withdrawal_date_time", length=20)
+	@Convert(converter=DateToStringConverter.class)
+	private String withdrawalDateTime;
+	
+	@Comment("법인여부")
+	@Column(columnDefinition = "varchar(1)")
+	private String corpYn;
 }

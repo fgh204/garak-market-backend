@@ -44,6 +44,7 @@ dependencies {
 	implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.281'
 	implementation 'io.github.bootpay:backend:+'
+	//implementation 'io.github.bootpay:backend:2.0.2'
 	implementation 'com.nimbusds:nimbus-jose-jwt:3.10'
 	implementation 'org.bouncycastle:bcprov-jdk15on:1.61'
 	implementation 'org.bouncycastle:bcpkix-jdk15on:1.61'

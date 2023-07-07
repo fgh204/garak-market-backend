@@ -71,6 +71,8 @@ public class UtilService {
 			_rtnId = _dateFormat.substring(0,4) + StringUtils.leftPad(nextVal, 8,"0");
 		} else if("NOTICE_ID".equals(kw)){
 			_rtnId = _dateFormat.substring(0,4) + StringUtils.leftPad(nextVal, 6,"0");
+		} else if("EVENT_ID".equals(kw)){
+			_rtnId = StringUtils.leftPad(nextVal, 5,"0");
 		} else {
 			_rtnId = nextVal;
 		}

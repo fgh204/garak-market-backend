@@ -27,6 +27,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CustReviewInfoDTO {
+	private String productId;
 	private String productName;
 	private String orderNo;
 	private String userId;
@@ -41,6 +42,7 @@ public class CustReviewInfoDTO {
 	private String userName;
 	private String updateDatetime;
 	private String phoneNumber;
+	private String reviewImgYn;
 		
 	public CustReviewInfoDTO() {
 		

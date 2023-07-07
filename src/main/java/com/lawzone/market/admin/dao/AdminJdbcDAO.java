@@ -35,6 +35,8 @@ public class AdminJdbcDAO {
 				.append("\n 	where pi2.user_id = ui.user_id ")
 				.append("\n 	and pi2.point_expiration_datetime > now() ),0) ")
 				.append("\n 	, ifnull(si.market_exposure_yn,'N') ")
+				.append("\n 	, DATE_FORMAT(ui.create_datetime, '%Y.%m.%d %H:%i:%s') as createDatetime ")
+				.append("\n 	, DATE_FORMAT(ui.withdrawal_date_time, '%Y.%m.%d %H:%i:%s') as withdrawalDatetime ")
 				.append("\n from lz_market.user_info ui ")
 				.append("\n 	left outer join lz_market.seller_info si ")
 				.append("\n 	on ui.user_id = si.seller_id ")
@@ -320,7 +322,7 @@ public class AdminJdbcDAO {
 				.append("\n     pi2.product_weight as productWeight  , ")
 				.append("\n     pi2.product_desc as productDesc  , ")
 				.append("\n     si.shop_name as shopName   , ")
-				.append("\n     pi2.today_delivery_standard_time as todayDeliveryStandardTime   , ")
+				.append("\n     si.today_delivery_standard_time as todayDeliveryStandardTime   , ")
 				.append("\n     pi2.product_category_code as productCategoryCode   , ")
 				.append("\n     pci.product_category_small_name as productCategorySmallName  , ")
 				.append("\n     ifnull(pii.delegate_thumbnail_yn,'N') as imgRegstYn ")
@@ -335,7 +337,8 @@ public class AdminJdbcDAO {
 				.append("\n     lz_market.seller_info si  , ")
 				.append("\n     lz_market.product_category_info pci ")
 				.append("\n where pi2.seller_id = si.seller_id  ")
-				.append("\n and pi2.product_category_code = pci.product_category_code ");
+				.append("\n and pi2.product_category_code = pci.product_category_code ")
+				.append("\n and pi2.event_id is null ");
 				if(adminProductCDTO.getUserLvl() < 5) {
 					_query.append("\n and pi2.seller_id = ? ");
 				}else if(!"000".equals(adminProductCDTO.getProductCategoryCode())){
@@ -406,21 +409,29 @@ public class AdminJdbcDAO {
 		return _query.toString();
 	}
 	
-	public String kakaoTargetPointList() {
+	public String kakaoTargetPointList(AdminUserCDTO adminUserCDTO) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select ")
 		.append("\n     ceil(sum(pi2.point_value)) as pointAmount ")
 		.append("\n     , pi2.user_id as userId ")
-		.append("\n     , DATE_FORMAT(pi2.point_expiration_datetime, '%Y.%m.%d') as pointExpirationDate ")
-		.append("\n     , DATE_FORMAT( DATE_SUB(pi2.point_expiration_datetime, INTERVAL 3 day) , '%Y.%m.%d') as stnDate ")
+		//.append("\n     , DATE_FORMAT(pi2.point_expiration_datetime, '%Y.%m.%d') as pointExpirationDate ")
+		//.append("\n     , DATE_FORMAT( DATE_SUB(pi2.point_expiration_datetime, INTERVAL 3 day) , '%Y.%m.%d') as stnDate ")
+		.append("\n     , DATE_FORMAT(pi2.point_expiration_datetime,'%y년 %m월 %d일') as pointExpirationDate ")
+		.append("\n     , DATE_FORMAT( DATE_SUB(pi2.point_expiration_datetime,INTERVAL 3 day) ,'%y년 %m월 %d일') as stnDate ")
 		.append("\n     , ui.phone_number as phoneNumber ")
 		.append("\n     , ui.user_name as userName ")
+		.append("\n     , ui.use_yn ")
 		.append("\n from lz_market.point_detail_info pi2 ")
 		.append("\n     , lz_market.user_info ui ")
 		.append("\n where pi2.user_id = ui.user_id ")
-		.append("\n and DATE_FORMAT(pi2.point_expiration_datetime, '%Y-%m-%d') between ? and ? ")
-		.append("\n group by pi2.user_id , DATE_FORMAT(pi2.point_expiration_datetime, '%Y.%m.%d') ");
+		.append("\n and DATE_FORMAT(pi2.point_expiration_datetime, '%Y-%m-%d') between ? and ? ");
+		
+		if(!"%".equals(adminUserCDTO.getReviewYn())) {
+			_query.append("\n and ui.use_yn = ? ");
+		}
+		_query.append("\n group by pi2.user_id , DATE_FORMAT(pi2.point_expiration_datetime, '%Y.%m.%d') ")
+		.append("\n having ceil(sum(pi2.point_value)) > 0 ");
 		return _query.toString();
 	}
 	
@@ -450,6 +461,31 @@ public class AdminJdbcDAO {
 		}
 		
 		_query.append("\n group by DATE_FORMAT(poi.order_date , '%Y.%m.%d') , ui.user_id ");
+		return _query.toString();
+	}
+	
+	public String deliveryOrderKey() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n update lz_market.product_order_item_info a ")
+				.append("\n 	set a.delivery_order_key = ? ")
+				.append("\n where a.order_no = ? ")
+				.append("\n and a.seller_id = ? ")
+				.append("\n and a.delivery_order_key is null ");
+		
+		return _query.toString();
+	}
+	
+	public String deliveryOrderKeyByProduct() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n update lz_market.product_order_item_info a ")
+				.append("\n 	set a.delivery_order_key = ? ")
+				.append("\n where a.order_no = ? ")
+				.append("\n and a.product_id = ? ")
+				.append("\n and a.seller_id = ? ")
+				.append("\n and a.delivery_order_key is null ");
+		
 		return _query.toString();
 	}
 }

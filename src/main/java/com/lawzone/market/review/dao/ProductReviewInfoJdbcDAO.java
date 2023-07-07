@@ -264,7 +264,8 @@ public class ProductReviewInfoJdbcDAO {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select ")
-			.append("\n 	 lz_market.FN_PRDT_NM(pri.product_id) ")
+			.append("\n 	 pri.product_id ")
+			.append("\n 	 , lz_market.FN_PRDT_NM(pri.product_id) ")
 			.append("\n 	 , pri.order_no ")
 			.append("\n 	 , pri.user_id ")
 			.append("\n 	 , pri.taste_score ")
@@ -278,12 +279,29 @@ public class ProductReviewInfoJdbcDAO {
 			.append("\n 	 , ui.user_name ")
 			.append("\n 	 , DATE_FORMAT(pri.update_datetime, '%Y.%m.%d %H:%i:%s') as updateDatetime ")
 			.append("\n 	 , ui.phone_number ")
+			.append("\n 	 , (select case when count(1) > 0 then 'Y' else 'N' end  ")
+			.append("\n 	 from lz_market.product_image_info pii ")
+			.append("\n 	 where pii.product_id = pri.product_id ")
+			.append("\n 	 and pii.order_no = pri.order_no) as reviewImgYn ")
 			.append("\n from lz_market.product_review_info pri ")
 			.append("\n 	, lz_market.user_info ui ")
 			.append("\n where pri.user_id = ui.user_id ")
 			.append("\n and pri.create_datetime between ? and ? ")
 			.append("\n order by pri.update_datetime desc ")
 			.append("\n limit " + page + ", " + maxPageCnt);
+		return _query.toString();
+	}
+	
+	public String adminCustReviewImgInfoList() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n select ")
+			.append("\n		pii.product_id ")
+			.append("\n 	 , pii.order_no ")
+			.append("\n 	 , pii.thumbnail_image_path ")
+			.append("\n from lz_market.product_image_info pii ")
+			.append("\n where pii.product_id = ? ")
+			.append("\n and pii.order_no = ? ");
 		return _query.toString();
 	}
 }

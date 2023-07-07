@@ -93,7 +93,7 @@ public class PointController {
 		return JsonUtils.returnValue("0000", "조회 되었습니다.", rtnMap).toString();
 	}
 	
-	//포인트네영조회
+	//포인트내역조회
 	@ResponseBody
 	@PostMapping("/pointHistInfo")
 	public String getPointHistInfo(HttpServletRequest request, @RequestBody(required = true) Map map) {

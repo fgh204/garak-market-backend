@@ -28,6 +28,17 @@ public class CustOrderItemListDTO {
 	private String orderItemDlngStateCode;
 	private String orderItemDlngStateName;
 	private Boolean isReviewRegistered;
+	private Boolean isReviewWritable;
+	private String shopName;
+	private String sellerId;
+	private String todayDeliveryStandardTime;
+	private String orderCompletionDate;
+	private String estimatedDeliveryDate;
+	private String orderCompletionTime;
+	private String orderCancellationDate;
+	private String deliveryCompletionDate;
+	private String slsDateText;
+	private String orderNo;
 	
 	public CustOrderItemListDTO(
 			String productName
@@ -42,6 +53,17 @@ public class CustOrderItemListDTO {
 			, String orderItemDlngStateCode
 			, String orderItemDlngStateName
 			, String isReviewRegistered
+			, String isReviewWritable
+			, String shopName
+			, String sellerId
+			, String todayDeliveryStandardTime
+			, String orderCompletionDate
+			, String estimatedDeliveryDate
+			, String orderCompletionTime
+			, String orderCancellationDate
+			, String deliveryCompletionDate
+			, String slsDateText
+			, String orderNo
 			) {
 		this.productName = productName;
 		this.orderItemStateCode = orderItemStateCode;
@@ -55,6 +77,17 @@ public class CustOrderItemListDTO {
 		this.orderItemDlngStateCode = orderItemDlngStateCode;
 		this.orderItemDlngStateName = orderItemDlngStateName;
 		this.isReviewRegistered = "Y".equalsIgnoreCase(isReviewRegistered);
+		this.isReviewWritable = "Y".equalsIgnoreCase(isReviewWritable);
+		this.shopName = shopName;
+		this.sellerId = sellerId;
+		this.todayDeliveryStandardTime = todayDeliveryStandardTime;
+		this.orderCompletionDate = orderCompletionDate;
+		this.estimatedDeliveryDate = estimatedDeliveryDate;
+		this.orderCompletionTime = orderCompletionTime;
+		this.orderCancellationDate = orderCancellationDate;
+		this.deliveryCompletionDate = deliveryCompletionDate;
+		this.slsDateText = slsDateText;
+		this.orderNo = orderNo;
 	}
 	
 	public CustOrderItemListDTO() {

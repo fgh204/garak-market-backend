@@ -12,6 +12,7 @@ import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import net.sf.json.JsonConfig;
 import net.sf.json.util.CycleDetectionStrategy;
+import net.sf.json.util.PropertyFilter;
 
 public class JsonUtils {
 	/**
@@ -110,8 +111,17 @@ public class JsonUtils {
 		Map<Object, Object> mapInfo = new HashMap<>();
 		JsonConfig config = new JsonConfig();
     	config.setIgnoreDefaultExcludes(false);
-    	config.setCycleDetectionStrategy(CycleDetectionStrategy.LENIENT); 
-
+    	config.setCycleDetectionStrategy(CycleDetectionStrategy.LENIENT);
+    	
+//    	config.setJsonPropertyFilter( new PropertyFilter() {
+//			
+//			@Override
+//			public boolean apply(Object arg0, String arg1, Object arg2) {
+//				// TODO Auto-generated method stub
+//				return arg2 == null; 
+//			}
+//		});
+    	
 		try
 		{
 			mapInfo.put("msgCd", msgCd);

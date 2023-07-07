@@ -79,9 +79,23 @@ public class ParameterUtils {
         while( it.hasNext() )
         {
             String key = it.next();
-            Object value = paramList.get(key);
-            String strValue = String.valueOf(value);
             String columnType = String.valueOf(beanMap.getType(key));
+            Object value = paramList.get(key);
+            Boolean value2 = false;
+            if(columnType.indexOf("Boolean") > -1) {
+            	try {
+            		value2 = (Boolean) paramList.get(key);
+            		
+            		if(value2 == null) {
+            			value2 = false;
+            		}
+            	}catch (Exception e) {
+            		value2 = false;
+				}
+            }
+            
+            String strValue = String.valueOf(value);
+            
             
             //log.info("key===>" + key);
             //log.info("value===>" + value);
@@ -117,7 +131,11 @@ public class ParameterUtils {
     		}
             else if(!"class".equals(key) && !"ipdttm".equals(key) && !"ipempno".equals(key) && !"ippgid".equals(key) && !"ipipad".equals(key)){
             	if(!"update".equals(paramGb)) {
-            		beanMap.put(key, null);
+            		if(columnType.indexOf("Boolean") > -1) {
+            			beanMap.put(key, value2);
+            		} else {
+            			beanMap.put(key, null);
+            		}
             	}
             }
         }

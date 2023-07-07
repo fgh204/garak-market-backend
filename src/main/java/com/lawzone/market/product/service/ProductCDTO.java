@@ -26,6 +26,9 @@ public class ProductCDTO {
 	private String sellerIdYn;
 	private String favoriteYn;
 	private String useYn;
+	private String eventId;
+	private Boolean isSoldOutHidden;
+	private String productSortCode;
 	
 	public ProductCDTO() {
 		

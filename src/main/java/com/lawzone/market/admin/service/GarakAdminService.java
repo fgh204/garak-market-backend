@@ -32,6 +32,7 @@ import com.lawzone.market.admin.dto.user.AdminUserDTO;
 import com.lawzone.market.admin.dto.user.BoilerplateDTO;
 import com.lawzone.market.admin.dto.user.KakaoTargetPointDTO;
 import com.lawzone.market.admin.dto.user.KakaoTargetReviewDTO;
+import com.lawzone.market.cart.service.CartInfoListDTO;
 import com.lawzone.market.common.dao.BoilerplateInfoJdbcDAO;
 import com.lawzone.market.common.dao.ExternalLinkInfoDAO;
 import com.lawzone.market.common.service.CommonService;
@@ -43,6 +44,7 @@ import com.lawzone.market.order.dao.ProductOrderItemInfoDAO;
 import com.lawzone.market.order.dao.ProductOrderJdbcDAO;
 import com.lawzone.market.order.service.CustOrderInfoDTO;
 import com.lawzone.market.order.service.CustOrderItemListDTO;
+import com.lawzone.market.order.service.CustOrderItemListPDTO;
 import com.lawzone.market.order.service.ProductOrderItemInfo;
 import com.lawzone.market.order.service.ProductOrderService;
 import com.lawzone.market.product.dao.ProductTagDAO;
@@ -340,7 +342,17 @@ public class GarakAdminService {
 		ProductOrderItemBookIdInfoId productOrderItemBookIdInfoId = new ProductOrderItemBookIdInfoId();
 		
 		int bookCnt = bookIdBasicInfoList.size();
-		int bookItemCnt = 0;
+		int bookItemCnt = 0;		
+		
+		String _orderNo = "";
+		String _productId = "";
+		String _orderSellerId = "";
+		
+		String deliveryOrderKey = this.adminJdbcDAO.deliveryOrderKey();
+		ArrayList<String> _deliveryOrderKeyValue = new ArrayList<>();
+		
+		String deliveryOrderKeyByProduct = this.adminJdbcDAO.deliveryOrderKeyByProduct();
+		ArrayList<String> _deliveryOrderKeyByProductValue = new ArrayList<>();
 		
 		if(bookCnt > 0) {
 			for(int i = 0; i < bookCnt; i++) {
@@ -377,6 +389,27 @@ public class GarakAdminService {
 					productOrderItemBookIdInfo.setId(productOrderItemBookIdInfoId);
 					
 					this.productOrderItemBookIdInfoDAO.save(productOrderItemBookIdInfo);
+					
+					_orderNo = bookIdBasicInfoList.get(i).getOrderNo();
+					_productId = bookIdBasicInfoList.get(i).getProductId();
+					_orderSellerId = bookIdBasicInfoList.get(i).getSellerId();
+					
+					if("Y".equals(bookIdBasicInfoList.get(i).getCombinedDeliveryYn())) {
+						_deliveryOrderKeyValue = new ArrayList<>();
+						_deliveryOrderKeyValue.add(0, _orderNo + _productId);
+						_deliveryOrderKeyValue.add(1, _orderNo);
+						_deliveryOrderKeyValue.add(2, _orderSellerId);
+						
+						this.utilService.getQueryStringUpdate(deliveryOrderKey, _deliveryOrderKeyValue);
+					} else {
+						_deliveryOrderKeyByProductValue = new ArrayList<>();
+						_deliveryOrderKeyByProductValue.add(0, _orderNo + _productId);
+						_deliveryOrderKeyByProductValue.add(1, _orderNo);
+						_deliveryOrderKeyByProductValue.add(2, _productId);
+						_deliveryOrderKeyByProductValue.add(3, _orderSellerId);
+						
+						this.utilService.getQueryStringUpdate(deliveryOrderKeyByProduct, _deliveryOrderKeyByProductValue);
+					}
 				}
 			}
 			String updateSql = this.adminJdbcDAO.adminOrderStatConfirmAllUpdate( _sellerIdYn);
@@ -1027,13 +1060,44 @@ public class GarakAdminService {
 		String _bfDate = adminOrderCDTO.getOrderDateBf();
 		String _afDate = adminOrderCDTO.getOrderDateAf();
 		
-		CustReviewInfoDTO custReviewInfoDTO = new CustReviewInfoDTO();
-		
 		ArrayList<String> _queryValue = new ArrayList<>();
 		_queryValue.add(0, _bfDate);
 		_queryValue.add(1, _afDate);
 		
-		return this.utilService.getQueryString(sql,custReviewInfoDTO,_queryValue);
+		CustReviewInfoDTO custReviewInfoDTO = new CustReviewInfoDTO();
+		CustReviewImgInfoDTO custReviewImgInfoDTO = new CustReviewImgInfoDTO();
+		
+		List<CustReviewInfoDTO> custReviewInfoList = this.utilService.getQueryString(sql,custReviewInfoDTO,_queryValue);
+		List<CustReviewImgInfoDTO> custReviewImgInfoList = new ArrayList<>();
+		ArrayList<CustReviewInfoPDTO> custReviewInfoListInfo = new ArrayList<CustReviewInfoPDTO>();
+		CustReviewInfoPDTO custReviewInfoPDTO = new CustReviewInfoPDTO();
+		
+		int _cnt = custReviewInfoList.size();
+		
+		String reviewImgSql = this.productReviewInfoJdbcDAO.adminCustReviewImgInfoList();
+		ArrayList<String> _reviewImgQueryValue = new ArrayList<>();
+		
+		for(int i = 0; i < _cnt; i++) {
+			custReviewInfoPDTO = new CustReviewInfoPDTO();
+			
+			custReviewInfoPDTO = modelMapper.map(custReviewInfoList.get(i), CustReviewInfoPDTO.class);
+			
+			if("Y".equals(custReviewInfoPDTO.getReviewImgYn())) {
+				custReviewImgInfoList = new ArrayList<>();
+				
+				_reviewImgQueryValue = new ArrayList<>();
+				_reviewImgQueryValue.add(0, custReviewInfoPDTO.getProductId());
+				_reviewImgQueryValue.add(1, custReviewInfoPDTO.getOrderNo());
+				
+				custReviewImgInfoList = this.utilService.getQueryString(reviewImgSql,custReviewImgInfoDTO,_reviewImgQueryValue);
+				
+				custReviewInfoPDTO.setCustReviewImgList((ArrayList<CustReviewImgInfoDTO>) custReviewImgInfoList);
+			}
+			
+			custReviewInfoListInfo.add(custReviewInfoPDTO);
+		}
+		
+		return custReviewInfoListInfo;
 	}
 	
 	@Transactional(rollbackFor = Exception.class)
@@ -1089,6 +1153,7 @@ public class GarakAdminService {
 		String _tag1 = "";
 		String _tag2 = "";
 		String _tag3 = "";
+		String _tagId = "";
 		
 		Map addProductMap = new HashMap<>();
 		int cnt = adminAddProductDTO.size();
@@ -1102,10 +1167,6 @@ public class GarakAdminService {
 		
 		for(int i = 0; i < cnt; i++) {
 			addProductMap = (Map) adminAddProductDTO.get(i);
-			
-			_tag1 = (String) addProductMap.get("productTag1");
-			_tag2 = (String) addProductMap.get("productTag2");
-			_tag3 = (String) addProductMap.get("productTag3");
 			
 			productDTO = new ProductDTO();
 			productDTO.setProductName(addProductMap.get("productName").toString());
@@ -1123,53 +1184,73 @@ public class GarakAdminService {
 			
 			tagIndex = 0;
 			
-			if("Y".equals(_tag1)) {
-				productTagInfoDTO = new ProductTagInfoDTO();
-				
-				productTagInfoDTO.setProductId(_productId);
-				productTagInfoDTO.setTagId(new BigInteger("7"));
-				
-				ProductTagInfo productTagInfo = new ProductTagInfo();
-				ProductTagInfoId productTagInfoId = new ProductTagInfoId();
-				
-				productTagInfoId = modelMapper.map(productTagInfoDTO, ProductTagInfoId.class);
-				
-				productTagInfo.setProductTagInfoId(productTagInfoId);
-				
-				this.productTagDAO.save(productTagInfo);
-			}
+			_tagId = (String) addProductMap.get("productTagId");
 			
-			if("Y".equals(_tag2)) {
-				productTagInfoDTO = new ProductTagInfoDTO();
-				
-				productTagInfoDTO.setProductId(_productId);
-				productTagInfoDTO.setTagId(new BigInteger("8"));
-				
-				ProductTagInfo productTagInfo = new ProductTagInfo();
-				ProductTagInfoId productTagInfoId = new ProductTagInfoId();
-				
-				productTagInfoId = modelMapper.map(productTagInfoDTO, ProductTagInfoId.class);
-				
-				productTagInfo.setProductTagInfoId(productTagInfoId);
-				
-				this.productTagDAO.save(productTagInfo);
-			}
+			productTagInfoDTO = new ProductTagInfoDTO();
 			
-			if("Y".equals(_tag3)) {
-				productTagInfoDTO = new ProductTagInfoDTO();
-				
-				productTagInfoDTO.setProductId(_productId);
-				productTagInfoDTO.setTagId(new BigInteger("9"));
-				
-				ProductTagInfo productTagInfo = new ProductTagInfo();
-				ProductTagInfoId productTagInfoId = new ProductTagInfoId();
-				
-				productTagInfoId = modelMapper.map(productTagInfoDTO, ProductTagInfoId.class);
-				
-				productTagInfo.setProductTagInfoId(productTagInfoId);
-				
-				this.productTagDAO.save(productTagInfo);
-			}
+			productTagInfoDTO.setProductId(_productId);
+			productTagInfoDTO.setTagId(new BigInteger(_tagId));
+			
+			ProductTagInfo productTagInfo = new ProductTagInfo();
+			ProductTagInfoId productTagInfoId = new ProductTagInfoId();
+			
+			productTagInfoId = modelMapper.map(productTagInfoDTO, ProductTagInfoId.class);
+			
+			productTagInfo.setProductTagInfoId(productTagInfoId);
+			
+			this.productTagDAO.save(productTagInfo);
+			
+//			_tag1 = (String) addProductMap.get("productTag1");
+//			_tag2 = (String) addProductMap.get("productTag2");
+//			_tag3 = (String) addProductMap.get("productTag3");
+//			
+//			if("Y".equals(_tag1)) {
+//				productTagInfoDTO = new ProductTagInfoDTO();
+//				
+//				productTagInfoDTO.setProductId(_productId);
+//				productTagInfoDTO.setTagId(new BigInteger("7"));
+//				
+//				ProductTagInfo productTagInfo = new ProductTagInfo();
+//				ProductTagInfoId productTagInfoId = new ProductTagInfoId();
+//				
+//				productTagInfoId = modelMapper.map(productTagInfoDTO, ProductTagInfoId.class);
+//				
+//				productTagInfo.setProductTagInfoId(productTagInfoId);
+//				
+//				this.productTagDAO.save(productTagInfo);
+//			}
+//			
+//			if("Y".equals(_tag2)) {
+//				productTagInfoDTO = new ProductTagInfoDTO();
+//				
+//				productTagInfoDTO.setProductId(_productId);
+//				productTagInfoDTO.setTagId(new BigInteger("8"));
+//				
+//				ProductTagInfo productTagInfo = new ProductTagInfo();
+//				ProductTagInfoId productTagInfoId = new ProductTagInfoId();
+//				
+//				productTagInfoId = modelMapper.map(productTagInfoDTO, ProductTagInfoId.class);
+//				
+//				productTagInfo.setProductTagInfoId(productTagInfoId);
+//				
+//				this.productTagDAO.save(productTagInfo);
+//			}
+//			
+//			if("Y".equals(_tag3)) {
+//				productTagInfoDTO = new ProductTagInfoDTO();
+//				
+//				productTagInfoDTO.setProductId(_productId);
+//				productTagInfoDTO.setTagId(new BigInteger("9"));
+//				
+//				ProductTagInfo productTagInfo = new ProductTagInfo();
+//				ProductTagInfoId productTagInfoId = new ProductTagInfoId();
+//				
+//				productTagInfoId = modelMapper.map(productTagInfoDTO, ProductTagInfoId.class);
+//				
+//				productTagInfo.setProductTagInfoId(productTagInfoId);
+//				
+//				this.productTagDAO.save(productTagInfo);
+//			}
 		}
 		return "저장되었습니다";
 	}
@@ -1262,7 +1343,10 @@ public class GarakAdminService {
 		_queryValue.add(1, endDate);
 		
 		if("01".equals(searchGb)){
-			sql = this.adminJdbcDAO.kakaoTargetPointList();
+			sql = this.adminJdbcDAO.kakaoTargetPointList(adminUserCDTO);
+			if(!"%".equals(adminUserCDTO.getReviewYn())) {
+				_queryValue.add(2, adminUserCDTO.getReviewYn());
+			}
 			KakaoTargetPointDTO kakaoTargetPoint = new KakaoTargetPointDTO();
 			kakaoTargetList = this.utilService.getQueryString(sql,kakaoTargetPoint,_queryValue);
 		} else {

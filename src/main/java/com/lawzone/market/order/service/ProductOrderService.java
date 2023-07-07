@@ -34,7 +34,11 @@ import com.lawzone.market.order.dao.ProductOrderDAO;
 import com.lawzone.market.order.dao.ProductOrderItemInfoDAO;
 import com.lawzone.market.order.dao.ProductOrderJdbcDAO;
 import com.lawzone.market.order.dao.ProductOrderRevokeDAO;
+import com.lawzone.market.product.dao.ProductTagJdbcDAO;
 import com.lawzone.market.product.service.PageInfoDTO;
+import com.lawzone.market.product.service.ProductInfoListPDTO;
+import com.lawzone.market.product.service.TagInfoDTO;
+import com.lawzone.market.review.service.ProductReviewInfoPDTO;
 import com.lawzone.market.user.SiteUser;
 import com.lawzone.market.util.UtilService;
 
@@ -49,6 +53,7 @@ public class ProductOrderService {
 	private final ProductOrderItemInfoDAO productOrderItemInfoDAO;
 	private final ProductOrderRevokeDAO productOrderRevokeDAO;
 	private final ProductOrderJdbcDAO productOrderJdbcDAO;
+	private final ProductTagJdbcDAO produstTagJdbcDAO;
 	
 	private final OrderPaymentDAO orderPaymentDAO;
 	private final ModelMapper modelMapper;
@@ -106,7 +111,74 @@ public class ProductOrderService {
 			_queryValue.add(2, userId);
 		}
 		
-		return this.utilService.getQueryString(sql,custOrderItemListDTO,_queryValue);
+		
+		ArrayList<CustOrderItemListPDTO> custOrderItemListPDTO = new ArrayList<CustOrderItemListPDTO>();
+		CustOrderItemListPDTO custOrderItemListInfo = new CustOrderItemListPDTO();
+		
+		List<CustOrderItemListDTO> custOrderItemList = this.utilService.getQueryString(sql,custOrderItemListDTO,_queryValue);
+		
+		int custOrderItemListSize =  custOrderItemList.size();
+		
+		String productTagSql = this.produstTagJdbcDAO.productTgaList();
+		ArrayList<String> _productTagQueryValue = new ArrayList<>();
+		TagInfoDTO tagInfoDTO = new TagInfoDTO();
+		
+		String slsDateText = "";
+		String slsDayYn = "Y";
+		String orderCompletionDate = "";
+		String todayDeliveryYn = "Y";
+		String slsDate = "";
+		
+		String slsDateList[];
+		
+		int orderCompletionTime = 0;
+		int _todayDeliveryTime = 0;
+		
+		for(int i = 0; i < custOrderItemListSize; i++) {
+			custOrderItemListInfo = new CustOrderItemListPDTO();
+			
+			custOrderItemListInfo = modelMapper.map(custOrderItemList.get(i), CustOrderItemListPDTO.class);
+			
+			orderCompletionDate = custOrderItemListInfo.getOrderCompletionDate();
+			
+			if(!"".equals(orderCompletionDate)) {
+				orderCompletionDate = orderCompletionDate.replace(".", "-");
+				slsDateText = custOrderItemListInfo.getSlsDateText();
+				
+				if(slsDateText.indexOf(orderCompletionDate) > -1) {
+					slsDayYn = "N";
+				} else {
+					slsDayYn = this.utilService.getSlsDayYn(orderCompletionDate);
+				}
+				
+				orderCompletionTime = Integer.parseInt(custOrderItemListInfo.getOrderCompletionTime());
+				_todayDeliveryTime = Integer.parseInt(custOrderItemListInfo.getTodayDeliveryStandardTime());
+				
+				if(_todayDeliveryTime >= orderCompletionTime && "Y".equals(slsDayYn)) {
+					todayDeliveryYn = "Y";
+				}else {
+					todayDeliveryYn = "N";
+				}
+				
+				slsDateList = slsDateText.split(";");
+				
+				slsDate = this.utilService.getSlsDate(orderCompletionDate , todayDeliveryYn, slsDateList);
+				
+				custOrderItemListInfo.setEstimatedDeliveryDate(slsDate.replace("-", "."));
+			}
+			
+			custOrderItemListPDTO.add(i, custOrderItemListInfo);
+			
+			_productTagQueryValue = new ArrayList<>();
+			_productTagQueryValue.add(0, custOrderItemList.get(i).getProductId());
+			_productTagQueryValue.add(1, "Y");
+			
+			List<TagInfoDTO> tagInfoList = this.utilService.getQueryString(productTagSql,tagInfoDTO,_productTagQueryValue);
+			
+			custOrderItemListPDTO.get(i).setProductTagList((ArrayList<TagInfoDTO>) tagInfoList);
+		}
+		
+		return custOrderItemListPDTO;
 	}
 	
 	@Transactional
@@ -434,7 +506,7 @@ public class ProductOrderService {
 	}
 	
 	@Transactional
-	public void addOrderPaymentInfo(String _orderNo) {
+	public BigDecimal addOrderPaymentInfo(String _orderNo) {
 		String _query = this.productOrderJdbcDAO.getOrderPaymentInfo();
 		Map orderItemPaymentMap = new HashMap<>();
 		ArrayList<String> _queryValue = new ArrayList<>();
@@ -449,6 +521,7 @@ public class ProductOrderService {
 		
 		int _cnt = orderItemPaymentList.size();
 		BigDecimal _cancelledOrderAmount = new BigDecimal("0");
+		BigDecimal deliveryAmount = new BigDecimal(0);
 		
 		for(int i = 0; i < _cnt; i++) {
 			orderPaymentDTO = new OrderPaymentDTO();
@@ -464,7 +537,11 @@ public class ProductOrderService {
 			orderPaymentInfo = modelMapper.map(orderPaymentDTO, OrderPaymentInfo.class);
 			
 			orderPaymentDAO.save(orderPaymentInfo);
+			
+			deliveryAmount = deliveryAmount.add(orderItemPaymentList.get(i).getDeliveryAmount());
 		}
+		
+		return deliveryAmount;
 	}
 	
 	@Transactional

@@ -24,11 +24,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.lawzone.market.config.SessionBean;
+import com.lawzone.market.event.service.EventInfoCDTO;
+import com.lawzone.market.event.service.EventInfoDTO;
+import com.lawzone.market.event.service.EventMstService;
+import com.lawzone.market.event.service.EventProductInfoDTO;
 import com.lawzone.market.externalLink.util.AppPush;
 import com.lawzone.market.externalLink.util.AppPushDTO;
 import com.lawzone.market.externalLink.util.BootpayUtils;
 import com.lawzone.market.order.service.CustOrderInfoDTO;
 import com.lawzone.market.order.service.CustOrderItemListDTO;
+import com.lawzone.market.order.service.CustOrderItemListPDTO;
 import com.lawzone.market.order.service.OrderPaymentDTO;
 import com.lawzone.market.order.service.OrderPaymentInfo;
 import com.lawzone.market.order.service.ProductOrderInfo;
@@ -68,6 +73,7 @@ public class PaymentController {
 	private final AppPush appPush;
 	private final PointService pointService;
 	private final ModelMapper modelMapper;
+	private final EventMstService eventMstService;
 	
 	@Resource
 	private SessionBean sessionBean;
@@ -141,23 +147,80 @@ public class PaymentController {
 		}
 		
 		//주문항목정보
-		List<CustOrderItemListDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(_orderNo, "001", "", "N");
+		List<CustOrderItemListPDTO> custOrderItemList = this.productOrderService.getCustOrderItemList(_orderNo, "001", "", "N");
 		
 		int cnt = custOrderItemList.size();
 		String _productId = "";
 		BigDecimal orderCnt = new BigDecimal("0");
 		BigDecimal productStock = new BigDecimal("0");
-		
+		String eventId = "";
+		EventInfoCDTO eventInfoCDTO = new EventInfoCDTO();
 		String paymentConfirm = "Y";
+		
+		BigDecimal personBuyCount = new BigDecimal("0");
+		BigDecimal eventCount = new BigDecimal("0");
+		BigDecimal personPaymentCount = new BigDecimal("0");
+		BigDecimal eventPaymentCount = new BigDecimal("0");
+		BigDecimal _zero = new BigDecimal("0");
+		
 		for(int i = 0; i < cnt; i++) {
 			_productId = custOrderItemList.get(i).getProductId();
 			orderCnt = custOrderItemList.get(i).getProductCount();
 			List<ProductInfo> productInfo = this.productService.getProductPriceByProductId(_productId);
 			productStock = productInfo.get(0).getProductStock();
+			eventId = productInfo.get(0).getEventId();
 			
-			if(productStock.compareTo(orderCnt) == -1) {
-				paymentConfirm = "N";
-				break;
+			if("".equals(eventId) || eventId == null) {
+				if(productStock.compareTo(orderCnt) < 0) {
+					paymentConfirm = "N";
+					break;
+				}
+			} else {
+				eventInfoCDTO = new EventInfoCDTO();
+				eventInfoCDTO.setSearchGb("000");
+				eventInfoCDTO.setEventCfcd("000");
+				eventInfoCDTO.setPageCnt("0");
+				eventInfoCDTO.setMaxPage("5");
+				eventInfoCDTO.setEventId(eventId);
+				List<EventInfoDTO> eventInfoList = this.eventMstService.getEventListInfo(eventInfoCDTO);
+				
+				if("001".equals(eventInfoList.get(0).getEventStateCode())) {
+					//이벤트상품정보
+					List<EventProductInfoDTO> eventProductInfo = this.eventMstService.getEventProductInfo(_productId, eventId);
+					
+					personBuyCount = eventProductInfo.get(0).getPersonBuyCount();
+					eventCount = eventProductInfo.get(0).getEventCount();
+					personPaymentCount = new BigDecimal(eventProductInfo.get(0).getPersonPaymentCount().toString());
+					eventPaymentCount = new BigDecimal(eventProductInfo.get(0).getEventPaymentCount().toString());
+					
+					if(personBuyCount.compareTo(_zero) == 0) {
+						personBuyCount = productStock;
+					} else {
+						personBuyCount = personBuyCount.subtract(personPaymentCount);
+						
+						if(personBuyCount.compareTo(_zero) < 0) {
+							personBuyCount = _zero;
+						}
+					}
+					
+					if(eventCount.compareTo(_zero) == 0) {
+						eventCount = productStock;
+					} else {
+						eventCount = eventCount.subtract(eventPaymentCount);
+						
+						if(eventCount.compareTo(_zero) < 0) {
+							eventCount = _zero;
+						}
+					}
+					
+					if(personBuyCount.compareTo(_zero) == 0 || eventCount.compareTo(_zero) == 0) {
+						paymentConfirm = "N";
+						break;
+					}
+				} else {
+					paymentConfirm = "N";
+					break;
+				}
 			}
 		}
 		
@@ -291,17 +354,18 @@ public class PaymentController {
 					for(int i = 0; i < pushIdList.size(); i++) {
 						push = new ArrayList<>();
 						sellerId = pushIdList.get(i).getUserId();
-						if ("00000069".equals(sellerId)) {
-							push.add(0, "e01fc4e3-92bb-486c-aa8c-f7c88d4514b9");
-						} else if ("00000070".equals(sellerId)) {
-							push.add(0, "ae63fb01-b52c-459a-b51b-509ecd93f22a");
-						} else if ("00000072".equals(sellerId)) {
-							push.add(0, "ace1539a-3b58-4fe4-814a-3d1c76eeecb3");
-						} else if ("00000606".equals(sellerId)) {
-							push.add(0, "45d05a1f-7945-4d27-ad6e-a3c5987f9389");
-						} else if ("00000601".equals(sellerId)) {
-							push.add(0, "fef10bec-e5af-4c62-a9e8-d09e61a71cd3");
-						} 
+						push.add(0, pushIdList.get(i).getPushId());
+//						if ("00000069".equals(sellerId)) {
+//							push.add(0, "e01fc4e3-92bb-486c-aa8c-f7c88d4514b9");
+//						} else if ("00000070".equals(sellerId)) {
+//							push.add(0, "ae63fb01-b52c-459a-b51b-509ecd93f22a");
+//						} else if ("00000072".equals(sellerId)) {
+//							push.add(0, "ace1539a-3b58-4fe4-814a-3d1c76eeecb3");
+//						} else if ("00000606".equals(sellerId)) {
+//							push.add(0, "45d05a1f-7945-4d27-ad6e-a3c5987f9389");
+//						} else if ("00000601".equals(sellerId)) {
+//							push.add(0, "fef10bec-e5af-4c62-a9e8-d09e61a71cd3");
+//						} 
 						appPushDTO.setContent("상품 : " + pushIdList.get(i).getProductName());
 						appPushDTO.setPushList(push);
 						
@@ -319,10 +383,12 @@ public class PaymentController {
 		    }else {
 		    	return JsonUtils.returnValue("9999", paymentData.get("message").toString(), rtnMap).toString();
 		    }
+			rtnMap.put("orderNo", _orderNo);
+			
+			return JsonUtils.returnValue("0000", "결제가 완료되었습니다", rtnMap).toString();		
+		} else {
+			return JsonUtils.returnValue("9999", "결제시 오류가 발생하였습니다.", rtnMap).toString();
 		}
-		rtnMap.put("orderNo", _orderNo);
-		
-		return JsonUtils.returnValue("0000", "결제가 완료되었습니다", rtnMap).toString();	
 	}
 	
 	@ResponseBody

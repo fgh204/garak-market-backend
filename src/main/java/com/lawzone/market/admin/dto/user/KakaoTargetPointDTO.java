@@ -18,6 +18,7 @@ public class KakaoTargetPointDTO {
 	private String stnDate;
 	private String phoneNumber;
 	private String userName;
+	private Character useYn;
 	
 	public KakaoTargetPointDTO() {
 		

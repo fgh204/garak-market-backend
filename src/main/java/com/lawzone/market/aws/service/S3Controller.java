@@ -2,6 +2,7 @@ package com.lawzone.market.aws.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.lawzone.market.common.CdDtlInfo;
+import com.lawzone.market.common.dao.CdDtlInfoDAO;
 import com.lawzone.market.user.controller.UserInfoController;
 
 import lombok.RequiredArgsConstructor;
@@ -26,18 +29,29 @@ public class S3Controller {
     private String dir;
 
     private final AmazonS3 amazonS3;
-
+    private final CdDtlInfoDAO cdDtlInfoDAO;
+    
     public String upload(MultipartFile multipartFile, String s3FileName, String imgCfcd) throws IOException {
         //String s3FileName = UUID.randomUUID() + "-" + multipartFile.getOriginalFilename();
     	String s3uploadImagePath = ""; 
     	
-    	if("03".equals(imgCfcd)){
-    		s3uploadImagePath = "/profileImages";
-    	} else if("01".equals(imgCfcd) || "02".equals(imgCfcd)){
-    		s3uploadImagePath = "/productImage";
-    	} else if("04".equals(imgCfcd)){
-    		s3uploadImagePath = "/productReviewImages";
+    	Optional<CdDtlInfo> cdDtlInfo = this.cdDtlInfoDAO.findByIdCodeNoAndIdDtlCode("24", imgCfcd);
+    	
+    	if(cdDtlInfo.isPresent()) {
+    		s3uploadImagePath = cdDtlInfo.get().getDtlCodeText();
     	}
+    	
+//    	if("03".equals(imgCfcd)){
+//    		s3uploadImagePath = "/profileImages";
+//    	} else if("01".equals(imgCfcd) || "02".equals(imgCfcd)){
+//    		s3uploadImagePath = "/productImage";
+//    	} else if("04".equals(imgCfcd)){
+//    		s3uploadImagePath = "/productReviewImages";
+//    	} else if("05".equals(imgCfcd)){
+//    		s3uploadImagePath = "/event-banner";
+//    	} else if("06".equals(imgCfcd)){
+//    		s3uploadImagePath = "/notice-image";
+//    	}
     	
         ObjectMetadata objMeta = new ObjectMetadata();
         objMeta.setContentLength(multipartFile.getInputStream().available());
@@ -50,13 +64,19 @@ public class S3Controller {
         //String s3FileName = UUID.randomUUID() + "-" + multipartFile.getOriginalFilename();
     	String s3uploadImagePath = ""; 
     	
-    	if("03".equals(imgCfcd)){
-    		s3uploadImagePath = "/profileImages";
-    	} else if("01".equals(imgCfcd) || "02".equals(imgCfcd)){
-    		s3uploadImagePath = "/productImage";
-    	} else if("04".equals(imgCfcd)){
-    		s3uploadImagePath = "/productReviewImages";
+    	Optional<CdDtlInfo> cdDtlInfo = this.cdDtlInfoDAO.findByIdCodeNoAndIdDtlCode("24", imgCfcd);
+    	
+    	if(cdDtlInfo.isPresent()) {
+    		s3uploadImagePath = cdDtlInfo.get().getDtlCodeText();
     	}
+    	
+//    	if("03".equals(imgCfcd)){
+//    		s3uploadImagePath = "/profileImages";
+//    	} else if("01".equals(imgCfcd) || "02".equals(imgCfcd)){
+//    		s3uploadImagePath = "/productImage";
+//    	} else if("04".equals(imgCfcd)){
+//    		s3uploadImagePath = "/productReviewImages";
+//    	}
     	
         ObjectMetadata objMeta = new ObjectMetadata();
         objMeta.setContentLength(inputStream.available());

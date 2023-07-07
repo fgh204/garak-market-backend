@@ -1,6 +1,7 @@
 package com.lawzone.market.product.service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 
 import lombok.AllArgsConstructor;
@@ -26,6 +27,12 @@ public class ProductInfoListDTO {
 	private String productCategorySmallName;
 	private String slsDateText;
 	private Character useYn;
+	private String eventId;
+	private BigInteger combinedDeliveryStandardAmount;
+	private BigInteger deliveryAmount;
+	private String combinedDeliveryYn;
+	private BigInteger paymentCount;
+	private BigInteger productReviewCount;
 	
 	public ProductInfoListDTO() {
 		

@@ -1,6 +1,7 @@
 package com.lawzone.market.product.service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +27,16 @@ public class ProductInfoListPDTO {
 	private String todayDeliveryYn;
 	private String slsDate;
 	private Character useYn;
+	private String eventBeginTime;
+	private String eventEndTime;
+	private BigDecimal personBuyCount;
+	private BigDecimal eventCount;
+	private String eventId;
+	private String eventBeginDate;
+	private String eventEndDate;
+	private BigInteger combinedDeliveryStandardAmount;
+	private BigInteger deliveryAmount;
+	private String combinedDeliveryYn;
 	
 	private ArrayList<TagInfoDTO> productTagList;
 	

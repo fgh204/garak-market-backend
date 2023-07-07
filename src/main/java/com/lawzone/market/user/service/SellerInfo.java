@@ -89,4 +89,8 @@ public class SellerInfo extends BaseTimeEntity{
 	@Comment("마켓노출여부")
 	@Column(columnDefinition = "varchar(1)")
     private String MarketExposureYn;
+	
+	@Comment("합배송기준금액")
+	@Column(columnDefinition = "DECIMAL (15,2)")
+	private BigDecimal combinedDeliveryStandardAmount;
 }

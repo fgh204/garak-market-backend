@@ -42,15 +42,15 @@ public class CartController {
 		//this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
 		CartInfoDTO cartInfoDTO = new CartInfoDTO();
 		cartInfoDTO = (CartInfoDTO) ParameterUtils.setDto(map, cartInfoDTO, "insert", sessionBean);
-		Long cartNumber =  this.cartService.addCartInfo(cartInfoDTO);
+		Map cartMap = this.cartService.addCartInfo(cartInfoDTO);
 		
 		Map rtnMap = new HashMap<>();
 		
-		if(cartNumber == 0) {
-			return JsonUtils.returnValue("9999", "재고가 없습니다", rtnMap).toString();
-		}else {
-			return JsonUtils.returnValue("0000", "저장되었습니다", rtnMap).toString();
-		}
+		//if(cartNumber == 0) {
+			return JsonUtils.returnValue((String) cartMap.get("rtnCd"), (String) cartMap.get("rtnMag"), rtnMap).toString();
+		//}else {
+		//	return JsonUtils.returnValue("0000", "저장되었습니다", rtnMap).toString();
+		//}
 	}
 	
 	@ResponseBody
@@ -78,11 +78,13 @@ public class CartController {
 		CartInfoDTO cartInfoDTO = new CartInfoDTO();
 		cartInfoDTO = (CartInfoDTO) ParameterUtils.setDto(map, cartInfoDTO, "insert", sessionBean);
 		
-		this.cartService.modifyCartInfo(cartInfoDTO);
-		
 		Map rtnMap = new HashMap<>();
 		
-		return JsonUtils.returnValue("0000", "수정되었습니다", rtnMap).toString();
+		if(this.cartService.modifyCartInfo(cartInfoDTO)) {
+			return JsonUtils.returnValue("0000", "수정되었습니다", rtnMap).toString();
+		} else {
+			return JsonUtils.returnValue("9999", "재고가 없습니다", rtnMap).toString();
+		}
 	}
 	
 	@ResponseBody

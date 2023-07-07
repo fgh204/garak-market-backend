@@ -8,6 +8,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -60,6 +61,33 @@ public class CommonController {
 		
 		Map rtnMap = new HashMap<>();
 		rtnMap.put("boilerplateList", boilerplateList);
+		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/check_update")
+	public String getCheckUpdate(HttpServletRequest request, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
+		
+		Map rtnMap = new HashMap<>();
+		Map checkMap = new HashMap<>();
+		if(map.get("request_locale") == null) {
+			checkMap.put("request_locale", "");
+			checkMap.put("device_version", "");
+			checkMap.put("hashkey", "");
+			checkMap.put("device_id", "");
+			checkMap.put("request_type", "");
+			checkMap.put("device_model", "");
+			checkMap.put("app_version", "");
+			checkMap.put("fcm_token", "");
+			checkMap.put("device_platform", "");
+			checkMap.put("lon", "");
+			checkMap.put("request_id", "");
+			checkMap.put("lat", "");
+		} else {
+			checkMap = map;
+		}
+		
+		rtnMap.put("deviceInfo", checkMap);
 		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
 	}
 }

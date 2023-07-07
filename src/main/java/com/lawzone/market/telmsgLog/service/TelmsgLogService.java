@@ -16,6 +16,7 @@ import com.lawzone.market.review.service.ProductReviewInfoDTO;
 import com.lawzone.market.telmsgLog.dao.TelmsgLogDAO;
 import com.lawzone.market.user.dao.UserTrackingInfoDAO;
 import com.lawzone.market.user.service.UserTrackingInfo;
+import com.lawzone.market.user.service.UserTrackingInfoId;
 import com.lawzone.market.util.SlackWebhook;
 
 import lombok.RequiredArgsConstructor;
@@ -82,15 +83,20 @@ public class TelmsgLogService {
 	public void addTelmsgLog1(String ingrsPathCd, String dlngTpcd
 							, String trnrcvTpcd, Map telMsgDta) {
 		try {
+			String userId = sessionBean.getUserId();
+			String userIp = sessionBean.getUserIp();
+			String sessionId = sessionBean.getSessionId();
+			String svcUrl = (String) telMsgDta.get("svcUrl");
+			
 			TelmsgLogInfo telmsgLogInfo = new TelmsgLogInfo();
-
+			
 			telmsgLogInfo.setController((String) telMsgDta.get("controller"));
 			telmsgLogInfo.setDlngDttm("now()");
 			telmsgLogInfo.setMethod((String) telMsgDta.get("method"));
-			telmsgLogInfo.setSessionId(sessionBean.getSessionId());
-			telmsgLogInfo.setSvcUrl((String) telMsgDta.get("svcUrl"));
-			telmsgLogInfo.setUserId(sessionBean.getUserId());
-			telmsgLogInfo.setUserIp(sessionBean.getUserIp());
+			telmsgLogInfo.setSessionId(sessionId);
+			telmsgLogInfo.setSvcUrl(svcUrl);
+			telmsgLogInfo.setUserId(userId);
+			telmsgLogInfo.setUserIp(userIp);
 			//00 : 일반로그, 01 : 결제, 02 : 운송장, 50:화면로그  
 			telmsgLogInfo.setIngrsPathCd(ingrsPathCd);
 			//01_00 : 결제요청, 01_01 : 결제조회, 01_04 : 결제승인, 01_90 : 결제취소 
@@ -111,14 +117,18 @@ public class TelmsgLogService {
 			
 			this.telmsgLogDAO.save(telmsgLogInfo);
 			
-			if(sessionBean.getUserId() != null) {
-				List<CdDtlInfo> cdDtlInfoList = this.cdDtlInfoDAO.findByIdCodeNoAndDtlCodeNameAndUseYn("15",sessionBean.getSvcUrl() , "Y");
+			if(userId != null) {
+				List<CdDtlInfo> cdDtlInfoList = this.cdDtlInfoDAO.findByIdCodeNoAndDtlCodeNameAndUseYn("15",svcUrl , "Y");
 				
 				if(cdDtlInfoList.size() > 0) {
 					UserTrackingInfo userTrackingInfo = new UserTrackingInfo();
 					
-					userTrackingInfo.setUserId(sessionBean.getUserId());
-					userTrackingInfo.setSvcUrl(sessionBean.getSvcUrl());
+					UserTrackingInfoId userTrackingInfoId = new UserTrackingInfoId();
+					
+					userTrackingInfoId.setUserId(userId);
+					userTrackingInfoId.setSvcUrl(svcUrl);
+					
+					userTrackingInfo.setId(userTrackingInfoId);
 					
 					this.userTrackingInfoDAO.save(userTrackingInfo);
 				}

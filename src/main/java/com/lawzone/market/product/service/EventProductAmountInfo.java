@@ -29,9 +29,9 @@ public class EventProductAmountInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "varchar(30)")
 	private String eventId;
 	
-	@Comment("이벤트상품ID")
-	@Column(columnDefinition = "varchar(12)")
-	private String eventProductId;
+	@Comment("이벤트상품명")
+	@Column(columnDefinition = "varchar(300)")
+	private String eventProductName; 
 	
 	@Comment("이벤트상품할인구분코드")
 	@Column(columnDefinition = "varchar(2)")
@@ -41,13 +41,15 @@ public class EventProductAmountInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "DECIMAL (15,2)")
 	private String eventProductDiscountCfValue;
 	
-	@Comment("이벤트상품할인시작일시")
-	@Column(name="event_product_discount_begin_date", length=20)
-	@Convert(converter=DateToStringConverter.class)
-	private String eventProductDiscountBeginDate;
+	@Comment("이벤트상품할인률")
+	@Column(columnDefinition = "DECIMAL (4,2)")
+	private String eventProductDiscountRate;
 	
-	@Comment("이벤트상품할인종료일시")
-	@Column(name="event_product_discount_end_date", length=20)
-	@Convert(converter=DateToStringConverter.class)
-	private String eventProductDiscountEndDate;
+	@Comment("이벤트시작시간")
+	@Column(columnDefinition = "varchar(4)")
+    private String beginTime;
+	
+	@Comment("이벤트종료시간")
+	@Column(columnDefinition = "varchar(4)")
+    private String endTime;
 }

@@ -29,6 +29,15 @@ public class CartInfoListDTO {
 	private String productCategorySmallName;
 	private String sellerId;
 	private String slsDateText;
+	private String eventBeginTime;
+	private String eventEndTime;
+	private String eventBeginDate;
+	private String eventEndDate;
+	private BigInteger personBuyCount;
+	private BigInteger eventCount;
+	private String eventId;
+	private String createDatetime;
+	private String updateDatetime;
 	
 	public CartInfoListDTO() {
 		

@@ -132,6 +132,7 @@ public class ProductOrderItemBookIdInfoJdbcDAO {
 				.append("\n where poii.product_id = pi2.product_id ") 
 				.append("\n and pi2.seller_id = si.seller_id ")
 				.append("\n and poii.order_no = poi.order_no ")
+				.append("\n and poii.order_item_state_code  <> '002' ")
 				.append("\n and poii.order_no = ? ")
 				.append("\n and poii.product_id = ? ");
 
@@ -166,6 +167,7 @@ public class ProductOrderItemBookIdInfoJdbcDAO {
 				.append("\n where poii.product_id = pi2.product_id ") 
 				.append("\n and pi2.seller_id = si.seller_id ")
 				.append("\n and poii.order_no = poi.order_no ")
+				.append("\n and poii.order_item_state_code  <> '002' ")
 				.append("\n and poii.order_no = ? ")
 				.append("\n and poii.seller_id = ? ");
 

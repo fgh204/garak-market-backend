@@ -18,7 +18,10 @@ public class UserInfoJdbcDAO {
 			  .append("\n   , ui.background_image_path ")
 			  .append("\n   , si.introduction_text ")
 			  .append("\n   , ui.social_name ")
-			  .append("\n   , si.product_category_code ")			  
+			  .append("\n   , si.product_category_code ")
+			  .append("\n   , si.combined_delivery_yn ")	
+			  .append("\n   , ceil(si.delivery_amount) as deliveryAmount ")	
+			  .append("\n   , ceil(si.combined_delivery_standard_amount) as combinedDeliveryStandardAmount ")	
 			  .append("\n from lz_market.user_info ui ")
 			  .append("\n 	left outer join lz_market.seller_info si ")
 			  .append("\n 	on ui.user_id = si.seller_id  ")
@@ -48,7 +51,13 @@ public class UserInfoJdbcDAO {
 		_query.append("\n select")
 			  .append("\n	si.product_category_code ")
 			  .append("\n	, si.seller_id ")
-			  .append("\n   , si.shop_name ");
+			  .append("\n   , si.shop_name ")
+			  .append("\n   , si.today_delivery_standard_time as todayDeliveryStandardTime ")
+			  .append("\n   , ifnull((select ")
+			  .append("\n   	cdi.dtl_code_text ")
+			  .append("\n   from lz_market.cd_dtl_info cdi ")
+			  .append("\n   where cdi.code_no = 8  ")
+			  .append("\n   and cdi.dtl_code = si.seller_id),'') as slsDateText ");
 			  if( _userId == null) {
 				  _query.append("\n   , 'N' ");
 			  }else {
@@ -73,6 +82,8 @@ public class UserInfoJdbcDAO {
 			  //.append("\n	pi2.seller_id  ")
 			  .append("\n 	pii.thumbnail_image_path ")
 			  .append("\n 	, pi2.product_id ")
+			  .append("\n 	, pi2.product_name ")
+			  .append("\n 	, ceil(pi2.product_price) ")
 			  .append("\n from lz_market.product_info pi2 ")
 			  .append("\n   	, lz_market.product_image_info pii ")
 			  .append("\n where pi2.product_id = pii.product_id ")
@@ -80,6 +91,7 @@ public class UserInfoJdbcDAO {
 			  .append("\n and pii.delegate_thumbnail_yn = ? ")
 			  .append("\n and pi2.seller_id = ? ")
 			  .append("\n and pi2.use_yn = ? ")
+			  .append("\n and pi2.product_stock > 0 ")
 			  //.append("\n order by pi2.product_id desc ")
 			  .append("\n order by rand() ")
 			  .append("\n limit 5 ");
@@ -125,6 +137,7 @@ public class UserInfoJdbcDAO {
 			  .append("\n	cdi.dtl_code_name ")
 			  .append("\n   , cdi.dtl_code_text ")
 			  .append("\n   , uti.user_id ")
+			  .append("\n   , cdi.dtl_code_eng_name ")
 			  //.append("\n   , uti.update_datetime ")
 			  .append("\n   , case when uti.user_id is null then 'N' ")
 			  .append("\n   when uti.update_datetime is null then 'N' ")

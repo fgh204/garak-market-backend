@@ -116,7 +116,10 @@ public class UserInfoController {
 
 	@Resource
 	private SessionBean sessionBean;
-
+	
+	@Value("${lzmarket.jwttoken}") 
+	private String token;
+	
 	@GetMapping("/login")
 	public String login(UserLoginForm userLoginForm) {
 		return "market_login_form";
@@ -240,14 +243,20 @@ public class UserInfoController {
 		}else {
 			rtnMap.put("userInfo", marketUserInfo);
 		}
-		Boolean isConfirmed = false;
+		//Boolean isConfirmed = false;
 		
-		if(pointConfirmInfo.size() > 0) {
-			if("Y".equals(pointConfirmInfo.get(0).getIsConfirmed())) {
-				isConfirmed = true;
-			}
+		//if(pointConfirmInfo.size() > 0) {
+		//	if("Y".equals(pointConfirmInfo.get(0).getIsConfirmed())) {
+		//		isConfirmed = true;
+		//	}
+		//}
+		
+		int pointConfirmSize = pointConfirmInfo.size();
+		
+		for(int i = 0; i < pointConfirmSize; i++) {
+			rtnMap.put(pointConfirmInfo.get(i).getDtlCodeEngName(), pointConfirmInfo.get(i).getIsConfirmed());
 		}
-		rtnMap.put("isPointConfirmed", isConfirmed);
+		
 		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
 	}
 
@@ -346,6 +355,7 @@ public class UserInfoController {
 
 		productCDTO.setSellerSearchYn("Y");
 		productCDTO.setSellerIdYn("Y");
+		productCDTO.setProductSortCode("001");
 
 		List<PageInfoDTO> pageInfo = this.productService.getPageInfo(productCDTO);
 
@@ -383,6 +393,11 @@ public class UserInfoController {
 
 		productCDTO.setSellerSearchYn("Y");
 		productCDTO.setSellerIdYn("Y");
+    	
+    	if("".equals(productCDTO.getProductSortCode()) || productCDTO.getProductSortCode() == null) {
+    		productCDTO.setProductSortCode("001");
+    	}
+    	
 		// 판매자정보
 		List<MarketUserInfoDTO> marketUserInfo = this.userInfoService.getUserInfo(productCDTO.getSellerId());
 		// 판매상품리뷰점수
@@ -515,7 +530,7 @@ public class UserInfoController {
 		marketSignupDTO = (MarketSignupDTO) ParameterUtils.setDto(map, marketSignupDTO, "insert", sessionBean);
 
 		Map rtnMap = new HashMap<>();
-
+		marketSignupDTO.setWithdrawalDateTime("now()");
 		List<UserInfo> userInfo = this.userInfoService.getDomaadoUserMembershipWithdrawal(marketSignupDTO);
 
 		if (userInfo.size() > 0) {
@@ -552,9 +567,26 @@ public class UserInfoController {
 		String _token = this.jwtTokenUtil.generateToken(_userInfo.get(0), (long) 0);
 
 		ResponseCookie accessTokenCookie;
-
-		accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", _token).path("/").secure(true).httpOnly(true)
-				.sameSite("None").domain("domaado.me").build();
+		
+		if("P".equals(this.service)) {
+			accessTokenCookie = ResponseCookie.from(this.token, _token)
+	                .path("/")
+	                .secure(true)
+	                .httpOnly(true)
+	                .sameSite("None")
+	                .domain("domaado.me")
+	                .build();
+		}else {
+			accessTokenCookie = ResponseCookie.from(this.token, _token)
+	                .path("/")
+	                .secure(true)
+	                .httpOnly(true)
+	                .sameSite("None")
+	                .build();
+		}
+		
+		//accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", _token).path("/").secure(true).httpOnly(true)
+		//		.sameSite("None").domain("domaado.me").build();
 		response.setHeader("Set-Cookie", accessTokenCookie.toString());
 
 		return JsonUtils.returnValue("0000", "logout되었습니다", rtnMap).toString();
@@ -704,14 +736,20 @@ public class UserInfoController {
 				
 				List<PointConfirmDTO> pointConfirmInfo = this.userInfoService.getPointConfirmInfo(userId);
 				
-				Boolean isConfirmed = false;
+//				Boolean isConfirmed = false;
+//				
+//				if(pointConfirmInfo.size() > 0) {
+//					if("Y".equals(pointConfirmInfo.get(0).getIsConfirmed())) {
+//						isConfirmed = true;
+//					}
+//				}
+//				rtnMap.put("isPointConfirmed", isConfirmed);
 				
-				if(pointConfirmInfo.size() > 0) {
-					if("Y".equals(pointConfirmInfo.get(0).getIsConfirmed())) {
-						isConfirmed = true;
-					}
+				int pointConfirmSize = pointConfirmInfo.size();
+				
+				for(int i = 0; i < pointConfirmSize; i++) {
+					rtnMap.put(pointConfirmInfo.get(i).getDtlCodeEngName(), pointConfirmInfo.get(i).getIsConfirmed());
 				}
-				rtnMap.put("isPointConfirmed", isConfirmed);
 				
 				userMap.put("token", accessToken);
 				userMap.put("previousUrl", previousUrl);
