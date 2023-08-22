@@ -45,10 +45,10 @@ public class PointController {
 	public String addPoint(HttpServletRequest request, @RequestBody(required = true) Map map) {
 		PointInfoCDTO pointInfoCDTO = new PointInfoCDTO();
 		pointInfoCDTO = (PointInfoCDTO) ParameterUtils.setDto(map, pointInfoCDTO, "insert", sessionBean);
-		String _rtnMsg = this.pointService.addPoint(pointInfoCDTO);
+		Map _rtnMsg = this.pointService.addPoint(pointInfoCDTO);
 		
 		Map rtnMap = new HashMap<>();
-		return JsonUtils.returnValue("0000", _rtnMsg, rtnMap).toString();
+		return JsonUtils.returnValue("0000", (String) _rtnMsg.get("rtnMsg"), rtnMap).toString();
 	}
 	
 	//포인트조회

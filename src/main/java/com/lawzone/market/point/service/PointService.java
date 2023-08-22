@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.el.lang.ELArithmetic.BigDecimalDelegate;
@@ -43,8 +45,10 @@ public class PointService {
 	private final EventInfoDAO eventInfoDAO;
 	
 	@Transactional(rollbackFor = Exception.class)
-	public String addPoint(PointInfoCDTO pointInfoCDTO){
-		String _rtnMsg = "저장 되었습니다.";
+	public Map addPoint(PointInfoCDTO pointInfoCDTO){
+		Map _rtnMap = new HashMap<>();
+		_rtnMap.put("rtnCode", "0000");
+		_rtnMap.put("rtnMsg", "저장 되었습니다.");
 		
 		List<UserInfo> _userInfo = this.userInfoDAO.findByUserId(pointInfoCDTO.getUserId());
 		
@@ -53,14 +57,16 @@ public class PointService {
 			String socialId = _userInfo.get(0).getSocialId();
 			
 			if(!("002".equals(pointInfoCDTO.getEventCode()) || "003".equals(pointInfoCDTO.getEventCode()))){
-				_rtnMsg = "사용하지 않는 포인트 입니다";
-				return _rtnMsg;
+				_rtnMap.put("rtnCode", "9999");
+				_rtnMap.put("rtnMsg", "사용하지 않는 포인트 입니다.");
+				return _rtnMap;
 			}
 			
 			if("002".equals(pointInfoCDTO.getEventCode())){
 				if("".equals(pointInfoCDTO.getEventId()) || pointInfoCDTO.getEventId() == null) {
-					_rtnMsg = "이벤트를 확인해 주세요";
-					return _rtnMsg;
+					_rtnMap.put("rtnCode", "9999");
+					_rtnMap.put("rtnMsg", "이벤트를 확인해 주세요");
+					return _rtnMap;
 				}
 				
 				String pointChkSql = this.pointInfoJdbcDAO.pointAccumulationYn();
@@ -77,8 +83,9 @@ public class PointService {
 				= this.utilService.getQueryString(pointChkSql,pointChkDTO,_pointChkQueryValue);
 				
 				if("N".equals(pointChkList.get(0).getPointYn())) {
-					_rtnMsg = "이미 지급된 포인트 입니다";
-					return _rtnMsg;
+					_rtnMap.put("rtnCode", "9999");
+					_rtnMap.put("rtnMsg", "이미 지급된 포인트 입니다");
+					return _rtnMap;
 				} else {
 					List<EventInfo> eventInfo = this.eventInfoDAO.findByeventIdAndUseYn(pointInfoCDTO.getEventId(), "Y");
 					BigDecimal amountZero = new BigDecimal(0);
@@ -90,12 +97,14 @@ public class PointService {
 						pointInfoCDTO.setExpirationDateValue(eventInfo.get(0).getExpirationDateValue());
 						
 						if(pointInfoCDTO.getPointValue() == null || pointInfoCDTO.getPointValue().compareTo(amountZero) == 0){
-							_rtnMsg = "등록된 포인트 금액이 없습니다!";
-							return _rtnMsg;
+							_rtnMap.put("rtnCode", "9999");
+							_rtnMap.put("rtnMsg", "등록된 포인트 금액이 없습니다!");
+							return _rtnMap;
 						}
 					} else {
-						_rtnMsg = "등록된 이벤트가 없습니다!";
-						return _rtnMsg;
+						_rtnMap.put("rtnCode", "9999");
+						_rtnMap.put("rtnMsg", "등록된 이벤트가 없습니다!");
+						return _rtnMap;
 					}
 				}
 			}
@@ -136,9 +145,10 @@ public class PointService {
 				this.savePoint(pointInfoCDTO, userId);
 			}
 		}else {
-			_rtnMsg = "포인트를 등록할 고객정보가 없습니다.";
+			_rtnMap.put("rtnCode", "9999");
+			_rtnMap.put("rtnMsg", "포인트를 등록할 고객정보가 없습니다.");
 		}
-	return _rtnMsg;
+	return _rtnMap;
 	}
 	
 	@Transactional(rollbackFor = Exception.class)

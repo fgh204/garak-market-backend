@@ -15,7 +15,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.client.ClientProtocolException;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,6 +38,8 @@ import com.lawzone.market.point.service.PointInfoCDTO;
 import com.lawzone.market.point.service.PointService;
 import com.lawzone.market.product.service.PageInfoDTO;
 import com.lawzone.market.product.service.ProductInfoListPDTO;
+import com.lawzone.market.send.service.SendFormInfoCDTO;
+import com.lawzone.market.send.service.SendFormInfoService;
 import com.lawzone.market.user.dao.DeliveryAddressInfoDAO;
 import com.lawzone.market.user.dao.DeliveryAddressInfoJdbcDAO;
 import com.lawzone.market.user.dao.SellerFavoriteInfoDAO;
@@ -71,6 +75,10 @@ public class UserInfoService {
 	private final CdDtlInfoDAO cdDtlInfoDAO;
 	private final PointService pointService;
 	private final CommonJdbcDAO commonJdbcDAO;
+	private final SendFormInfoService sendFormInfoService;
+	
+	@Value(value = "${lzmarket.service}")
+	private String svcGb;
 	
 	public UserInfo create(Map<String, Object> userMap) {
 		UserInfo user = new UserInfo();
@@ -520,7 +528,7 @@ public class UserInfoService {
     }
 	
 	@Transactional(rollbackFor = Exception.class)
-	public Map getKakaoLogin(Map map) {
+	public Map getKakaoLogin(Map map) throws ClientProtocolException, IOException {
 		String token = "";
 		String newYn = "";
 		
@@ -618,7 +626,17 @@ public class UserInfoService {
 		pointInfoCDTO.setUserId(userInfo.get(0).getUserId());
 		pointInfoCDTO.setEventCode("002");
 		pointInfoCDTO.setEventId("00001");
-		this.pointService.addPoint(pointInfoCDTO);
+		Map msgMap = this.pointService.addPoint(pointInfoCDTO);
+		
+		if("0000".equals(msgMap.get("rtnCode"))) {
+			SendFormInfoCDTO sendFormInfoCDTO = new SendFormInfoCDTO();
+			
+			sendFormInfoCDTO.setSendFormCode("00000001");
+			sendFormInfoCDTO.setRecipient(phoneNumber);
+			sendFormInfoCDTO.setReceiveUserId(userInfo.get(0).getUserId());
+			
+			this.sendFormInfoService.sendBiztalkInfo(sendFormInfoCDTO);
+		}
 		
 		List<PointConfirmDTO> pointConfirmInfo = getPointConfirmInfo(userInfo.get(0).getUserId());
 		
@@ -871,45 +889,46 @@ public class UserInfoService {
 	
 	@Transactional(rollbackFor = Exception.class)
 	public void setSearchWord() {
-		String sql = this.userInfoJdbcDAO.searchWord();
-		String removeSearchWord = this.commonJdbcDAO.removeCdDtlInfo();
-		String addSearchWord = this.commonJdbcDAO.insertCdDtlInfo();
-	
-		//and si.product_category_code = ?
-		SearchWordDTO searchWordDTO = new SearchWordDTO();
-		ArrayList<String> _queryValue = new ArrayList<>();
+		if("P".equals(this.svcGb)) {
+			String sql = this.userInfoJdbcDAO.searchWord();
+			String removeSearchWord = this.commonJdbcDAO.removeCdDtlInfo();
+			String addSearchWord = this.commonJdbcDAO.insertCdDtlInfo();
 		
-		List<SearchWordDTO> searchWordList = this.utilService.getQueryString(sql,searchWordDTO,_queryValue);
-		
-		if(searchWordList.size() > 0) {
-			Comparator<SearchWordDTO> compareByCnt = Comparator.comparing( SearchWordDTO::getSearchCount );
+			//and si.product_category_code = ?
+			SearchWordDTO searchWordDTO = new SearchWordDTO();
+			ArrayList<String> _queryValue = new ArrayList<>();
 			
-			List<SearchWordDTO> sortedList = searchWordList.stream()
-					.sorted(compareByCnt.reversed())
-					.collect(Collectors.toList());
+			List<SearchWordDTO> searchWordList = this.utilService.getQueryString(sql,searchWordDTO,_queryValue);
 			
-			//코드삭제
-			ArrayList<String> _removeQueryValue = new ArrayList<>();
-			_removeQueryValue.add(0,"14");
-			this.utilService.getQueryStringUpdate(removeSearchWord, _removeQueryValue);
-			//코드등록
-			int cnt = sortedList.size();
-			String searchCntText = "";
-			ArrayList<String> _addQueryValue = new ArrayList<>();
-			for(int i = 0; i < cnt; i++) {
-				searchCntText = Integer.toString(i + 1);
+			if(searchWordList.size() > 0) {
+				Comparator<SearchWordDTO> compareByCnt = Comparator.comparing( SearchWordDTO::getSearchCount );
 				
-				_addQueryValue = new ArrayList<>();
-				_addQueryValue.add(0, "14");
-				_addQueryValue.add(1, StringUtils.leftPad(searchCntText, 5, "0"));
-				_addQueryValue.add(2, sortedList.get(i).getSearchWord());
-				_addQueryValue.add(3, sortedList.get(i).getSearchCount().toString());
-				_addQueryValue.add(4, "Y");
+				List<SearchWordDTO> sortedList = searchWordList.stream()
+						.sorted(compareByCnt.reversed())
+						.collect(Collectors.toList());
 				
-				this.utilService.getQueryStringUpdate(addSearchWord, _addQueryValue);
+				//코드삭제
+				ArrayList<String> _removeQueryValue = new ArrayList<>();
+				_removeQueryValue.add(0,"14");
+				this.utilService.getQueryStringUpdate(removeSearchWord, _removeQueryValue);
+				//코드등록
+				int cnt = sortedList.size();
+				String searchCntText = "";
+				ArrayList<String> _addQueryValue = new ArrayList<>();
+				for(int i = 0; i < cnt; i++) {
+					searchCntText = Integer.toString(i + 1);
+					
+					_addQueryValue = new ArrayList<>();
+					_addQueryValue.add(0, "14");
+					_addQueryValue.add(1, StringUtils.leftPad(searchCntText, 5, "0"));
+					_addQueryValue.add(2, sortedList.get(i).getSearchWord());
+					_addQueryValue.add(3, sortedList.get(i).getSearchCount().toString());
+					_addQueryValue.add(4, "Y");
+					
+					this.utilService.getQueryStringUpdate(addSearchWord, _addQueryValue);
+				}
 			}
 		}
-		
     }
 	
 	public List getPointConfirmInfo(String userId) {

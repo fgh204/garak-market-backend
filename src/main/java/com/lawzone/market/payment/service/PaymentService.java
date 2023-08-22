@@ -1,6 +1,7 @@
 package com.lawzone.market.payment.service;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +35,8 @@ import com.lawzone.market.point.service.PointInfoCDTO;
 import com.lawzone.market.point.service.PointService;
 import com.lawzone.market.product.dao.ProductJdbcDAO;
 import com.lawzone.market.product.service.ProductInfo;
+import com.lawzone.market.send.service.SendFormInfoCDTO;
+import com.lawzone.market.send.service.SendFormInfoService;
 import com.lawzone.market.telmsgLog.service.TelmsgLogService;
 import com.lawzone.market.util.SlackWebhook;
 import com.lawzone.market.util.UtilService;
@@ -60,6 +63,7 @@ public class PaymentService {
 	private final SlackWebhook slackWebhook;
 	private final PointService pointService;
 	private final ProductOrderService productOrdeService;
+	private final SendFormInfoService sendFormInfoService;
 	
 	@Resource
 	private SessionBean sessionBean;
@@ -155,6 +159,8 @@ public class PaymentService {
 		String _orderNo = paymentCancleDTO.getOrderNo();
 		String _receiptId = paymentCancleDTO.getReceiptId();
 		String _productId = paymentCancleDTO.getProductId();
+		String _productName = paymentCancleDTO.getProductName();
+		String _phoneNumber = paymentCancleDTO.getPhoneNumber();
 		String _message = paymentCancleDTO.getMessage();
 		String _productIdYn = "Y";
 		String _rtnMsg = "";
@@ -246,6 +252,18 @@ public class PaymentService {
 				
 				List<ProductOrderUserInfoDTO> productOrderUserInfo = this.productOrdeService.getProductOrderUserInfo(_orderNo);
 				
+				DecimalFormat df = new DecimalFormat("###,###");
+				String formatMoney = df.format(_cancleAmt + _addPointAmt.doubleValue());
+				
+				SendFormInfoCDTO sendFormInfoCDTO = new SendFormInfoCDTO();
+				
+				sendFormInfoCDTO.setSendFormCode("00000008"); 
+				sendFormInfoCDTO.setRecipient(_phoneNumber);
+				sendFormInfoCDTO.setProductName(_productName);
+				sendFormInfoCDTO.setOrderNo(_orderNo);
+				sendFormInfoCDTO.setCancelledPaymentAmount(formatMoney);
+				sendFormInfoCDTO.setReceiveUserId(userId);
+				this.sendFormInfoService.sendBiztalkInfo(sendFormInfoCDTO);
 				
 				slackMsg.append("주문번호 : ")
 				.append(_order_no)

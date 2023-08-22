@@ -1,5 +1,7 @@
 package com.lawzone.demo;
 
+import java.util.UUID;
+
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
 import org.junit.jupiter.api.Test;
@@ -16,11 +18,13 @@ public class LawzoneApplicationTests {
 		config.setSaltGeneratorClassName("org.jasypt.salt.RandomSaltGenerator"); 
 		config.setStringOutputType("base64"); 
 		encryptor.setConfig(config); 
-
-		String plainText = "jMpQlvAXiJ50UcHz0jZG"; // 암호화 할 내용
+		
+		String plainText = "fjrlem1!"; // 암호화 할 내용
 		String encryptedText = encryptor.encrypt(plainText); // 암호화
 		String decryptedText = encryptor.decrypt(encryptedText); // 복호화
 		System.out.println("Enc:"
 				+ ""+encryptedText+", Dec:"+decryptedText);
+		System.out.println("====" + UUID.randomUUID().toString());
+		
 	}
 }

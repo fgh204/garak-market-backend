@@ -28,6 +28,7 @@ import com.lawzone.market.common.dao.BoilerplateInfoDAO;
 import com.lawzone.market.common.dao.CdDtlInfoDAO;
 import com.lawzone.market.common.dao.CdDtlInfoJdbcDAO;
 import com.lawzone.market.common.dao.CommonJdbcDAO;
+import com.lawzone.market.externalLink.util.BizTalkUtils;
 import com.lawzone.market.externalLink.util.TodayUtils;
 import com.lawzone.market.product.service.TagInfo;
 import com.lawzone.market.util.DateUtils;
@@ -46,6 +47,7 @@ public class CommonService {
 	private final DateUtils dateUtils;
 	private final CdDtlInfoDAO cdDtlInfoDAO;
 	private final TodayUtils todayUtils;
+	private final BizTalkUtils bizTalkUtils;
 	private final AdminJdbcDAO adminJdbcDAO;
 	private final CdDtlInfoJdbcDAO cdDtlInfoJdbcDAO;
 	@Transactional(rollbackFor = Exception.class)
@@ -212,6 +214,48 @@ public class CommonService {
 		_queryValue.add(6, refreshToken);
 		
 		this.utilService.getQueryStringUpdate(_sql, _queryValue);
+		
+		return accessToken;
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	public String setBiztalkToken() throws ClientProtocolException, IOException {
+		String _checkSql = this.commonJdbcDAO.externalLinkInfoByBiztalk();
+		String useYn = "N";
+		String accessToken = "";
+		
+		ArrayList<String> _checkQueryValue = new ArrayList<>();
+		_checkQueryValue.add(0, "00002");
+		
+		ExternalLinkInfoDTO externalLinkInfoDTO = new ExternalLinkInfoDTO();
+		List<ExternalLinkInfoDTO> externalLinkInfoList = this.utilService.getQueryString(_checkSql ,externalLinkInfoDTO, _checkQueryValue);
+		
+		if(externalLinkInfoList.size() > 0) {
+			useYn = externalLinkInfoList.get(0).getUseYn();
+			accessToken = externalLinkInfoList.get(0).getAccessToken();
+		}
+		
+		if("N".equals(useYn)) {
+			Map biztalkTokenMap = this.bizTalkUtils.getBiztalkToken();
+			accessToken = (String) biztalkTokenMap.get("token");
+			
+			if(!("".equals(accessToken) || accessToken == null)) {
+				String _sql = this.adminJdbcDAO.addExternalLinkInfoByBiztalk();
+				
+				ArrayList<String> _queryValue = new ArrayList<>();
+				_queryValue.add(0, "00002");
+				_queryValue.add(1, accessToken);
+				_queryValue.add(2, "99999999");
+				_queryValue.add(3, "99999999");
+				_queryValue.add(4, accessToken);
+				
+				this.utilService.getQueryStringUpdate(_sql, _queryValue);
+			}
+		}
+		
+//		this.bizTalkUtils.sendBiztalk(null);
+//		this.bizTalkUtils.getBiztalkSendResult(null);
+//		this.bizTalkUtils.getBiztalkPolling(null);
 		
 		return accessToken;
 	}

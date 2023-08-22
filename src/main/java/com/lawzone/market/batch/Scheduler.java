@@ -82,6 +82,15 @@ public class Scheduler {
 		}
     }
     
+    @Scheduled(fixedDelay = 43200000)
+    public void setBiztalkToken() {
+        try {
+        	this.commonService.setBiztalkToken();
+        } catch (Exception e) {
+			// TODO: handle exception
+		}
+    }
+    
 //    @Scheduled(cron = "0 33 14 ? * MON-FRI")
 //    public void setDeliveryStaus3() {
 //        try {

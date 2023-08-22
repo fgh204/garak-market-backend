@@ -18,6 +18,8 @@ import lombok.ToString;
 public class PaymentCancleDTO {
 	private String orderNo;
 	private String productId;
+	private String productName;
+	private String phoneNumber;
 	private BigDecimal productTotalAmt;
 	private BigDecimal orderTotalAmt;
 	private String receiptId;	

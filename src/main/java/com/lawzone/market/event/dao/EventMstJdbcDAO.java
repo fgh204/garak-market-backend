@@ -277,6 +277,7 @@ public class EventMstJdbcDAO {
 			.append("\n 	, ei.expiration_date_gb as expirationDateGb ")
 			.append("\n 	, ceil(ei.expiration_date_value) as expirationDateValue ")
 			.append("\n 	, ceil(ei.point_amount) as pointAmount ")
+			.append("\n 	, ei.point_amount_modification_yn as pointAmountModificationYn ")
 			.append("\n from lz_market.event_info ei ")
 			//.append("\n where event_id in('99999', '00004') ")
 			.append("\n where ei.duplicate_limit_yn = 'N' ")

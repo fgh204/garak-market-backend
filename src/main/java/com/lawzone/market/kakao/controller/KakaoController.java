@@ -1,5 +1,6 @@
 package com.lawzone.market.kakao.controller;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,6 +8,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.http.client.ClientProtocolException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -82,7 +84,7 @@ public class KakaoController {
 	@PostMapping("/authorization/callback")
 	public String getLogin(HttpServletRequest request
 			, HttpServletResponse httpResponse
-			, @RequestBody(required = true) Map map) throws JsonMappingException, JsonProcessingException {
+			, @RequestBody(required = true) Map map) throws ClientProtocolException, IOException {
 		//this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
 		LoginDTO loginDTO = new LoginDTO();
 		loginDTO = (LoginDTO) ParameterUtils.setDto(map, loginDTO, "insert", sessionBean);
@@ -159,7 +161,7 @@ public class KakaoController {
         return JsonUtils.returnValue("0000", "로그인되었습니다.", kakaoMap).toString();
     }
 	
-    private Map getKakaoUserInfo(String accessToken) {
+    private Map getKakaoUserInfo(String accessToken) throws ClientProtocolException, IOException {
         // 카카오에 요청 보내기 및 응답 받기
         WebClient webClient = WebClient.builder()
             .baseUrl("https://kapi.kakao.com")

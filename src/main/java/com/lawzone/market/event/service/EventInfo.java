@@ -49,6 +49,10 @@ public class EventInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "char(1)")
     private String expirationDateGb;
 	
+	@Comment("포인트금액수정여부")
+	@Column(columnDefinition = "char(1)")
+    private String pointAmountModificationYn;
+	
 	@Comment("만료일자구분값")
 	@Column(columnDefinition = "DECIMAL(3)")
     private BigDecimal expirationDateValue;

@@ -2,6 +2,7 @@ package com.lawzone.market.payment.controller;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -50,6 +51,8 @@ import com.lawzone.market.point.service.PointInfoCDTO;
 import com.lawzone.market.point.service.PointService;
 import com.lawzone.market.product.service.ProductInfo;
 import com.lawzone.market.product.service.ProductService;
+import com.lawzone.market.send.service.SendFormInfoCDTO;
+import com.lawzone.market.send.service.SendFormInfoService;
 import com.lawzone.market.telmsgLog.service.TelmsgLogService;
 import com.lawzone.market.util.JsonUtils;
 import com.lawzone.market.util.ParameterUtils;
@@ -74,6 +77,7 @@ public class PaymentController {
 	private final PointService pointService;
 	private final ModelMapper modelMapper;
 	private final EventMstService eventMstService;
+	private final SendFormInfoService sendFormInfoService;
 	
 	@Resource
 	private SessionBean sessionBean;
@@ -110,6 +114,7 @@ public class PaymentController {
 		String _receiptId = (String) paymentMap.get("receipt_id");
 		String _orderNo = (String) paymentMap.get("order_id");
 		String orderDate = "";
+		String phoneNumber = "";
 		BigDecimal paymentPrice = new BigDecimal("0");
 		BigDecimal orderPrice = new BigDecimal("0");
 		BigDecimal pointAmount = new BigDecimal("0");
@@ -136,6 +141,7 @@ public class PaymentController {
 		List<CustOrderInfoDTO> custOrderInfo = this.productOrderService.getCustOrderInfoByOrderNo(_orderNo, "001", "", "Y");
 		orderPrice = new BigDecimal(custOrderInfo.get(0).getTotalPrice().toString());
 		pointAmount = new BigDecimal(custOrderInfo.get(0).getPointAmount().toString());
+		phoneNumber = custOrderInfo.get(0).getPhoneNumber();
 		//orderDate = custOrderInfo.get(0).getTotalPrice().toString();
 		
 		PointInfoCDTO pointInfoCDTO = new PointInfoCDTO();
@@ -321,6 +327,20 @@ public class PaymentController {
 					//this.productOrderService.modifyProductOrderItemInfoStat("003",_orderNo);
 					//this.productService.modifyProductStock(_orderNo);
 					
+					DecimalFormat df = new DecimalFormat("###,###");
+					String formatMoney = df.format(_payment_amount.add(pointAmount));
+					
+					SendFormInfoCDTO sendFormInfoCDTO = new SendFormInfoCDTO();
+					
+					sendFormInfoCDTO.setSendFormCode("00000007");
+					sendFormInfoCDTO.setRecipient(phoneNumber);
+					sendFormInfoCDTO.setProductName(_order_name);
+					sendFormInfoCDTO.setOrderNo(_orderNo);
+					sendFormInfoCDTO.setTotalAmount(formatMoney);
+					sendFormInfoCDTO.setReceiveUserId(userId);
+					
+					this.sendFormInfoService.sendBiztalkInfo(sendFormInfoCDTO);
+					
 					StringBuilder slackMsg = new StringBuilder();
 					slackMsg.append("주문번호 : ")
 					.append(_order_no)
@@ -454,6 +474,8 @@ public class PaymentController {
 					_paymentAmt = _paymentAmount.subtract(_cancelledPaymentAmount);
 					_pointAmt = _pointAmount.subtract(_cancelledPointAmount);
 					paymentCancleDTO.setReceiptId(_receiptId);
+					paymentCancleDTO.setProductName(_paymentCancleList.get(0).getProductName());
+					paymentCancleDTO.setPhoneNumber(_paymentCancleList.get(0).getPhoneNumber());
 					
 					_orderAmount = new BigDecimal("0");
 					_cancelledOrderAmount = new BigDecimal("0");

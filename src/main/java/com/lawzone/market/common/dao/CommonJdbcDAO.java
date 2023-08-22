@@ -113,6 +113,20 @@ public class CommonJdbcDAO {
 		return _query.toString();
 	}
 	
+	public String externalLinkInfoByBiztalk() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n SELECT ")
+			.append("\n eli.access_token as accessToken ")
+			.append("\n	, '' as refreshToken")
+			.append("\n	, case when DATE_ADD(eli.update_datetime, INTERVAL 12 HOUR) > now() then 'Y' else 'N' end as useYn ")
+			.append("\n from lz_market.external_link_info eli ")
+			.append("\n where eli.external_link_company_code = ? ")
+			.append("\n and ifnull(eli.access_token, '') <> '' ");
+		
+		return _query.toString();
+	}
+	
 	public String modiifyExternalLinkInfo() {
 		StringBuffer _query = new StringBuffer();
 		

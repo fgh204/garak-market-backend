@@ -542,7 +542,7 @@ public class ProductOrderJdbcDAO {
 			  .append("\n 	, poii.seller_id ")
 			  //.append("\n 	, si.delivery_amount ")
 			  .append("\n 	, case when si.combined_delivery_yn = 'N' then 0 ")
-			  .append("\n 		when si.combined_delivery_yn = 'Y' AND sum(poii.product_price * poii.product_count) > si.combined_delivery_standard_amount then 0 ")
+			  .append("\n 		when si.combined_delivery_yn = 'Y' AND sum(poii.product_price * poii.product_count) >= si.combined_delivery_standard_amount then 0 ")
 			  .append("\n 		else si.delivery_amount END as deliveryAmount ")
 			  .append("\n from lz_market.product_order_item_info poii ")
 			  .append("\n 	, lz_market.seller_info si ")

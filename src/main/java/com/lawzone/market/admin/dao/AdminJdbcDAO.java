@@ -409,6 +409,25 @@ public class AdminJdbcDAO {
 		return _query.toString();
 	}
 	
+	public String addExternalLinkInfoByBiztalk() {
+		StringBuffer _query = new StringBuffer();
+		
+		_query.append("\n INSERT INTO lz_market.external_link_info ")
+				.append("\n (external_link_company_code, access_token, create_datetime, create_user, update_datetime, update_user) ")
+				.append("\n VALUES ( ")
+				.append("\n   ? ")
+				.append("\n  , ? ")
+				.append("\n  , now() ")
+				.append("\n  , ? ")
+				.append("\n  , now() ")
+				.append("\n  , ? ")
+				.append("\n ) ")
+				.append("\n on duplicate KEY ")
+				.append("\n update access_token = ? ")
+				.append("\n , update_datetime = now() ");
+		return _query.toString();
+	}
+	
 	public String kakaoTargetPointList(AdminUserCDTO adminUserCDTO) {
 		StringBuffer _query = new StringBuffer();
 		

@@ -159,7 +159,6 @@ public class JwtTokenUtil{
         		}
         	}
         }
-        
         if("D".equals(this.service) && _resolveToken == null) {
         	//_resolveToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyMjEyMzE4NjExIiwidXNlckZvcm0iOiJ7XCJ1c2VyTm1cIjpcIuq5gO2YgeyImFwiLFwicGhvbmVOdW1iZXJcIjpcIjAxMDMzNTI0NTA5XCIsXCJzb2NpYWxJZFwiOlwiMjIxMjMxODYxMVwiLFwidXNlcklkXCI6XCIwMDAwMDAwMlwiLFwic2VsbGVyWW5cIjpcIllcIixcImVtYWlsXCI6XCJmZ2gyMDRAa2FrYW8uY29tXCJ9IiwiaWF0IjoxNjY3NzE1MjI1LCJleHAiOjE3OTkxMTUyMjV9.8awIlGay-A_gNib8iVSAc9LYPA5-p3vNuOSHCN6d2JI";
     	}

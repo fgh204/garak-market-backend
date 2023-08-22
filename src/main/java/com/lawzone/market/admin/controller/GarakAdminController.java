@@ -88,6 +88,8 @@ import com.lawzone.market.product.service.ProductInfoDTO;
 import com.lawzone.market.product.service.ProductService;
 import com.lawzone.market.product.service.ProductTagInfoDTO;
 import com.lawzone.market.review.service.ProductReviewInfoService;
+import com.lawzone.market.send.service.SendFormInfoCDTO;
+import com.lawzone.market.send.service.SendFormInfoService;
 import com.lawzone.market.telmsgLog.service.TelmsgLogService;
 import com.lawzone.market.user.service.SellerInfo;
 import com.lawzone.market.user.service.SellerInfoService;
@@ -125,7 +127,8 @@ public class GarakAdminController {
 	private final NoticeService noticeService;
 	private final PointService pointService;
 	private final EventMstService eventMstService;
-
+	private final SendFormInfoService sendFormInfoService;
+	
 	@ResponseBody
 	@PostMapping("/login")
 	public String getLogin(HttpServletRequest request, @RequestBody(required = true) Map map)
@@ -731,7 +734,7 @@ public class GarakAdminController {
 
 		AdminOrderCDTO adminOrderCDTO = new AdminOrderCDTO();
 		adminOrderCDTO = (AdminOrderCDTO) ParameterUtils.setDto(map, adminOrderCDTO, "insert", sessionBean);
-
+		
 		List<AdminPageInfoDTO> paging = this.garakAdminService.getAdminCustReviewPageInfo(adminOrderCDTO);
 		List<CustReviewInfoDTO> custReviewInfo = this.garakAdminService.getAdminCustReviewInfoList(adminOrderCDTO);
 		// List<AdminOrderStatCountInfoDTO> adminOrderStatCountInfoDTO =
@@ -1010,9 +1013,9 @@ public class GarakAdminController {
 		
 		pointInfoCDTO.setUserId(adminUserCDTO.getAdminUserId());
 		
-		String _rtnMsg = this.pointService.addPoint(pointInfoCDTO);
+		Map _rtnMap = this.pointService.addPoint(pointInfoCDTO);
 
-		return JsonUtils.returnValue("0000", _rtnMsg, rtnMap).toString();
+		return JsonUtils.returnValue("0000", (String) _rtnMap.get("rtnMsg"), rtnMap).toString();
 	}
 	
 	@ResponseBody

@@ -2,6 +2,7 @@ package com.lawzone.market.order.controller;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,6 +52,8 @@ import com.lawzone.market.product.service.ProductCDTO;
 import com.lawzone.market.product.service.ProductDTO;
 import com.lawzone.market.product.service.ProductInfo;
 import com.lawzone.market.product.service.ProductService;
+import com.lawzone.market.send.service.SendFormInfoCDTO;
+import com.lawzone.market.send.service.SendFormInfoService;
 import com.lawzone.market.telmsgLog.service.TelmsgLogService;
 import com.lawzone.market.user.service.SellerInfoService;
 import com.lawzone.market.user.service.UserInfo;
@@ -77,6 +80,7 @@ public class ProductOrderController {
 	private final SlackWebhook slackWebhook;
 	private final AppPush appPush;
 	private final EventMstService eventMstService;
+	private final SendFormInfoService sendFormInfoService;
 	
 	@Resource
 	private SessionBean sessionBean;
@@ -377,6 +381,20 @@ public class ProductOrderController {
 			//this.productOrderService.modifyProductOrderInfoStat("003",_orderNo);
 			//this.productOrderService.modifyProductOrderItemInfoStat("003",_orderNo);
 			//this.productService.modifyProductStock(_orderNo);
+			
+			DecimalFormat df = new DecimalFormat("###,###");
+			String formatMoney = df.format(_paymentPointAmount);
+			
+			SendFormInfoCDTO sendFormInfoCDTO = new SendFormInfoCDTO();
+			
+			sendFormInfoCDTO.setSendFormCode("00000007");
+			sendFormInfoCDTO.setRecipient(custOrderInfoDTO.get(0).getPhoneNumber());
+			sendFormInfoCDTO.setProductName(orderName);
+			sendFormInfoCDTO.setOrderNo(_orderNo);
+			sendFormInfoCDTO.setTotalAmount(formatMoney);
+			sendFormInfoCDTO.setReceiveUserId(userId);
+			
+			this.sendFormInfoService.sendBiztalkInfo(sendFormInfoCDTO);
 			
 			orderStateCode = "003";
 			

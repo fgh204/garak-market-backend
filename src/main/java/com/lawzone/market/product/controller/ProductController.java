@@ -29,6 +29,7 @@ import org.json.simple.JSONObject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -320,13 +321,19 @@ public class ProductController {
 	public JSONObject addProductImage(HttpServletRequest request,
 			@RequestPart(value = "imageFile", required = false) MultipartFile[] productImage,
 			@RequestPart(value = "imageCfcd", required = false) String formImageCfcd,
-			@RequestParam(name = "imageCfcd", defaultValue = "00") String paramImageCfcd)
+			@RequestParam(name = "imageCfcd", defaultValue = "00") String paramImageCfcd 
+			,@RequestHeader() Map map2
+			//,@RequestPart MultipartFile imgFile
+			)
 			throws IllegalStateException, IOException, ImageProcessingException, MetadataException {
 		String imagePath = "";
 		String imageCfcd = "";
 		Map _map = new HashMap<>();
 		
 		imageCfcd = formImageCfcd;
+		
+		//log.error("@RequestHeader ======= " + map2);
+		//log.error("@@RequestBody ======= " + map3);
 		
 		if("".equals(imageCfcd) || imageCfcd == null) {
 			imageCfcd = paramImageCfcd;
@@ -336,7 +343,8 @@ public class ProductController {
 		_map.put("paramImageCfcd", paramImageCfcd);
 		_map.put("imageCfcd", imageCfcd);
 		this.telmsgLogService.addTelmsgLog("00", "00", "1", _map, "");
-		
+		this.telmsgLogService.addTelmsgLog("00", "00", "1", map2, "");
+		//this.telmsgLogService.addTelmsgLog("00", "00", "1", imgFile, "");
 		Enumeration headerNames = request.getHeaderNames();
 		
 //    	while(headerNames.hasMoreElements()) {

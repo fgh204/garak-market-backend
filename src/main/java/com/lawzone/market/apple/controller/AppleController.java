@@ -147,13 +147,31 @@ public class AppleController {
 		    
 			ResponseCookie accessTokenCookie;
 			
-			accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", token)
-	                .path("/")
-	                .secure(true)
-	                .httpOnly(true)
-	                .sameSite("None")
-	                .domain("domaado.me")
-	                .build();
+			if("P".equals(this.service)) {
+				accessTokenCookie = ResponseCookie.from(this.token, token)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .sameSite("None")
+		                .domain("domaado.me")
+		                .build();
+			} else if("T".equals(this.service)) {
+				accessTokenCookie = ResponseCookie.from(this.token, token)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .sameSite("None")
+		                .domain("test.domaado.me")
+		                .build();
+			} else {
+				accessTokenCookie = ResponseCookie.from(this.token, token)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .sameSite("None")
+		                .build();
+			}
+			
 			response.setHeader("Set-Cookie", accessTokenCookie.toString());	
 	    }
 	    response.sendRedirect("https://domaado.me/product");

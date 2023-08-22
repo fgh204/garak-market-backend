@@ -49,6 +49,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -465,9 +466,34 @@ public class UserInfoController {
 			ResponseCookie accessTokenCookie;
 
 			String serviceNm = "";
-
-			accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", _token).path("/").secure(true).httpOnly(true)
-					.sameSite("None").domain(serviceNm + "domaado.me").build();
+			
+			if("P".equals(this.service)) {
+				accessTokenCookie = ResponseCookie.from(this.token, _token)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .sameSite("None")
+		                .domain("domaado.me")
+		                .build();
+			} else if("T".equals(this.service)) {
+				accessTokenCookie = ResponseCookie.from(this.token, _token)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .sameSite("None")
+		                .domain("test.domaado.me")
+		                .build();
+			} else {
+				accessTokenCookie = ResponseCookie.from(this.token, _token)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .sameSite("None")
+		                .build();
+			}
+			
+			//accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", _token).path("/").secure(true).httpOnly(true)
+			//		.sameSite("None").domain(serviceNm + "domaado.me").build();
 			response.setHeader("Set-Cookie", accessTokenCookie.toString());
 
 			return JsonUtils.returnValue("0000", "조회되었습니다.", rtnMap).toString();
@@ -545,9 +571,34 @@ public class UserInfoController {
 			}
 			String _token = this.jwtTokenUtil.generateToken(userInfo.get(0), (long) 0);
 			ResponseCookie accessTokenCookie;
-
-			accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", _token).path("/").secure(true).httpOnly(true)
-					.sameSite("None").domain("domaado.me").build();
+			
+			if("P".equals(this.service)) {
+				accessTokenCookie = ResponseCookie.from(this.token, _token)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .sameSite("None")
+		                .domain("domaado.me")
+		                .build();
+			} else if("T".equals(this.service)) {
+				accessTokenCookie = ResponseCookie.from(this.token, _token)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .sameSite("None")
+		                .domain("test.domaado.me")
+		                .build();
+			} else {
+				accessTokenCookie = ResponseCookie.from(this.token, _token)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .sameSite("None")
+		                .build();
+			}
+			
+			//accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", _token).path("/").secure(true).httpOnly(true)
+			//		.sameSite("None").domain("domaado.me").build();
 			response.setHeader("Set-Cookie", accessTokenCookie.toString());
 
 			return JsonUtils.returnValue("0000", "탈퇴되었습니다", rtnMap).toString();
@@ -569,19 +620,30 @@ public class UserInfoController {
 		ResponseCookie accessTokenCookie;
 		
 		if("P".equals(this.service)) {
-			accessTokenCookie = ResponseCookie.from(this.token, _token)
+			accessTokenCookie = ResponseCookie.from(this.token, null)
 	                .path("/")
 	                .secure(true)
 	                .httpOnly(true)
 	                .sameSite("None")
 	                .domain("domaado.me")
+	                .maxAge(0)
 	                .build();
-		}else {
-			accessTokenCookie = ResponseCookie.from(this.token, _token)
+		} else if("T".equals(this.service)) {
+			accessTokenCookie = ResponseCookie.from(this.token, null)
 	                .path("/")
 	                .secure(true)
 	                .httpOnly(true)
 	                .sameSite("None")
+	                .domain("test.domaado.me")
+	                .maxAge(0)
+	                .build();
+		} else {
+			accessTokenCookie = ResponseCookie.from(this.token, null)
+	                .path("/")
+	                .secure(true)
+	                .httpOnly(true)
+	                .sameSite("None")
+	                .maxAge(0)
 	                .build();
 		}
 		
@@ -718,20 +780,54 @@ public class UserInfoController {
 
 		MarketSignupDTO marketSignupDTO = new MarketSignupDTO();
 		marketSignupDTO = (MarketSignupDTO) ParameterUtils.setDto(map, marketSignupDTO, "insert", sessionBean);
-
-		userMap = this.userInfoService.autoSignin(marketSignupDTO);
-
-		String token = userMap.get("token").toString();
-		String accessToken = userMap.get("accessToken").toString();
-		String userId = userMap.get("userId").toString();
-		String previousUrl = marketSignupDTO.getPreviousUrl();
-
+		
+		String token = "";
+		String accessToken = "";
+		String userId = "";
+		String previousUrl = "";
+		
+		//if("".equals(marketSignupDTO.getLoginId()) || marketSignupDTO.getLoginId() == null) {
+		//	token = null;
+		//} else {
+			userMap = this.userInfoService.autoSignin(marketSignupDTO);
+			
+			token = userMap.get("token").toString();
+			accessToken = userMap.get("accessToken").toString();
+			userId = userMap.get("userId").toString();
+			previousUrl = marketSignupDTO.getPreviousUrl();
+		//}
+		
 		if (!("".equals(token) || token == null)) {
 			if (this.jwtTokenUtil.validateToken(token)) {
 				ResponseCookie accessTokenCookie;
-
-				accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", token).path("/").secure(true)
-						.httpOnly(true).sameSite("None").domain("domaado.me").build();
+				
+				if("P".equals(this.service)) {
+					accessTokenCookie = ResponseCookie.from(this.token, token)
+			                .path("/")
+			                .secure(true)
+			                .httpOnly(true)
+			                .sameSite("None")
+			                .domain("domaado.me")
+			                .build();
+				} else if("T".equals(this.service)) {
+					accessTokenCookie = ResponseCookie.from(this.token, token)
+			                .path("/")
+			                .secure(true)
+			                .httpOnly(true)
+			                .sameSite("None")
+			                .domain("test.domaado.me")
+			                .build();
+				} else {
+					accessTokenCookie = ResponseCookie.from(this.token, token)
+			                .path("/")
+			                .secure(true)
+			                .httpOnly(true)
+			                .sameSite("None")
+			                .build();
+				}
+				
+				//accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", token).path("/").secure(true)
+				//		.httpOnly(true).sameSite("None").domain("domaado.me").build();
 				response.setHeader("Set-Cookie", accessTokenCookie.toString());
 				
 				List<PointConfirmDTO> pointConfirmInfo = this.userInfoService.getPointConfirmInfo(userId);
@@ -760,9 +856,37 @@ public class UserInfoController {
 		} else {
 			String _token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyNTc4NDgwMzA4IiwidXNlckZvcm0iOiJ7XCJ1c2VyTm1cIjpcIuq5gO2YgeyImOydtOumhOyImOyglVwiLFwicGhvbmVOdW1iZXJcIjpcIjAxMDMzNTI0NTA5XCIsXCJzb2NpYWxJZFwiOlwiMjU3ODQ4MDMwOFwiLFwidXNlcklkXCI6XCIwMDAwMDAwMlwiLFwic2VsbGVyWW5cIjpcIllcIixcInVzZXJMdmxcIjo5LFwiZW1haWxcIjpcImZnaDIwNEBrYWthby5jb21cIn0iLCJpYXQiOjE2NzM1ODY3OTcsImV4cCI6MTY3MzU4Njc5N30.qTbdTjRWgWRtIg8gqi7xPELjsLaCfgMVtgsrl4gp-FE";
 			ResponseCookie accessTokenCookie;
-
-			accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", _token).path("/").secure(true).httpOnly(true)
-					.sameSite("None").domain("domaado.me").build();
+			
+			if("P".equals(this.service)) {
+				accessTokenCookie = ResponseCookie.from(this.token, null)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .sameSite("None")
+		                .maxAge(0)
+		                .domain("domaado.me")
+		                .build();
+			} else if("T".equals(this.service)) {
+				accessTokenCookie = ResponseCookie.from(this.token, null)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .sameSite("None")
+		                .maxAge(0)
+		                .domain("test.domaado.me")
+		                .build();
+			} else {
+				accessTokenCookie = ResponseCookie.from(this.token, null)
+		                .path("/")
+		                .secure(true)
+		                .httpOnly(true)
+		                .maxAge(0)
+		                .sameSite("None")
+		                .build();
+			}
+			
+			//accessTokenCookie = ResponseCookie.from("7i7e9BCzFOXqOZAj5", _token).path("/").secure(true).httpOnly(true)
+			//		.sameSite("None").domain("domaado.me").build();
 			response.setHeader("Set-Cookie", accessTokenCookie.toString());
 			return JsonUtils.returnValue("9999", "로그인정보를 확인하세요.", rtnMap).toString();
 		}
@@ -808,9 +932,9 @@ public class UserInfoController {
 
 	@ResponseBody
 	@PostMapping("/getStore")
-	public String getStore(HttpServletRequest request, @RequestBody(required = true) Map map)
+	public String getStore(HttpServletRequest request
+			, @RequestBody(required = true) Map map)
 			throws JsonMappingException, JsonProcessingException {
-
 		StoreInfoCDTO storeInfoCDTO = new StoreInfoCDTO();
 		storeInfoCDTO = (StoreInfoCDTO) ParameterUtils.setDto(map, storeInfoCDTO, "insert", sessionBean);
 

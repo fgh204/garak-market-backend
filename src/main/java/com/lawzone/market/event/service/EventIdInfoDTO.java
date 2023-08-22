@@ -18,6 +18,7 @@ public class EventIdInfoDTO {
 	private Character expirationDateGb;
 	private BigInteger expirationDateValue;
 	private BigInteger pointAmount;
+	private Character pointAmountModificationYn;
 	
 	public EventIdInfoDTO() {
 		
