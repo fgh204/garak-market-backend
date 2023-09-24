@@ -30,6 +30,7 @@ public class CustOrderInfoDTO {
 	private String accessMethodCfcd;
 	private String accessMethodCfcdNm;
 	private String accessMethodText;
+	private String recipient;
 	//private String orderDlngStateCode;
 	//private String orderDlngStateName;
 	

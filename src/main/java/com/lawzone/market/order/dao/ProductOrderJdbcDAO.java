@@ -142,6 +142,7 @@ public class ProductOrderJdbcDAO {
 				.append("\n	, poi.access_method_cfcd as accessMethodCfcd")
 				.append("\n	, lz_market.FN_DTL_NM(11,poi.access_method_cfcd) as accessMethodCfcdNm ")
 				.append("\n	, REGEXP_REPLACE(access_method_text , '[0-9]' ,'*') as accessMethodText ")
+				.append("\n	, ifnull(ui.phone_number,'') as recipient ")
 				//.append("\n	, poi.order_dlng_state_code as order_dlng_state_code ")
 				//.append("\n	, lz_market.FN_DTL_NM(3,poi.order_dlng_state_code) as order_dlng_state_name ")
 				.append("\nfrom lz_market.product_order_info poi ") 

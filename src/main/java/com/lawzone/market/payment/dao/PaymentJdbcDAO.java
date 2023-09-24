@@ -31,7 +31,8 @@ public class PaymentJdbcDAO {
 				.append("\n	poii.order_no as order_no ")
 				.append("\n , poii.product_id as product_id ")
 				.append("\n , pi3.product_name  as product_name ")
-				.append("\n , poi.phone_number as phoneNumber ")
+				//.append("\n , poi.phone_number as phoneNumber ")
+				.append("\n , ui.phone_number as phoneNumber ")
 				.append("\n , (poii.product_count * poii.product_price) as product_total_amt ")
 				.append("\n , poi.product_total_price as order_total_amt ")
 				.append("\n , pi2.receipt_id as receipt_id ")
@@ -47,8 +48,10 @@ public class PaymentJdbcDAO {
 				.append("\n left outer join lz_market.product_info pi3 ")
 				.append("\n on pi3.product_id = poii.product_id ")
 				.append("\n , lz_market.payment_info pi2  ")
+				.append("\n , lz_market.user_info ui ")
 				.append("\n where poi.order_no = poii.order_no ")
 				.append("\n and poi.order_no = pi2.order_no ")
+				.append("\n and poi.user_id = ui.user_id ")
 				.append("\n and poii.order_item_state_code = '003' ")
 				.append("\n and poii.order_no = ? ");
 		if("Y".equals(_productIdYn)) {

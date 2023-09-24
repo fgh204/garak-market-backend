@@ -115,6 +115,7 @@ public class PaymentController {
 		String _orderNo = (String) paymentMap.get("order_id");
 		String orderDate = "";
 		String phoneNumber = "";
+		String recipient = "";
 		BigDecimal paymentPrice = new BigDecimal("0");
 		BigDecimal orderPrice = new BigDecimal("0");
 		BigDecimal pointAmount = new BigDecimal("0");
@@ -142,6 +143,7 @@ public class PaymentController {
 		orderPrice = new BigDecimal(custOrderInfo.get(0).getTotalPrice().toString());
 		pointAmount = new BigDecimal(custOrderInfo.get(0).getPointAmount().toString());
 		phoneNumber = custOrderInfo.get(0).getPhoneNumber();
+		recipient = custOrderInfo.get(0).getRecipient();
 		//orderDate = custOrderInfo.get(0).getTotalPrice().toString();
 		
 		PointInfoCDTO pointInfoCDTO = new PointInfoCDTO();
@@ -330,16 +332,18 @@ public class PaymentController {
 					DecimalFormat df = new DecimalFormat("###,###");
 					String formatMoney = df.format(_payment_amount.add(pointAmount));
 					
-					SendFormInfoCDTO sendFormInfoCDTO = new SendFormInfoCDTO();
-					
-					sendFormInfoCDTO.setSendFormCode("00000007");
-					sendFormInfoCDTO.setRecipient(phoneNumber);
-					sendFormInfoCDTO.setProductName(_order_name);
-					sendFormInfoCDTO.setOrderNo(_orderNo);
-					sendFormInfoCDTO.setTotalAmount(formatMoney);
-					sendFormInfoCDTO.setReceiveUserId(userId);
-					
-					this.sendFormInfoService.sendBiztalkInfo(sendFormInfoCDTO);
+					if(!"".equals(recipient)) {
+						SendFormInfoCDTO sendFormInfoCDTO = new SendFormInfoCDTO();
+						
+						sendFormInfoCDTO.setSendFormCode("00000007");
+						sendFormInfoCDTO.setRecipient(recipient);
+						sendFormInfoCDTO.setProductName(_order_name);
+						sendFormInfoCDTO.setOrderNo(_orderNo);
+						sendFormInfoCDTO.setTotalAmount(formatMoney);
+						sendFormInfoCDTO.setReceiveUserId(userId);
+						
+						this.sendFormInfoService.sendBiztalkInfo(sendFormInfoCDTO);
+					}
 					
 					StringBuilder slackMsg = new StringBuilder();
 					slackMsg.append("주문번호 : ")

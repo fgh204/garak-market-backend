@@ -29,7 +29,12 @@ public class SendFormInfoService {
 	@Transactional(rollbackFor = Exception.class)
 	public void sendBiztalkInfo(SendFormInfoCDTO sendFormInfoCDTO) throws ClientProtocolException, IOException {
 		String sendFormCode = sendFormInfoCDTO.getSendFormCode();
+		String phoneNumber = sendFormInfoCDTO.getRecipient();
 		String recipient = sendFormInfoCDTO.getRecipient();
+		
+		if("".equals(phoneNumber) || phoneNumber == null) {
+			return;
+		}
 		
 		List<SendFormInfo> sendFormInfo = this.sendFormInfoDAO.findBySendFormCodeAndUseYn(sendFormCode, "Y");
 		

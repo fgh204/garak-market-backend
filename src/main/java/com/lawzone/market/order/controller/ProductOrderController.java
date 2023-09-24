@@ -385,16 +385,20 @@ public class ProductOrderController {
 			DecimalFormat df = new DecimalFormat("###,###");
 			String formatMoney = df.format(_paymentPointAmount);
 			
-			SendFormInfoCDTO sendFormInfoCDTO = new SendFormInfoCDTO();
+			String recipient = custOrderInfoDTO.get(0).getRecipient();
 			
-			sendFormInfoCDTO.setSendFormCode("00000007");
-			sendFormInfoCDTO.setRecipient(custOrderInfoDTO.get(0).getPhoneNumber());
-			sendFormInfoCDTO.setProductName(orderName);
-			sendFormInfoCDTO.setOrderNo(_orderNo);
-			sendFormInfoCDTO.setTotalAmount(formatMoney);
-			sendFormInfoCDTO.setReceiveUserId(userId);
-			
-			this.sendFormInfoService.sendBiztalkInfo(sendFormInfoCDTO);
+			if(!"".equals(recipient)) {
+				SendFormInfoCDTO sendFormInfoCDTO = new SendFormInfoCDTO();
+				
+				sendFormInfoCDTO.setSendFormCode("00000007");
+				sendFormInfoCDTO.setRecipient(recipient);
+				sendFormInfoCDTO.setProductName(orderName);
+				sendFormInfoCDTO.setOrderNo(_orderNo);
+				sendFormInfoCDTO.setTotalAmount(formatMoney);
+				sendFormInfoCDTO.setReceiveUserId(userId);
+				
+				this.sendFormInfoService.sendBiztalkInfo(sendFormInfoCDTO);
+			}
 			
 			orderStateCode = "003";
 			
