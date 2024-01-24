@@ -671,6 +671,27 @@ public class UserInfoService {
 		
 		if(userInfo.size() > 0) {
 			userInfo.get(0).setPushId(marketUserDTO.getPushId());
+			//userInfo.get(0).setAppVersion(marketUserDTO.getAppVersion());
+		}
+    }
+	
+	@Transactional(rollbackFor = Exception.class)
+	public void addPushAgreeYn(MarketUserDTO marketUserDTO) {
+
+		List<UserInfo> userInfo = this.userInfoDAO.findByUserId(marketUserDTO.getUserId());
+		
+		if(userInfo.size() > 0) {
+			userInfo.get(0).setPushAgreeYn(marketUserDTO.getPushAgreeYn());
+		}
+    }
+	
+	@Transactional(rollbackFor = Exception.class)
+	public void addAppVersion(MarketUserDTO marketUserDTO) {
+
+		List<UserInfo> userInfo = this.userInfoDAO.findByUserId(marketUserDTO.getUserId());
+		
+		if(userInfo.size() > 0) {
+			userInfo.get(0).setAppVersion(marketUserDTO.getAppVersion());
 		}
     }
 	

@@ -2,6 +2,7 @@ package com.lawzone.market.telmsgLog.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.annotation.Resource;
 
@@ -125,12 +126,22 @@ public class TelmsgLogService {
 					
 					UserTrackingInfoId userTrackingInfoId = new UserTrackingInfoId();
 					
-					userTrackingInfoId.setUserId(userId);
-					userTrackingInfoId.setSvcUrl(svcUrl);
+					Optional<UserTrackingInfo> userTrackingSearchInfo = this.userTrackingInfoDAO.findByIdUserIdAndIdSvcUrl(userId, svcUrl);
 					
-					userTrackingInfo.setId(userTrackingInfoId);
-					
-					this.userTrackingInfoDAO.save(userTrackingInfo);
+					if(userTrackingSearchInfo.isEmpty()) {
+						userTrackingInfoId = new UserTrackingInfoId();
+						userTrackingInfoId.setUserId(userId);
+						userTrackingInfoId.setSvcUrl(svcUrl);
+						userTrackingInfo.setId(userTrackingInfoId);
+						
+						this.userTrackingInfoDAO.save(userTrackingInfo);
+					} else {
+						userTrackingInfoId = new UserTrackingInfoId();
+						userTrackingInfoId.setUserId(userTrackingSearchInfo.get().getId().getUserId());
+						userTrackingInfoId.setSvcUrl(userTrackingSearchInfo.get().getId().getSvcUrl());
+						userTrackingInfo.setId(userTrackingInfoId);
+						this.userTrackingInfoDAO.save(userTrackingInfo);
+					}
 				}
 			}
 		} catch (Exception e) {

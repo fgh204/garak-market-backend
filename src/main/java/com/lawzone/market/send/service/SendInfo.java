@@ -46,7 +46,7 @@ public class SendInfo extends BaseTimeEntity{
 	private String sendText;
 	
 	@Comment("phone")
-	@Column(columnDefinition = "varchar(15)")
+	@Column(columnDefinition = "varchar(20)")
 	private String phone;
 	
 	@Comment("발송여부")

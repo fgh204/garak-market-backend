@@ -34,6 +34,11 @@ public class ProductInfo extends BaseTimeEntity{
 	@Column(columnDefinition = "DECIMAL (15,2)")
 	private BigDecimal productPrice;
 	
+	@Comment("공급가액")
+	@NotNull
+	@Column(columnDefinition = "DECIMAL (15,2)")
+	private BigDecimal supplyPrice;
+	
 	@Comment("상품수량")
 	@NotNull
 	@Column(columnDefinition = "DECIMAL (5)")

@@ -54,7 +54,7 @@ public class ProductImageInfo extends BaseTimeEntity{
 	
 	@Comment("썸네일이미지")
 	@NotNull
-	@Column(columnDefinition = "varchar (300)")
+	@Column(columnDefinition = "varchar (3000)")
 	private String thumbnailImagePath;
 	
 	@Comment("이미지구분코드")

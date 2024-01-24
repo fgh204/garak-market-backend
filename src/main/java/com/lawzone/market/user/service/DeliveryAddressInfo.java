@@ -72,11 +72,11 @@ public class DeliveryAddressInfo extends BaseTimeEntity{
 	private String baseShippingYn;
 	
 	@Comment("배송연락처")
-	@Column(columnDefinition = "varchar(11)")
+	@Column(columnDefinition = "varchar(20)")
 	private String phoneNumber;
 	
 	@Comment("배송서브연락처")
-	@Column(columnDefinition = "varchar(11)")
+	@Column(columnDefinition = "varchar(20)")
 	private String subPhoneNumber;
 	
 	@Comment("배송장소구분코드")

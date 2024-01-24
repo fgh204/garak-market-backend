@@ -20,6 +20,7 @@ public class ProductInfoDTO {
 	private String endDate;
 	private String productName;
 	private BigDecimal productPrice;
+	private BigInteger supplyPrice;
 	private BigInteger productStock;
 	private String productDesc;
 	private Character useYn;

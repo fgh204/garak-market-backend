@@ -102,11 +102,11 @@ public class ProductOrderInfo extends BaseTimeEntity{
 	private String deliveryMessage;
 	
 	@Comment("배송연락처")
-	@Column(columnDefinition = "varchar(11)")
+	@Column(columnDefinition = "varchar(20)")
 	private String phoneNumber;
 	
 	@Comment("배송서브연락처")
-	@Column(columnDefinition = "varchar(11)")
+	@Column(columnDefinition = "varchar(20)")
 	private String subPhoneNumber;
 	
 	@Comment("주문명")

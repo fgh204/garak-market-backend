@@ -23,8 +23,9 @@ public class CorsConfig {
       if("D".equals(service)) {
           config.addAllowedOriginPattern("*");
       }else if("T".equals(service)) {
-    	  config.addAllowedOriginPattern("https://test.domaado.me");
-    	  config.addAllowedOriginPattern("https://app.domaado.me");
+    	  config.addAllowedOriginPattern("*");
+    	  //config.addAllowedOriginPattern("https://test.domaado.me");
+    	  //config.addAllowedOriginPattern("https://app.domaado.me");
       } else {
     	  config.addAllowedOriginPattern("https://domaado.me");
           config.addAllowedOriginPattern("https://admin.domaado.me");

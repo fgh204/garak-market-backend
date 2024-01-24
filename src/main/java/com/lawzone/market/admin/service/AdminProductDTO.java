@@ -16,6 +16,7 @@ public class AdminProductDTO {
 	private String productId;
 	private String productName;
 	private BigDecimal productPrice;
+	private BigDecimal supplyPrice;
 	private BigDecimal productStock;
 	private BigDecimal productWeight;
 	private String productDesc;
@@ -26,6 +27,8 @@ public class AdminProductDTO {
 	private String imgRegstYn;
 	private BigInteger changProductPrice;
 	private String deliveryOrderId;
+	private String combinedDeliveryYn;
+	private BigDecimal deliveryAmount;
 	
 	public AdminProductDTO() {
 		

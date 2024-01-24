@@ -66,11 +66,11 @@ public class ProductOrderItemBookIdInfo extends BaseTimeEntity{
 	private String recipientName;
 	
 	@Comment("배송연락처")
-	@Column(columnDefinition = "varchar(11)")
+	@Column(columnDefinition = "varchar(20)")
 	private String phoneNumber;
 	
 	@Comment("배송서브연락처")
-	@Column(columnDefinition = "varchar(11)")
+	@Column(columnDefinition = "varchar(20)")
 	private String subPhoneNumber;
 	
 	@Comment("주소")
@@ -124,7 +124,7 @@ public class ProductOrderItemBookIdInfo extends BaseTimeEntity{
 	private String spotName;
 	
 	@Comment("판매자전화번호")
-	@Column(columnDefinition = "varchar (11)")
+	@Column(columnDefinition = "varchar (20)")
 	private String sellerPhoneNumber;
 	
 	@Comment("사업장주소")

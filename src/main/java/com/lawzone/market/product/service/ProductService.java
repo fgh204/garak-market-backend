@@ -257,6 +257,7 @@ public class ProductService {
 		String eventId = productCDTO.getEventId();
 		Boolean isSoldOutHidden = productCDTO.getIsSoldOutHidden();
 		String productSortCode = productCDTO.getProductSortCode();
+		String productBundleCfcd = productCDTO.getProductBundleCfcd();
 		
 		if(
 			("Y".equals(sellerYn) && "Y".equals(sellerIdYn))
@@ -283,12 +284,17 @@ public class ProductService {
 		
 		String sql = this.productJdbcDAO.pageListQuery(productCDTO.getPageCount(), productCDTO.getMaxPageCount()
 														,categoryCodeYn, productIdYn, productNameYn, sellerYn
-														, favoriteYn, sellerId, useYn, eventId, isSoldOutHidden, productSortCode);
+														, favoriteYn, sellerId, useYn, eventId, isSoldOutHidden, productSortCode, productBundleCfcd);
 		ProductInfoListDTO productInfoListDTO = new ProductInfoListDTO();
 		
 		ArrayList<String> _queryValue = new ArrayList<>();
 		
 		int paramCnt = 0;
+		
+		if(!("".equals(productBundleCfcd) || productBundleCfcd == null)) {
+			_queryValue.add(paramCnt, productBundleCfcd);
+			paramCnt++;
+		}
 		
 		if(!"".equals(useYn)) {
 			_queryValue.add(paramCnt, useYn);
@@ -391,6 +397,7 @@ public class ProductService {
 			productInfoListInfo.setProductId(productList.get(i).getProductId());
 			productInfoListInfo.setProductName(productList.get(i).getProductName());
 			productInfoListInfo.setProductPrice(productList.get(i).getProductPrice());
+			productInfoListInfo.setSupplyPrice(productList.get(i).getSupplyPrice());
 			productInfoListInfo.setProductStock(productList.get(i).getProductStock());
 			productInfoListInfo.setProductDesc(productList.get(i).getProductDesc());
 			productInfoListInfo.setThumbnailImagePath(productList.get(i).getThumbnailImagePath());
@@ -507,6 +514,7 @@ public class ProductService {
 		String sellerIdYn = productCDTO.getSellerIdYn();
 		String useYn = productCDTO.getUseYn();
 		String eventId = productCDTO.getEventId();
+		String productBundleCfcd = productCDTO.getProductBundleCfcd();
 		Boolean isSoldOutHidden = productCDTO.getIsSoldOutHidden();
 		
 		if(!"Y".equals(sellerYn)) {
@@ -530,12 +538,17 @@ public class ProductService {
 		}
 		
 		String sql = this.productJdbcDAO.pageQuery(productCDTO.getMaxPageCount()
-				,categoryCodeYn, productIdYn, productNameYn, sellerYn, favoriteYn, sellerId, useYn, eventId, isSoldOutHidden);
+				,categoryCodeYn, productIdYn, productNameYn, sellerYn, favoriteYn, sellerId, useYn, eventId, isSoldOutHidden, productBundleCfcd);
 		PageInfoDTO pageInfoDTO = new PageInfoDTO();
 		
 		ArrayList<String> _queryValue = new ArrayList<>();
 		
 		int paramCnt = 0;
+		
+		if(!("".equals(productBundleCfcd) || productBundleCfcd == null)) {
+			_queryValue.add(paramCnt, productBundleCfcd);
+			paramCnt++;
+		}
 		
 		if(!"".equals(useYn)) {
 			_queryValue.add(paramCnt, useYn);
@@ -846,7 +859,8 @@ public class ProductService {
 		
 		List<ProductInfo> productInfo = this.productDAO.findByProductId(adminProductDTO.getProductId());
 		
-		productInfo.get(0).setProductPrice(new BigDecimal(adminProductDTO.getChangProductPrice()));
+		productInfo.get(0).setSupplyPrice(new BigDecimal(adminProductDTO.getChangProductPrice()));
+		productInfo.get(0).setProductPrice(adminProductDTO.getProductPrice());
 	}
 	
 	public List getEventProductList(ProductCDTO productCDTO) throws IllegalAccessException, InvocationTargetException {

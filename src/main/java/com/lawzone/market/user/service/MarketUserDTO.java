@@ -18,6 +18,8 @@ public class MarketUserDTO {
 	private String nickname;
 	private String userId;
 	private String pushId;
+	private String appVersion;
+	private String pushAgreeYn;
 	
 	public MarketUserDTO() {
 		

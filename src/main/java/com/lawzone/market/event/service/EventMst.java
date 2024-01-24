@@ -101,15 +101,15 @@ public class EventMst extends BaseTimeEntity{
     private String landingPageUrl;
 	
 	@Comment("팝업이미지PATH")
-	@Column(columnDefinition = "varchar(300)")
+	@Column(columnDefinition = "varchar(3000)")
     private String landingPageImagePath;
 	
 	@Comment("팝업이미지PATH")
-	@Column(columnDefinition = "varchar(300)")
+	@Column(columnDefinition = "varchar(3000)")
     private String popupImagePath;
 	
 	@Comment("배너이미지PATH")
-	@Column(columnDefinition = "varchar(300)")
+	@Column(columnDefinition = "varchar(3000)")
     private String bannerImagePath;
 	
 	@Comment("팝업노출구분코드")
@@ -141,6 +141,6 @@ public class EventMst extends BaseTimeEntity{
     private String bannerCreateReviewDisplayYn;
 	
 	@Comment("앱푸시이미지PATH")
-	@Column(columnDefinition = "varchar(300)")
+	@Column(columnDefinition = "varchar(3000)")
     private String appPushImagePath;
 }

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import software.amazon.ion.Decimal;
 
 @AllArgsConstructor
 @EqualsAndHashCode
@@ -16,6 +17,9 @@ public class AdminUserInfoDTO {
 	private String productCategoryCode;
 	private String userName;
 	private Integer userLvl;
+	private String combinedDeliveryYn;
+	private Double peeRate;
+	private String deliveryAmount;
 	
 	public AdminUserInfoDTO() {
 		

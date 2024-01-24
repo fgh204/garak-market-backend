@@ -41,6 +41,32 @@ public class EventProductInfoListDTO {
 	private BigDecimal discountRate;
 	private String eventBeginDate;
 	private String eventEndDate;
+	private String eventMstSeq;
+	private String eventCfcd;
+	private String eventTitle;
+	private String eventStateCode;
+	private BigDecimal eventCount;
+	private String eventProceedCode;
+	private String popupImagePath;
+	private String popupDisplayCfcd;
+	private String bannerImagePath;
+	private String bannerDetailDisplayYn;
+	private String bannerMyPageDisplayYn;
+	private String bannerTodayDisplayYn;
+	private String bannerPointHistDisplayYn;
+	private String bannerCreateReviewDisplayYn;
+	private String banner_reviewInfoDisplayYn;
+	private String landingPageImagePath;
+	private String landingPageUrl;
+	private BigDecimal personBuyCount;
+	private String benefitCfcd;
+	private BigDecimal benefitAmount;
+	private String benefitName;
+	private String benefitDateCfcd;
+	private String benefitDate;
+	private String benefitDuplicatedYn;
+	private String appPushImagePath;
+
 	
 	public EventProductInfoListDTO() {
 		

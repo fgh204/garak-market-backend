@@ -37,7 +37,7 @@ public class NoticeInfo extends BaseTimeEntity{
 	private String noticeDesc;
 	
 	@Comment("공지 이미지 경로")
-	@Column(columnDefinition = "varchar (300)")
+	@Column(columnDefinition = "varchar (3000)")
 	private String noticeImagesPath;
 	
 	@Comment("게시여부")

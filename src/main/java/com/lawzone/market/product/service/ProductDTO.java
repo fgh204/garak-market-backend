@@ -15,6 +15,7 @@ public class ProductDTO {
 	private String productId;
 	private String productName;
 	private BigDecimal productPrice;
+	private BigDecimal supplyPrice;
 	private BigDecimal productStock;
 	private String productDesc;
 	private String productCategoryCode;

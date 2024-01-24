@@ -435,10 +435,18 @@ public class ProductOrderJdbcDAO {
 				_query.append("\n and pi2.seller_id = ?");
 			}
 			
-			if("01".equals(searchGb)) {
+			if("01".equals(searchGb)) {//구매자명
 				_query.append("\n and ui.user_name like concat('%',?,'%')");
-			} else if("02".equals(searchGb)) {
+			} else if("02".equals(searchGb)) {//판매자명
 				_query.append("\n and si.shop_name like concat('%',?,'%')");
+			} else if("03".equals(searchGb)) {//주문번호
+				_query.append("\n and poi.order_no = ?");
+			} else if("04".equals(searchGb)) {//구매자 연락처
+				_query.append("\n and ui.phone_number = ?");
+			} else if("05".equals(searchGb)) {//수취인명
+				_query.append("\n and poi.recipient_name like concat('%',?,'%')");
+			} else if("06".equals(searchGb)) {//수취자 연락처 
+				_query.append("\n and poi.phone_number = ?"); 
 			} 
 			
 		_query.append("\n  group by poii.order_no , poii.product_id  ")	

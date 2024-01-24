@@ -29,6 +29,7 @@ public class ProductCDTO {
 	private String eventId;
 	private Boolean isSoldOutHidden;
 	private String productSortCode;
+	private String productBundleCfcd;
 	
 	public ProductCDTO() {
 		

@@ -995,4 +995,34 @@ public class UserInfoController {
 		rtnMap.put("searchWordList", searchWordList);
 		return JsonUtils.returnValue("0000", "조회되었습니다", rtnMap).toString();
 	}
+	
+	@ResponseBody
+	@PostMapping("/userInfo/addPushAgreeYn")
+	public String addPushAgreeYn(HttpServletRequest request, @RequestBody(required = true) Map map)
+			throws JsonMappingException, JsonProcessingException {
+		// this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		MarketUserDTO marketUserDTO = new MarketUserDTO();
+		marketUserDTO = (MarketUserDTO) ParameterUtils.setDto(map, marketUserDTO, "insert", sessionBean);
+
+		this.userInfoService.addPushAgreeYn(marketUserDTO);
+
+		Map rtnMap = new HashMap<>();
+
+		return JsonUtils.returnValue("0000", "저장되었습니다", rtnMap).toString();
+	}
+	
+	@ResponseBody
+	@PostMapping("/userInfo/addAppVersion")
+	public String addAppVersion(HttpServletRequest request, @RequestBody(required = true) Map map)
+			throws JsonMappingException, JsonProcessingException {
+		// this.telmsgLogService.addTelmsgLog("00", "00", "1", map);
+		MarketUserDTO marketUserDTO = new MarketUserDTO();
+		marketUserDTO = (MarketUserDTO) ParameterUtils.setDto(map, marketUserDTO, "insert", sessionBean);
+
+		this.userInfoService.addAppVersion(marketUserDTO);
+
+		Map rtnMap = new HashMap<>();
+
+		return JsonUtils.returnValue("0000", "저장되었습니다", rtnMap).toString();
+	}
 }

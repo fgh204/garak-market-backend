@@ -21,7 +21,8 @@ public class UserInfoJdbcDAO {
 			  .append("\n   , si.product_category_code ")
 			  .append("\n   , si.combined_delivery_yn ")	
 			  .append("\n   , ceil(si.delivery_amount) as deliveryAmount ")	
-			  .append("\n   , ceil(si.combined_delivery_standard_amount) as combinedDeliveryStandardAmount ")	
+			  .append("\n   , ceil(si.combined_delivery_standard_amount) as combinedDeliveryStandardAmount ")
+			  .append("\n   , ui.app_version as appVersion")
 			  .append("\n from lz_market.user_info ui ")
 			  .append("\n 	left outer join lz_market.seller_info si ")
 			  .append("\n 	on ui.user_id = si.seller_id  ")
@@ -92,8 +93,8 @@ public class UserInfoJdbcDAO {
 			  .append("\n and pi2.seller_id = ? ")
 			  .append("\n and pi2.use_yn = ? ")
 			  .append("\n and pi2.product_stock > 0 ")
-			  //.append("\n order by pi2.product_id desc ")
-			  .append("\n order by rand() ")
+			  .append("\n order by pi2.product_id desc ")
+			  //.append("\n order by rand() ")
 			  .append("\n limit 5 ");
 		
 		return _query.toString();

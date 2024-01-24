@@ -26,6 +26,7 @@ public class MarketUserInfoDTO {
 	private String combinedDeliveryYn;
 	private BigInteger deliveryAmount;
 	private BigInteger combinedDeliveryStandardAmount;
+	private String appVersion;
 	
 	public MarketUserInfoDTO() {
 		

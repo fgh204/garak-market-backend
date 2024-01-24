@@ -28,13 +28,17 @@ import lombok.Setter;
 @Setter
 public class SettlementListDTO {
 	private String shopName;
-	private String productAmt;
-	private String deliveryCharge;
-	private String salesAmount;
-	private String netProfit;
-	private String fee;
+	private BigDecimal productAmt;
+	private BigDecimal deliveryCharge;
+	private BigDecimal salesAmount;
+	private BigDecimal netProfit;
+	private BigDecimal fee;
 	private String saleBeginDate;
 	private String saleEndDate;
+	private BigDecimal productCount;
+	private BigDecimal supplyPrice;
+	private BigDecimal subSupplyPrice;
+	private BigDecimal productAmt2;
 		
 	public SettlementListDTO() {
 		

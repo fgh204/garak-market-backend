@@ -32,7 +32,23 @@ public class EventInfoDTO {
 	private String eventEndDate;
 	private BigDecimal productPrice;
 	private String eventBeginTime;
-	private String eventEndTime ;
+	private String eventEndTime;
+	private BigDecimal eventCount;
+	private String eventProceedCode;
+	private String popupDisplayCfcd;
+	private String bannerDetailDisplayYn;
+	private String bannerMyPageDisplayYn;
+	private String bannerTodayDisplayYn;
+	private String bannerPointHistDisplayYn;
+	private String bannerCreateReviewDisplayYn;
+	private String bannerReviewInfoDisplayYn;
+	private BigDecimal personBuyCount;
+	private String benefitCfcd;
+	private BigInteger benefitAmount;
+	private String benefitName;
+	private String benefitDateCfcd;
+	private String benefitDate;
+	private String benefitDuplicatedYn;
 	
 	public EventInfoDTO() {
 		

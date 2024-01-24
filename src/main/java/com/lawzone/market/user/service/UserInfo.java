@@ -49,11 +49,11 @@ public class UserInfo extends BaseTimeEntity{
 	private String nickname;
 	
 	@Comment("프로필 이미지 경로")
-	@Column(columnDefinition = "varchar (300)")
+	@Column(columnDefinition = "varchar (3000)")
 	private String profileImagesPath;
 	
 	@Comment("배경 이미지 경로")
-	@Column(columnDefinition = "varchar (300)")
+	@Column(columnDefinition = "varchar (3000)")
 	private String backgroundImagePath;
 	
 	@Comment("비밀번호")
@@ -95,4 +95,12 @@ public class UserInfo extends BaseTimeEntity{
 	@Comment("법인여부")
 	@Column(columnDefinition = "varchar(1)")
 	private String corpYn;
+	
+	@Comment("앱버전")
+	@Column(columnDefinition = "varchar(30)")
+	private String appVersion;
+	
+	@Comment("푸쉬동의여부")
+	@Column(columnDefinition = "varchar(1)")
+	private String pushAgreeYn;
 }

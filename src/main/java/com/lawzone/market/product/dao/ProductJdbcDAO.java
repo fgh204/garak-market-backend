@@ -6,7 +6,8 @@ import org.springframework.stereotype.Component;
 public class ProductJdbcDAO {
 	public String pageListQuery(String pageCnt, String maxPageCnt
 			, String cateCodeYn, String productIdYn, String productNameYn, String sellerYn
-			, String favoriteYn, String sellerId, String useYn, String eventId, Boolean isSoldOutHidden, String productSortCode) {
+			, String favoriteYn, String sellerId, String useYn, String eventId, Boolean isSoldOutHidden
+			, String productSortCode, String productBundleCfcd) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select * from (select")
@@ -21,6 +22,7 @@ public class ProductJdbcDAO {
 			  .append("\n order by epai.begin_time desc ")
 			  .append("\n limit 1 ")
 			  .append("\n ),pi2.product_price),0) as productPrice ")
+			  .append("\n , round(pi2.supply_price,0) as supplyPrice")
 			  .append("\n , round(pi2.product_stock,0) as productStock")
 			  .append("\n , pi2.product_desc as productDesc")
 			  .append("\n , pii.thumbnail_image_path as thumbnailImagePath")
@@ -50,6 +52,13 @@ public class ProductJdbcDAO {
 			  if("Y".equals(favoriteYn)) {
 				  _query.append("\n 	, lz_market.seller_favorite_info sfi");
 			  }
+			  
+			  if(!("".equals(productBundleCfcd) || productBundleCfcd == null)) {
+				  _query.append("\n 	left outer join lz_market.cd_dtl_info cdi");
+				  _query.append("\n 	on cdi.code_no  = '25'");
+				  _query.append("\n 	and cdi.dtl_code = ?");
+			  }
+			  
 			  _query.append("\n where pi2.product_id = pii.product_id")
 			  .append("\n and pi2.seller_id = si.seller_id ")
 			  .append("\n and pi2.product_category_code = pci.product_category_code  ");
@@ -96,7 +105,9 @@ public class ProductJdbcDAO {
 		if(isSoldOutHidden) {
 			_query.append("\n and pi2.product_stock > 0 ");
 		}
-		
+		if(!("".equals(productBundleCfcd) || productBundleCfcd == null)) {
+			_query.append("\n and cdi.dtl_code_text like concat('%',pi2.product_id, '%') ");
+		}
 		_query.append("\n ) A ");
 		
 		if("001".equals(productSortCode)) {
@@ -115,7 +126,8 @@ public class ProductJdbcDAO {
 	
 	public String pageQuery(String maxPageCnt
 			, String cateCodeYn, String productIdYn, String productNameYn, String sellerYn
-			, String favoriteYn, String sellerId, String useYn, String eventId, Boolean isSoldOutHidden ) {
+			, String favoriteYn, String sellerId, String useYn, String eventId
+			, Boolean isSoldOutHidden, String productBundleCfcd) {
 		StringBuffer _query = new StringBuffer();
 		
 		_query.append("\n select")
@@ -127,6 +139,12 @@ public class ProductJdbcDAO {
 			  .append("\n 	, lz_market.product_category_info pci ");
 			  if("Y".equals(favoriteYn)) {
 				  _query.append("\n 	, lz_market.seller_favorite_info sfi");
+			  }
+			  
+			  if(!("".equals(productBundleCfcd) || productBundleCfcd == null)) {
+				  _query.append("\n 	left outer join lz_market.cd_dtl_info cdi");
+				  _query.append("\n 	on cdi.code_no  = '25'");
+				  _query.append("\n 	and cdi.dtl_code = ?");
 			  }
 			  
 		_query.append("\n where pi2.product_id = pii.product_id")
@@ -175,7 +193,9 @@ public class ProductJdbcDAO {
 		if(isSoldOutHidden) {
 			_query.append("\n and pi2.product_stock > 0 ");
 		}
-		
+		if(!("".equals(productBundleCfcd) || productBundleCfcd == null)) {
+			_query.append("\n and cdi.dtl_code_text like concat('%',pi2.product_id, '%') ");
+		}
 		return _query.toString();
 	}
 	
@@ -214,6 +234,7 @@ public class ProductJdbcDAO {
 				.append("\n 	order by epai.begin_time desc ")
 				.append("\n 	limit 1 ")
 				.append("\n 	),pi2.product_price)) as product_price ")
+				.append("\n 	, ceil(pi2.supply_price) as supplyPrice ")
 				.append("\n 	, ceil(pi2.product_stock) as product_stock ")
 				.append("\n 	, pi2.product_desc as product_desc ")
 				.append("\n 	, pi2.use_yn as use_yn ")
@@ -257,7 +278,7 @@ public class ProductJdbcDAO {
 	public String productInfoCopyOrigin() {
 		StringBuffer _query = new StringBuffer();
 		
-		_query.append("\n insert into lz_market.product_info(product_id, begin_date, end_date, product_name, product_price, product_stock ")
+		_query.append("\n insert into lz_market.product_info(product_id, begin_date, end_date, product_name, product_price, supply_price, product_stock ")
 				.append("\n 	, product_desc, use_yn, product_category_code, seller_id,today_delivery_standard_time, product_weight, event_id, create_datetime, update_datetime, create_user, update_user) ")
 				.append("\n select ")
 				.append("\n 	? ")
@@ -265,6 +286,7 @@ public class ProductJdbcDAO {
 				.append("\n 	, b.end_date ")
 				.append("\n 	, b.product_name ")
 				.append("\n 	, b.product_price ")
+				.append("\n 	, b.supply_price ")
 				.append("\n 	, b.product_stock ")
 				.append("\n 	, b.product_desc ")
 				.append("\n 	, 'Y' ")
@@ -330,6 +352,31 @@ public class ProductJdbcDAO {
 				.append("\n         , epai.event_product_discount_rate as discountRate ")
 				.append("\n         , date_format(em.event_begin_date, '%Y-%m-%d') as eventBeginDate ")
 				.append("\n         , date_format(em.event_end_date, '%Y-%m-%d') as eventEndDate ")
+				.append("\n			, em.event_mst_seq as eventMstSeq ")
+				.append("\n			, em.event_cfcd as eventCfcd ")
+				.append("\n			, em.event_title as eventTitle ")
+				.append("\n			, em.event_state_code as eventStateCode ")
+				.append("\n			, em.event_count as eventCount ")
+				.append("\n			, em.event_proceed_code as eventProceedCode ")
+				.append("\n			, em.popup_image_path as popupImagePath ")
+				.append("\n			, em.popup_display_cfcd as popupDisplayCfcd ")
+				.append("\n			, em.banner_image_path as bannerImagePath ")
+				.append("\n			, em.banner_detail_display_yn as bannerDetailDisplayYn ")
+				.append("\n			, em.banner_my_page_display_yn as bannerMyPageDisplayYn ")
+				.append("\n			, em.banner_today_display_yn as bannerTodayDisplayYn ")
+				.append("\n			, em.banner_point_hist_display_yn as bannerPointHistDisplayYn ")
+				.append("\n			, em.banner_create_review_display_yn as bannerCreateReviewDisplayYn ")
+				.append("\n			, em.banner_review_info_display_yn as banner_reviewInfoDisplayYn ")
+				.append("\n			, em.landing_page_image_path as landingPageImagePath ")
+				.append("\n			, em.landing_page_url as landingPageUrl ")
+				.append("\n			, em.person_buy_count as personBuyCount ")
+				.append("\n			, em.benefit_cfcd as benefitCfcd ")
+				.append("\n			, ceil(em.benefit_amount) as benefitAmount ")
+				.append("\n			, em.benefit_name as benefitName ")
+				.append("\n			, em.benefit_date_cfcd as benefitDateCfcd ")
+				.append("\n			, em.benefit_date as benefitDate ")
+				.append("\n			, em.benefit_duplicated_yn as benefitDuplicatedYn ")
+				.append("\n			, em.app_push_image_path as appPushImagePath ")
 				.append("\n     from ")
 				.append("\n         lz_market.product_info pi2 ")
 				.append("\n         left outer join lz_market.event_product_amount_info epai ")

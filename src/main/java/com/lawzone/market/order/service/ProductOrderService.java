@@ -395,7 +395,6 @@ public class ProductOrderService {
 		}
 		
 		String sql = this.productOrderJdbcDAO.adminOrderCountInfo( _sellerIdYn, _orderDateGb, _searchGb);
-		
 		AdminOrderStatCountInfoDTO adminOrderStatCountInfoDTO = new AdminOrderStatCountInfoDTO();
 		
 		int _queryValueIdx = 0;
